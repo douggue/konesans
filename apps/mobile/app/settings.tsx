@@ -6,7 +6,7 @@ import { Screen, T, Card, Row, TopBar, Button, Sheet, PressScale } from '@/ui';
 import { colors } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT } from '@/lib/i18n';
-import { tap } from '@/lib/audio';
+import { tap, sfx, audioError } from '@/lib/audio';
 import { setOnlineAllowed, lastOnlineError } from '@/lib/online';
 import { serverConfigured } from '@/lib/remote';
 
@@ -35,10 +35,11 @@ export default function Settings() {
         {toggles.map((x, i) => (
           <Row key={x.key} style={{ minHeight: 56, borderBottomWidth: i < toggles.length - 1 ? 1 : 0, borderBottomColor: colors.line }}>
             <T v="bold" style={{ flex: 1 }}>{x.label}</T>
-            <Switch value={!!settings[x.key]} disabled={x.locked} onValueChange={(v) => { tap(); setSettings({ [x.key]: v }); }} trackColor={{ true: colors.green, false: '#B9C2D6' }} thumbColor="#fff" />
+            <Switch value={!!settings[x.key]} disabled={x.locked} onValueChange={(v) => { tap(); setSettings({ [x.key]: v }); if (v && x.key === 'sfx') setTimeout(() => sfx('correct'), 50); }} trackColor={{ true: colors.green, false: '#B9C2D6' }} thumbColor="#fff" />
           </Row>
         ))}
       </Card>
+      {audioError ? <T v="small" color={colors.muted} style={{ fontSize: 11, opacity: 0.7 }}>{audioError}</T> : null}
       <T v="label" color={colors.muted}>{t('app_lang').toUpperCase()}</T>
       <Row>
         {/* i18n-ok: each language named in its own words */ ([['ht', 'KR', 'Kreyòl ayisyen'], ['fr', 'FR', 'Français']] as [Lang, string, string][]).map(([id, code, label]) => ( // i18n-ok
