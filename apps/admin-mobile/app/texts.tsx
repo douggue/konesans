@@ -3,6 +3,7 @@ import { View, TextInput } from 'react-native';
 import { api, errText } from '@/api';
 import { useLoad } from '@/lib';
 import { useSession } from '@/session';
+import { publishNow } from '@/lib';
 import { Screen, Header, T, Row, Button, Loading, ErrorBox, Card, Icon, Toggle, haptic } from '@/ui';
 import { colors, fonts } from '@/theme';
 
@@ -37,7 +38,7 @@ export default function Texts() {
   });
   const save = async () => {
     setSaving(true);
-    try { const r = await api.saveStrings(draft); load.setData({ ...load.data!, overrides: r.overrides }); setDraft(JSON.parse(JSON.stringify(r.overrides))); haptic('ok'); bump(); toast('Tèks yo sove · pibliye pou yo rive sou telefòn yo'); }
+    try { const r = await api.saveStrings(draft); load.setData({ ...load.data!, overrides: r.overrides }); setDraft(JSON.parse(JSON.stringify(r.overrides))); haptic('ok'); bump(); toast('Sove ✓ · Timoun yo pa wè l toutotan ou pa pibliye', 'info', { label: 'Pibliye', run: publishNow(toast, bump) }); }
     catch (e) { toast(errText(e), 'err'); } finally { setSaving(false); }
   };
 

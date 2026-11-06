@@ -1,7 +1,7 @@
 /** Hooks and pure helpers shared by the screens. */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSession } from './session';
-import { errText, type AdminQuestion, type Category } from './api';
+import { api, errText, type AdminQuestion, type Category } from './api';
 
 /** Load data once, reload on demand (pull-to-refresh) and after `bump()`. */
 export function useLoad<T>(fn: () => Promise<T>, deps: unknown[] = []) {
@@ -70,3 +70,9 @@ export function timeAgo(iso?: string | null): string {
   if (s < 86400) return `${Math.floor(s / 3600)} è de sa`;
   return `${Math.floor(s / 86400)} jou de sa`;
 }
+
+/** Publish to kids' phones from a toast action (used after saves). */
+export const publishNow = (toast: (t: string, kind?: 'ok' | 'err' | 'info') => void, bump: () => void) => async () => {
+  try { const r = await api.publish(); toast(`Pibliye ✓ Vèsyon ${r.version}`); bump(); }
+  catch (e) { toast(errText(e), 'err'); }
+};

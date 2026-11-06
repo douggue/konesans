@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { api, errText, type AppConfig } from '@/api';
 import { useLoad } from '@/lib';
 import { useSession } from '@/session';
+import { publishNow } from '@/lib';
 import { Screen, Header, T, Row, Field, Button, SwitchRow, Loading, ErrorBox, Press, Card, haptic } from '@/ui';
 import { colors } from '@/theme';
 
@@ -39,7 +40,7 @@ export default function Settings() {
     try {
       const r = await api.saveConfig({ ...c, minAppVersion: c.minAppVersion.trim() });
       load.setData(r.config); setC(r.config); bump();
-      haptic('ok'); toast('Paramèt yo sove · pibliye pou voye yo bay timoun yo');
+      haptic('ok'); toast('Sove ✓ · Timoun yo pa wè l toutotan ou pa pibliye', 'info', { label: 'Pibliye', run: publishNow(toast, bump) });
     } catch (e) { toast(errText(e), 'err'); } finally { setSaving(false); }
   };
 

@@ -394,6 +394,8 @@ async function importBank() {
   for (let i = 0; i < qs.length; i += 150) { const res = await rpc('admin_import', { questions: qs.slice(i, i + 150) }); added += res.added; toast(`Enpòte ${Math.min(i + 150, qs.length)}/${qs.length}…`); }
   toast(`${added} kesyon enpòte`); await loadStats(); await loadCats(); viewDash();
 }
+/** After any save: changes reach kids' phones only after Publish, so offer it right there. */
+function savedToast() { toast('Sove ✓ · Timoun yo pa wè l toutotan ou pa pibliye', false, { label: 'Pibliye kounye a', run: publish }); loadStats(); }
 async function publish() {
   await loadStats();
   const n = S.stats.draftChanges;
@@ -557,7 +559,7 @@ function viewCategories() {
   $('#toolbar').innerHTML = `<h1>Kategori</h1><span class="grow" style="flex:1"></span><button class="btn" id="c-add" type="button">+ Nouvo kategori</button><button class="btn primary" id="c-save" type="button">Sove</button>`;
   $('#c-add').onclick = () => { const n = S.catsDraft.length + 1; S.catsDraft.push({ id: 'nouvo-' + n, name: { ht: 'Nouvo kategori', fr: 'Nouvelle catégorie' }, icon: 'kesyon', color: '#1F47B5', order: n, enabled: false, isNew: true, ages: AGES.slice(), _fresh: true }); renderCats(); };
   $('#c-save').onclick = (e) => busy(e.currentTarget, async () => {
-    try { const r = await rpc('admin_categories_save', { categories: S.catsDraft.map(({ _fresh, _icons, ...c }) => c) }); S.cats = r.categories; await loadStats(); await loadCats(); toast('Kategori yo sove · pibliye pou timoun yo wè yo'); viewCategories(); } catch (er) { toast(er.message, true); }
+    try { const r = await rpc('admin_categories_save', { categories: S.catsDraft.map(({ _fresh, _icons, ...c }) => c) }); S.cats = r.categories; await loadStats(); await loadCats(); savedToast(); viewCategories(); } catch (er) { toast(er.message, true); }
   });
   renderCats();
 }
@@ -626,7 +628,7 @@ async function viewSettings() {
       <div class="row2"><div class="field"><label>Mesaj (Kreyòl)</label><textarea class="inp" rows="2" data-sf="maintenance.ht">${esc(c.maintenance.ht)}</textarea></div><div class="field"><label>Message (Français)</label><textarea class="inp" rows="2" data-sf="maintenance.fr">${esc(c.maintenance.fr)}</textarea></div></div>
     </section>`;
   $('#s-color').onclick = (e) => { const b = e.target.closest('[data-v]'); if (!b) return; c.announcement.color = b.dataset.v; for (const x of $('#s-color').children) x.setAttribute('aria-pressed', String(x === b)); $('#s-preview').className = 'banner ' + b.dataset.v; };
-  $('#s-save').onclick = (e) => busy(e.currentTarget, async () => { try { S.config = (await rpc('admin_config_save', { config: S.config })).config; toast('Paramèt yo sove · pibliye pou yo rive sou telefòn yo'); loadStats(); } catch (er) { toast(er.message, true); } });
+  $('#s-save').onclick = (e) => busy(e.currentTarget, async () => { try { S.config = (await rpc('admin_config_save', { config: S.config })).config; savedToast(); loadStats(); } catch (er) { toast(er.message, true); } });
 }
 $('#content').addEventListener('input', (e) => {
   if (S.view !== 'paramet' || !S.config) return;
@@ -649,7 +651,7 @@ async function viewStrings() {
   };
   render();
   let t; $('#t-search').oninput = (e) => { clearTimeout(t); t = setTimeout(() => render(e.target.value), 150); };
-  $('#t-save').onclick = (e) => busy(e.currentTarget, async () => { try { S.strings.overrides = (await rpc('admin_strings_save', { overrides: S.stringsDirty })).overrides; S.stringsDirty = JSON.parse(JSON.stringify(S.strings.overrides)); toast('Tèks yo sove · pibliye pou yo rive sou telefòn yo'); loadStats(); render($('#t-search').value); } catch (er) { toast(er.message, true); } });
+  $('#t-save').onclick = (e) => busy(e.currentTarget, async () => { try { S.strings.overrides = (await rpc('admin_strings_save', { overrides: S.stringsDirty })).overrides; S.stringsDirty = JSON.parse(JSON.stringify(S.strings.overrides)); savedToast(); loadStats(); render($('#t-search').value); } catch (er) { toast(er.message, true); } });
 }
 $('#content').addEventListener('input', (e) => {
   if (S.view !== 'teks') return;

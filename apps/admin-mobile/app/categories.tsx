@@ -4,6 +4,7 @@ import { api, errText, type Category, type Age } from '@/api';
 import { useLoad } from '@/lib';
 import { useCache } from '@/cache';
 import { useSession } from '@/session';
+import { publishNow } from '@/lib';
 import { Screen, Header, T, Row, Field, Button, Toggle, Loading, ErrorBox, Sheet, Press, Icon, ICON_NAMES, Chip, haptic } from '@/ui';
 import { colors, raised, SWATCHES } from '@/theme';
 
@@ -39,7 +40,7 @@ export default function Categories() {
       const r = await api.saveCategories(list.map((c, i) => ({ ...c, order: i })));
       const sorted = sortCats(r.categories);
       load.setData(sorted); setList(sorted); setCategories(r.categories); bump();
-      haptic('ok'); toast('Kategori yo sove');
+      haptic('ok'); toast('Sove ✓ · Timoun yo pa wè l toutotan ou pa pibliye', 'info', { label: 'Pibliye', run: publishNow(toast, bump) });
     } catch (e) { toast(errText(e), 'err'); } finally { setSaving(false); }
   };
   const add = () => {
