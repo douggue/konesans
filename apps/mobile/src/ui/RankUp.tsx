@@ -149,7 +149,7 @@ export function RankUp({ open, to, onClose }: { open: boolean; from: number; to:
 }
 
 /** Shows the rank-up moment once when the kid reaches a new rank (only while this screen is focused). */
-export function RankUpListener() {
+export function RankUpListener({ delayMs = 0 }: { /** wait before showing (e.g. let a chest animation finish) */ delayMs?: number } = {}) {
   const xp = useStore((s) => s.progress.xp);
   const seen = useStore((s) => s.rankSeen ?? -1);
   const hydrated = useStore((s) => s.hydrated);
@@ -158,6 +158,12 @@ export function RankUpListener() {
   const idx = rankForXp(xp).index;
   // first run (or progress from before ranks existed): remember the current rank quietly
   useEffect(() => { if (hydrated && seen < 0) useStore.getState().ackRank(idx); }, [hydrated, seen]);
-  const show = hydrated && onboarded && focused && seen >= 0 && idx > seen;
-  return <RankUp open={show} from={seen} to={idx} onClose={() => useStore.getState().ackRank(idx)} />;
+  const want = hydrated && onboarded && focused && seen >= 0 && idx > seen;
+  const [ready, setReady] = React.useState(false);
+  useEffect(() => {
+    if (!want) { setReady(false); return; }
+    const id = setTimeout(() => setReady(true), delayMs);
+    return () => clearTimeout(id);
+  }, [want]);
+  return <RankUp open={want && ready} from={seen} to={idx} onClose={() => useStore.getState().ackRank(idx)} />;
 }
