@@ -14,19 +14,26 @@ const DIR = join(ROOT, 'content/bank');
 const file = process.argv[2];
 if (!file) { console.error('usage: sync-bank.mjs edits.json'); process.exit(1); }
 const edits = JSON.parse(readFileSync(file, 'utf8'));
-const byCat = new Map();
-const load = (cat) => {
-  if (!byCat.has(cat)) {
-    const p = join(DIR, cat + '.json');
-    byCat.set(cat, existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : []);
-  }
-  return byCat.get(cat);
+import { readdirSync } from 'node:fs';
+// Each id lives in exactly one file; new ids go to <category>.json.
+const byCat = new Map(); // file stem -> array
+const where = new Map(); // id -> file stem
+for (const f of readdirSync(DIR).filter((f) => f.endsWith('.json'))) {
+  const stem = f.slice(0, -5);
+  const arr = JSON.parse(readFileSync(join(DIR, f), 'utf8'));
+  byCat.set(stem, arr);
+  for (const q of arr) where.set(q.id, stem);
+}
+const load = (cat, id) => {
+  const stem = where.get(id) ?? cat;
+  if (!byCat.has(stem)) byCat.set(stem, []);
+  return byCat.get(stem);
 };
 const FIELDS = ['d', 'ages', 'ht', 'fr', 'opts', 'optsFr', 'a', 'ex', 'exFr', 'topic', 'status', 'note'];
 let applied = 0, added = 0, removed = 0;
 for (const e of edits) {
   if (!e?.id || !e.category) continue;
-  const arr = load(e.category);
+  const arr = load(e.category, e.id);
   const i = arr.findIndex((q) => q.id === e.id);
   if (e.deleted) { if (i >= 0) { arr.splice(i, 1); removed++; } continue; }
   const q = i >= 0 ? arr[i] : { id: e.id };

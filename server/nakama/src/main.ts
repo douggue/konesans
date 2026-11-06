@@ -5,6 +5,7 @@
  * - Match handler `duel`: authoritative loop driven by @konesans/core `reduce`.
  * - RPC `sync_progress`: idempotent event-log upload, server folds progress.
  * - RPC `consent_confirm`: parent clicked the confirmation link.
+ * - Admin + content RPCs: see admin.ts and docs/API.md.
  * Clients never see the answer key during a question (see core `publicView`).
  */
 import {
@@ -12,6 +13,7 @@ import {
   rng, ratingDelta, mergeLogs, foldProgress, canMatch, PRESET_REACTIONS,
   type DuelState, type AgeBand, type CategoryId, type SyncEvent,
 } from '@konesans/core';
+import * as A from './admin';
 
 const TICK_RATE = 5; // 5 ticks/s is plenty for a quiz
 const OP = { STATE: 1, ANSWER: 2, REACT: 3 } as const;
@@ -177,12 +179,12 @@ const rpcReport: nkruntime.RpcFunction = (ctx, logger, nk, payload) => {
 
 // ---------- helpers ----------
 
-const SYSTEM_USER = '00000000-0000-0000-0000-000000000000';
+const SYSTEM_USER = A.SYSTEM_USER;
 
 function loadBank(nk: nkruntime.Nakama) {
-  // Production: packs are stored in `content` collection, uploaded by the admin panel. Fallback to sample bank.
-  const r = nk.storageRead([{ collection: 'content', key: 'questions', userId: SYSTEM_USER }])[0];
-  return (r?.value?.questions as typeof SAMPLE_QUESTIONS) ?? SAMPLE_QUESTIONS;
+  // The last published content (admin panel → Publish). Before the first publish, the small sample bank.
+  const pub = A.publishedQuestions(nk);
+  return (pub.length ? pub : SAMPLE_QUESTIONS) as typeof SAMPLE_QUESTIONS;
 }
 
 function requireOnlineAllowed(nk: nkruntime.Nakama, userId: string) {
@@ -215,6 +217,29 @@ function safeJson(s: string | ArrayBuffer | undefined): any {
   try { return typeof s === 'string' ? JSON.parse(s) : s ? JSON.parse(String.fromCharCode(...new Uint8Array(s))) : undefined; } catch { return undefined; }
 }
 
+
+// ---------- admin/content RPC entry points (one plain function per RPC, see admin.ts) ----------
+function rpc_admin_me(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminMe(ctx, logger, nk, payload); }
+function rpc_admin_stats(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminStats(ctx, logger, nk, payload); }
+function rpc_admin_questions(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminQuestions(ctx, logger, nk, payload); }
+function rpc_admin_question_save(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminQuestionSave(ctx, logger, nk, payload); }
+function rpc_admin_question_delete(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminQuestionDelete(ctx, logger, nk, payload); }
+function rpc_admin_question_status(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminQuestionStatus(ctx, logger, nk, payload); }
+function rpc_admin_next_id(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminNextId(ctx, logger, nk, payload); }
+function rpc_admin_import(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminImport(ctx, logger, nk, payload); }
+function rpc_admin_categories(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminCategories(ctx, logger, nk, payload); }
+function rpc_admin_categories_save(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminCategoriesSave(ctx, logger, nk, payload); }
+function rpc_admin_config(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminConfig(ctx, logger, nk, payload); }
+function rpc_admin_config_save(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminConfigSave(ctx, logger, nk, payload); }
+function rpc_admin_strings(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminStrings(ctx, logger, nk, payload); }
+function rpc_admin_strings_save(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminStringsSave(ctx, logger, nk, payload); }
+function rpc_admin_publish(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminPublish(ctx, logger, nk, payload); }
+function rpc_admin_reports(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminReports(ctx, logger, nk, payload); }
+function rpc_admin_report_resolve(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminReportResolve(ctx, logger, nk, payload); }
+function rpc_admin_audit(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminAudit(ctx, logger, nk, payload); }
+function rpc_content_manifest(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.contentManifest(ctx, logger, nk, payload); }
+function rpc_content_pack(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.contentPack(ctx, logger, nk, payload); }
+
 // ---------- module entry ----------
 
 const InitModule: nkruntime.InitModule = (ctx, logger, nk, initializer) => {
@@ -223,6 +248,28 @@ const InitModule: nkruntime.InitModule = (ctx, logger, nk, initializer) => {
   initializer.registerRpc('sync_progress', rpcSyncProgress);
   initializer.registerRpc('consent_confirm', rpcConsentConfirm);
   initializer.registerRpc('report_player', rpcReport);
+  // public content (http_key) + admin RPCs (bearer token of an admin account). Nakama needs plain top-level function names here.
+  initializer.registerRpc('admin_me', rpc_admin_me);
+  initializer.registerRpc('admin_stats', rpc_admin_stats);
+  initializer.registerRpc('admin_questions', rpc_admin_questions);
+  initializer.registerRpc('admin_question_save', rpc_admin_question_save);
+  initializer.registerRpc('admin_question_delete', rpc_admin_question_delete);
+  initializer.registerRpc('admin_question_status', rpc_admin_question_status);
+  initializer.registerRpc('admin_next_id', rpc_admin_next_id);
+  initializer.registerRpc('admin_import', rpc_admin_import);
+  initializer.registerRpc('admin_categories', rpc_admin_categories);
+  initializer.registerRpc('admin_categories_save', rpc_admin_categories_save);
+  initializer.registerRpc('admin_config', rpc_admin_config);
+  initializer.registerRpc('admin_config_save', rpc_admin_config_save);
+  initializer.registerRpc('admin_strings', rpc_admin_strings);
+  initializer.registerRpc('admin_strings_save', rpc_admin_strings_save);
+  initializer.registerRpc('admin_publish', rpc_admin_publish);
+  initializer.registerRpc('admin_reports', rpc_admin_reports);
+  initializer.registerRpc('admin_report_resolve', rpc_admin_report_resolve);
+  initializer.registerRpc('admin_audit', rpc_admin_audit);
+  initializer.registerRpc('content_manifest', rpc_content_manifest);
+  initializer.registerRpc('content_pack', rpc_content_pack);
+  A.bootstrapAdmins(ctx, logger, nk);
   logger.info('Konesans module loaded. Reactions allowed: %s', PRESET_REACTIONS.join(','));
 };
 // Nakama looks for a global named InitModule.

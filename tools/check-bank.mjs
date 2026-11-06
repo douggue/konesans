@@ -16,7 +16,7 @@ const files = readdirSync(DIR).filter((f) => f.endsWith('.json')).sort();
 const spread = {};
 
 for (const f of files) {
-  const cat = basename(f, '.json');
+  const cat = basename(f, '.json').split('.')[0]; // istwa.json, istwa.world.json → istwa
   let arr;
   try { arr = JSON.parse(readFileSync(join(DIR, f), 'utf8')); } catch (e) { console.error(`✖ ${f}: invalid JSON — ${e.message}`); errors++; continue; }
   if (!Array.isArray(arr)) { console.error(`✖ ${f}: not an array`); errors++; continue; }
@@ -45,7 +45,7 @@ for (const f of files) {
     if (/\b(m|l|n|w|y|t)'/i.test(ht)) warn(q, 'apostrophe short form (write "m ap", "pa t")');
     if (/\b(tout repons|okenn repons)/i.test(ht)) err(q, '"all/none of the above" options are not allowed');
   }
-  spread[cat] = { n: arr.length, a: counts.slice(0, 4).join('/') , d1: arr.filter((q) => q.d === 1).length, d2: arr.filter((q) => q.d === 2).length, d3: arr.filter((q) => q.d === 3).length };
+  spread[basename(f, '.json')] = { n: arr.length, a: counts.slice(0, 4).join('/') , d1: arr.filter((q) => q.d === 1).length, d2: arr.filter((q) => q.d === 2).length, d3: arr.filter((q) => q.d === 3).length };
 }
 console.table(spread);
 console.log(`${ids.size} questions, ${errors} errors, ${warns} warnings`);

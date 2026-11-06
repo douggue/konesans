@@ -27,7 +27,7 @@ export function expand(q, category) {
 export function loadBank() {
   const out = [];
   for (const f of readdirSync(DIR).filter((f) => f.endsWith('.json')).sort()) {
-    const cat = basename(f, '.json');
+    const cat = basename(f, '.json').split('.')[0];
     if (!CATS.includes(cat)) continue;
     for (const q of JSON.parse(readFileSync(join(DIR, f), 'utf8'))) out.push(expand(q, cat));
   }

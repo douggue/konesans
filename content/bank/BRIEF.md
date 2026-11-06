@@ -37,3 +37,12 @@ Validate before finishing: `node -e "const a=require('/home/claude/konesans/cont
 - Spread across the three difficulty levels roughly 40% d=1, 35% d=2, 25% d=3.
 
 When done, report: count per file, the index spread of `a`, and a list of any question ids whose facts you were less than fully sure of (so they can be double-checked).
+
+## Expansion round (target ≈2,000 questions)
+- You write to your **own file** `content/bank/<category>.<part>.json` (e.g. `istwa.monn.json`). Never edit another file.
+- Use **only the id range you were given** (e.g. `ist-201` … `ist-320`), sequential, zero-padded to 3 digits (4 when above 999).
+- Before writing, read the existing files of your category (`content/bank/<category>*.json`) and do **not** repeat any fact already asked there. The checker warns on identical prompts; also avoid same-fact rewordings.
+- Other writers are working on the same category in parallel on different sub-topics: stay inside your sub-topics.
+- Write in batches of 25–40 (e.g. a small Node script that appends to your file), run the checker after each batch, and keep going until you reach your count.
+- Kid level matters more than coverage: a d=1 question must be answerable by a curious 7-year-old in Haiti.
+- If a fact needs a source you are not sure of, drop it; list anything borderline in your final report.
