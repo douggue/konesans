@@ -166,7 +166,7 @@
   "descr": "Time up (soft buzzer)",
   "seconds": 0.8,
   "bytes": 10344,
-  "true_peak": -11.6
+  "true_peak": -11.2
  },
  {
   "file": "sfx_vs.mp3",

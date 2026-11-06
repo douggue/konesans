@@ -83,7 +83,7 @@ def timeup():
     b = mixer(0.8)
     for at, m, d in ((0.0, 57, 0.16), (0.22, 55, 0.3)):
         n = ns(d + 0.1)
-        x = 0.5 * additive(hz(m), n, 'square', cutoff=1300, kmax=20) + 0.5 * additive(hz(m) * 1.006, n, 'saw', cutoff=1100, kmax=20)
+        x = 0.5 * additive(hz(m), n, 'square', cutoff=2000, kmax=24) + 0.5 * additive(hz(m) * 1.006, n, 'saw', cutoff=1700, kmax=24)
         b.add(x * adsr(n, 0.008, 0.2, 0.65, 0.08, gate=d), at)
     return reverb_tail(b.buf, 0.7, 0.1)[:ns(0.8)], dict(target=-19)
 
