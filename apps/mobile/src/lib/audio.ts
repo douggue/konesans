@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 import { useStore } from './store';
 import { AppState } from 'react-native';
 import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
-import { Asset } from 'expo-asset';
+import { AUDIO_DATA } from './audio-data';
 
 const VOICE_LANG: Record<string, string> = { en: 'en-US', es: 'es-MX', fr: 'fr-FR', ht: 'fr-HT' };
 
@@ -30,30 +30,30 @@ export function tap(kind: 'light' | 'success' | 'error' = 'light') {
 // and never throws: no audio (web before a tap, missing native module, odd device) just means silence.
 
 const SFX_SRC = {
-  tap: require('../../assets/audio/sfx_tap.mp3'),
-  correct: require('../../assets/audio/sfx_correct.mp3'),
-  wrong: require('../../assets/audio/sfx_wrong.mp3'),
-  combo: require('../../assets/audio/sfx_combo.mp3'),
-  tick: require('../../assets/audio/sfx_tick.mp3'),
-  timeup: require('../../assets/audio/sfx_timeup.mp3'),
-  vs: require('../../assets/audio/sfx_vs.mp3'),
-  found: require('../../assets/audio/sfx_found.mp3'),
-  ping: require('../../assets/audio/sfx_ping.mp3'),
-  pop: require('../../assets/audio/sfx_pop.mp3'),
-  win: require('../../assets/audio/sfx_win.mp3'),
-  lose: require('../../assets/audio/sfx_lose.mp3'),
-  draw: require('../../assets/audio/sfx_draw.mp3'),
-  coin: require('../../assets/audio/sfx_coin.mp3'),
-  badge: require('../../assets/audio/sfx_badge.mp3'),
-  level: require('../../assets/audio/sfx_level.mp3'),
+  tap: 'sfx_tap',
+  correct: 'sfx_correct',
+  wrong: 'sfx_wrong',
+  combo: 'sfx_combo',
+  tick: 'sfx_tick',
+  timeup: 'sfx_timeup',
+  vs: 'sfx_vs',
+  found: 'sfx_found',
+  ping: 'sfx_ping',
+  pop: 'sfx_pop',
+  win: 'sfx_win',
+  lose: 'sfx_lose',
+  draw: 'sfx_draw',
+  coin: 'sfx_coin',
+  badge: 'sfx_badge',
+  level: 'sfx_level',
 } as const;
 export type SfxName = keyof typeof SFX_SRC;
 
 const MUSIC_SRC = {
-  menu: require('../../assets/audio/menu.m4a'),
-  duel_search: require('../../assets/audio/duel_search.m4a'),
-  duel_battle: require('../../assets/audio/duel_battle.m4a'),
-  duel_hurry: require('../../assets/audio/duel_hurry.m4a'),
+  menu: 'menu',
+  duel_search: 'duel_search',
+  duel_battle: 'duel_battle',
+  duel_hurry: 'duel_hurry',
 } as const;
 type Loop = keyof typeof MUSIC_SRC;
 export type MusicTrack = Exclude<Loop, 'duel_hurry'>;
@@ -94,21 +94,16 @@ const safe = (f: () => void) => { try { f(); } catch (e: any) { if (!audioError)
  *  'active' change may fire before our listener exists — a cached flag then stays false and everything is silent. */
 const appActive = () => AppState.currentState !== 'background';
 
-/** Where each bundled file was found on the phone (for the sound test). */
+/** Which source each player got (for the sound test). */
 const SRC_URI: Record<string, string> = {};
 /**
- * Make a player for a bundled file. We copy the file to a real path first (expo-asset `downloadAsync`) and give the
- * player that path: handing it the bare bundled reference left every player unloaded on Android after updates.
+ * Make a player for one of our sounds. The sounds are embedded as data: URIs (src/lib/audio-data.ts,
+ * tools/gen-audio-data.mjs): bundled sound *files* weren't reachable on Android after over-the-air updates.
  */
-function makePlayer(mod: number, tag: string): AudioPlayer {
-  const p = createAudioPlayer(null, { updateInterval: 1000 });
-  safe(() => {
-    const a = Asset.fromModule(mod);
-    a.downloadAsync()
-      .then((d) => { const uri = d.localUri ?? d.uri; SRC_URI[tag] = uri; safe(() => p.replace({ uri })); })
-      .catch((e: any) => { SRC_URI[tag] = 'ERR ' + String(e?.message ?? e).slice(0, 80) + ' ' + (a.uri ?? ''); safe(() => p.replace({ uri: a.localUri ?? a.uri })); });
-  });
-  return p;
+function makePlayer(key: string, tag: string): AudioPlayer {
+  const uri = AUDIO_DATA[key];
+  SRC_URI[tag] = uri ? `data ${Math.round(uri.length / 1024)}KB` : 'missing';
+  return createAudioPlayer(uri ? { uri } : null, { updateInterval: 1000 });
 }
 
 function init() {
