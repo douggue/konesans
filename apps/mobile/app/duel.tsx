@@ -152,8 +152,8 @@ function ScoreNum({ n, color, small }: { n: number; color: string; small?: boole
 
 // ─── online ──────────────────────────────────────────────────────────────────
 
-const HAIR = ['afro', 'braids', 'short', 'puffs'] as const;
-const EXTRA = ['none', 'glasses', 'cap', 'mask', 'uniform'] as const;
+const HAIR = ['afro', 'braids', 'short', 'puffs', 'bun', 'mohawk', 'locs'] as const;
+const EXTRA = ['none', 'glasses', 'cap', 'mask', 'uniform', 'headphones', 'strawhat', 'shades', 'crown', 'flower'] as const;
 /** The other phone's avatar comes from the server: only keep values the avatar drawing knows. */
 function safeAvatar(a: unknown, seed: string): AvatarConfig {
   const base = avatarFromSeed(seed);

@@ -1,8 +1,12 @@
 /** UI strings — Kreyòl first, French second. Course content (EN/ES) lives in @konesans/core. */
 import { useStore } from './store';
 import { useRemote } from './remote';
+import { QUESTS_STRINGS } from './strings/quests';
+import { CARDS_STRINGS } from './strings/cards';
 
 const S = {
+  ...CARDS_STRINGS,
+  ...QUESTS_STRINGS,
   // nav
   home: ['Lakay', 'Accueil'], challenge: ['Defi', 'Défis'], course: ['Kou', 'Cours'], coding: ['Enfòmatik', 'Informatique'], me: ['Mwen', 'Moi'],
   // onboarding

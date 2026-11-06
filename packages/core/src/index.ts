@@ -23,3 +23,4 @@ export * from './coding/basics.js';
 export * from './safety/pricing.js';
 export * from './courses/content.js';
 export * from './courses/engine.js';
+export * from './modules/cards.js';
