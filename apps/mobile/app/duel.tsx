@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
-import { createDuel, reduce, planBotAnswer, BOT_PROFILES, BOT_NAMES, PRESET_REACTIONS, rng, type DuelState } from '@konesans/core';
+import { createDuel, reduce, planBotAnswer, BOT_PROFILES, BOT_NAMES, PRESET_REACTIONS, rng, type DuelState, type AvatarConfig, type Question } from '@konesans/core';
 import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Pill, Avatar, avatarFromSeed, PressScale, Bounce, Drop, FadeIn, Pop, Confetti, SlideSwap, useCountUp } from '@/ui';
 import { Matchmaking } from '@/ui/Matchmaking';
 import { QuestionView } from '@/ui/QuestionView';
@@ -10,13 +10,230 @@ import { useStore, useAvatar } from '@/lib/store';
 import { useT, type StrKey } from '@/lib/i18n';
 import { buildQuestions } from '@/lib/content';
 import { tap } from '@/lib/audio';
+import { serverConfigured } from '@/lib/remote';
+import { findDuel, setProfile, type OnlineDuel as OnlineCtl, type OnlineView } from '@/lib/online';
 
 const ME = 'me';
 
-/** 1v1 against Robo, run entirely on-device with the same reducer the server uses. */
+/**
+ * 1v1 duel.
+ * - Online (a parent turned on "Defi sou entènèt" in Settings): the server pairs kids of the same age; after
+ *   10 s alone it sends Robo. The server runs the game; the phone only shows it and sends answers.
+ * - Otherwise, or when there is no internet: against Robo, on the device, with the same rules.
+ */
 export default function Duel() {
+  const allowed = useStore((s) => s.kidSettings.randomDuelsAllowed);
+  const online = allowed && serverConfigured();
+  const [fallback, setFallback] = useState<StrKey | null>(null);
+  if (online && !fallback) return <OnlineDuel onFallback={setFallback} />;
+  return <LocalDuel note={fallback ?? (serverConfigured() && !allowed ? 'robo_parent' : null)} />;
+}
+
+// ─── shared pieces ────────────────────────────────────────────────────────────
+
+interface Side { name: string; avatar: AvatarConfig; score: number; isBot?: boolean }
+interface GameVM {
+  index: number; total: number; questionMs: number;
+  /** time left in ms, or null while waiting for the first question */
+  left: number | null;
+  question?: Question; reveal: boolean;
+  me: Side & { chosen: number | null }; op: Side & { answered: boolean; chosen?: number; reaction?: string };
+  myReaction?: string;
+}
+
+function DuelGame({ vm, onPick, onReact, onQuit }: { vm: GameVM; onPick: (i: number) => void; onReact: (r: string) => void; onQuit: () => void }) {
   const t = useT();
-  const { profile, seen, recordDuel, stats } = useStore();
+  const [quitting, setQuitting] = useState(false);
+  const { me, op, reveal } = vm;
+  const waiting = vm.left === null;
+  return (
+    <Screen>
+      <TopBar close title={`${t('question')} ${vm.index + 1} / ${vm.total}`} onBack={() => setQuitting(true)} />
+      <FadeIn from={-12}><Card style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10 }}>
+        <Bounce trigger={me.score || null} amount={0.12}><Avatar a={me.avatar} size={42} /></Bounce>
+        <View style={{ flex: 1 }}><T v="small" color={colors.muted}>{t('you')}</T><T v="bold" numberOfLines={1}>{me.name}</T></View>
+        <Bounce trigger={me.score || null} amount={0.25}><ScoreNum n={me.score} color={colors.blue} small /></Bounce>
+        <T v="small" color={colors.muted}>{t('vs')}</T>
+        <Bounce trigger={op.score || null} amount={0.25}><ScoreNum n={op.score} color={colors.red} small /></Bounce>
+        <View style={{ flex: 1, alignItems: 'flex-end' }}><T v="small" color={colors.muted}>{op.isBot ? t('robot') : t('opponent')}</T><T v="bold" numberOfLines={1}>{op.name}</T></View>
+        <Bounce trigger={op.score || null} amount={0.12}>
+          <View>
+            <Avatar a={op.avatar} size={42} />
+            {op.reaction ? <Pop key={op.reaction} style={{ position: 'absolute', right: -6, top: -26 }}><View style={{ backgroundColor: colors.card, borderRadius: 12, borderWidth: 2, borderColor: colors.line, paddingHorizontal: 8, paddingVertical: 2 }}><T v="small" numberOfLines={1}>{t(`re_${op.reaction}` as StrKey)}</T></View></Pop> : null}
+          </View>
+        </Bounce>
+      </Card></FadeIn>
+      <Row>
+        <Progress style={{ flex: 1 }} linear value={reveal || waiting ? (waiting ? 1 : 0) : (vm.left ?? 0) / vm.questionMs} color={(vm.left ?? vm.questionMs) < 4000 ? colors.red : colors.yellowDark} />
+        <T v="small" color={colors.muted} style={{ width: 44, textAlign: 'right' }}>{waiting ? t('get_set') : reveal ? '' : Math.ceil((vm.left ?? 0) / 1000) + ' s'}</T>
+      </Row>
+      {op.answered && !reveal && <Pop><Pill text={t('already_answered', { name: op.name })} color={colors.muted} bg={colors.line} /></Pop>}
+      {vm.question && <SlideSwap id={vm.index}><QuestionView q={vm.question} chosen={me.chosen} reveal={reveal} otherChosen={reveal ? op.chosen : undefined} otherAvatar={op.avatar} onPick={waiting ? undefined : (i) => { tap(); onPick(i); }} /></SlideSwap>}
+      {!reveal && (
+        <View style={{ gap: 8 }}>
+          <T v="small" color={colors.muted}>{t('reactions')}</T>
+          <Row gap={8} style={{ flexWrap: 'wrap' }}>
+            {PRESET_REACTIONS.slice(0, 4).map((r) => (
+              <PressScale role="button" key={r} scaleTo={0.9} onPress={() => { tap(); onReact(r); }} style={{ minHeight: 40, paddingHorizontal: 12, borderRadius: 20, borderWidth: 2, borderColor: vm.myReaction === r ? colors.blue : colors.line, backgroundColor: colors.card, justifyContent: 'center' }}>
+                <T v="small">{t(`re_${r}` as StrKey)}</T>
+              </PressScale>
+            ))}
+          </Row>
+        </View>
+      )}
+      <Sheet open={quitting} title={t('quit_q')}>
+        <Button title={t('stay')} onPress={() => setQuitting(false)} />
+        <Button variant="secondary" color={colors.red} title={t('quit')} onPress={() => { setQuitting(false); onQuit(); router.replace('/home'); }} />
+      </Sheet>
+    </Screen>
+  );
+}
+
+function DuelEnd({ won, draw, me, op, note, onReport }: { won: boolean; draw: boolean; me: Side; op: Side; note?: StrKey | null; onReport?: () => Promise<void> }) {
+  const t = useT();
+  const stats = useStore((s) => s.stats);
+  const [reported, setReported] = useState(false);
+  return (
+    <Screen scroll={false}>
+      {won && <Confetti />}
+      <View style={{ alignItems: 'center', gap: 10, marginTop: 'auto' }}>
+        <Drop><Mascot size={140} mood={won ? 'cheer' : draw ? 'happy' : 'sad'} /></Drop>
+        <Pop delay={450}><T v="display" center>{won ? t('you_win') : draw ? t('draw') : t('you_lose')}</T></Pop>
+        {note ? <FadeIn delay={500}><T v="small" center color={colors.muted}>{t(note)}</T></FadeIn> : null}
+        <Row gap={16}>
+          <FadeIn delay={650} x={-40} from={0} style={{ alignItems: 'center', gap: 4 }}><Avatar a={me.avatar} size={64} live={won} /><ScoreNum n={me.score} color={colors.blue} /><T v="small" color={colors.muted}>{me.name}</T></FadeIn>
+          <T v="h2" color={colors.muted}>{t('vs')}</T>
+          <FadeIn delay={650} x={40} from={0} style={{ alignItems: 'center', gap: 4 }}><Avatar a={op.avatar} size={64} /><ScoreNum n={op.score} color={colors.red} /><T v="small" color={colors.muted}>{op.isBot ? '🤖 ' : ''}{op.name}</T></FadeIn>
+        </Row>
+        <Pop delay={1100}><Pill text={`+${won ? 40 : draw ? 25 : 15} XP`} color="#5C4600" bg={colors.yellowSoft} icon="pwen" /></Pop>
+        <FadeIn delay={1250}><T v="small" color={colors.muted}>{t('wins')}: {stats.duelWins} / {stats.duels}</T></FadeIn>
+      </View>
+      <View style={{ marginTop: 'auto', gap: 10 }}>
+        <Button title={t('again')} onPress={() => router.replace('/duel')} />
+        <Button variant="secondary" title={t('done')} onPress={() => router.replace('/home')} />
+        {onReport && (reported
+          ? <T v="small" center color={colors.muted}>{t('reported')}</T>
+          : <Button variant="ghost" color={colors.muted} small title={t('report_player')} onPress={() => { setReported(true); onReport().catch(() => {}); }} />)}
+      </View>
+    </Screen>
+  );
+}
+
+function ScoreNum({ n, color, small }: { n: number; color: string; small?: boolean }) {
+  const v = useCountUp(n, undefined, 450);
+  return <T v={small ? 'h1' : 'display'} color={color}>{v}</T>;
+}
+
+// ─── online ──────────────────────────────────────────────────────────────────
+
+const HAIR = ['afro', 'braids', 'short', 'puffs'] as const;
+const EXTRA = ['none', 'glasses', 'cap', 'mask', 'uniform'] as const;
+/** The other phone's avatar comes from the server: only keep values the avatar drawing knows. */
+function safeAvatar(a: unknown, seed: string): AvatarConfig {
+  const base = avatarFromSeed(seed);
+  if (!a || typeof a !== 'object') return base;
+  const o = a as Record<string, unknown>;
+  const n = (k: keyof AvatarConfig) => (typeof o[k] === 'number' && Number.isInteger(o[k]) && (o[k] as number) >= 0 && (o[k] as number) < 32 ? (o[k] as number) : (base[k] as number));
+  return {
+    skin: n('skin'), hairColor: n('hairColor'), shirt: n('shirt'), bg: n('bg'),
+    hair: HAIR.includes(o.hair as never) ? (o.hair as AvatarConfig['hair']) : base.hair,
+    extra: EXTRA.includes(o.extra as never) ? (o.extra as AvatarConfig['extra']) : base.extra,
+  };
+}
+
+function OnlineDuel({ onFallback }: { onFallback: (note: StrKey) => void }) {
+  const t = useT();
+  const { profile, recordDuel } = useStore();
+  const myAvatar = useAvatar();
+  const [v, setV] = useState<OnlineView | null>(null);
+  const [lost, setLost] = useState(false);       // connection dropped mid-game
+  const [intro, setIntro] = useState(true);      // VS animation still playing
+  const [now, setNow] = useState(Date.now());
+  const ctl = useRef<OnlineCtl | null>(null);
+  const offset = useRef(0);                      // server clock − phone clock
+  const started = useRef(false);
+  const recorded = useRef(false);
+  const [myReaction, setMyReaction] = useState<string | undefined>();
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try { await setProfile(profile.username, myAvatar); } catch { /* findDuel reports the real problem */ }
+      if (!alive) return;
+      const c = await findDuel({
+        age: profile.age,
+        onView: (view) => {
+          if (!alive) return;
+          const sn = (view as OnlineView & { serverNow?: number }).serverNow;
+          if (typeof sn === 'number') offset.current = sn - Date.now();
+          if (view.players.length >= 2) started.current = true;
+          setV(view);
+        },
+        onError: (e) => {
+          if (!alive) return;
+          if (started.current) setLost(true);
+          else onFallback(e === 'not_allowed' ? 'robo_parent' : 'robo_offline');
+        },
+      });
+      if (!alive) { c?.leave(); return; }
+      ctl.current = c;
+    })();
+    const id = setInterval(() => setNow(Date.now()), 200);
+    return () => { alive = false; clearInterval(id); ctl.current?.leave(); ctl.current = null; };
+  }, []);
+
+  const myId = ctl.current?.myId;
+  const meP = v?.players.find((p) => p.id === myId);
+  const opP = myId ? v?.players.find((p) => p.id !== myId) : undefined; // until we know our own id, nobody is "the opponent"
+  const opAvatar = useMemo(() => (opP ? safeAvatar(opP.avatar, opP.username) : null), [opP?.id]);
+
+  useEffect(() => {
+    if (v?.phase === 'ended' && !recorded.current && meP && opP) {
+      recorded.current = true;
+      recordDuel(v.winnerId === myId, v.winnerId === null, meP.score);
+    }
+  }, [v?.phase]);
+
+  const me: Side = { name: profile.username, avatar: myAvatar, score: meP?.score ?? 0 };
+  const op: Side | null = opP && opAvatar ? { name: opP.username, avatar: opAvatar, score: opP.score, isBot: opP.isBot } : null;
+
+  if (intro || !v || !op || v.phase === 'lobby') {
+    return (
+      <Screen scroll={false}>
+        <TopBar close title={t('duel_bot')} onBack={() => router.back()} />
+        <Matchmaking me={{ name: profile.username, avatar: myAvatar, sub: `${profile.age} ${t('years')}` }}
+          opponent={op ? { name: op.name, avatar: op.avatar, sub: op.isBot ? t('robot') : t('online_player') } : null}
+          hint={t('robo_soon')} onDone={() => setIntro(false)} />
+      </Screen>
+    );
+  }
+
+  if (v.phase === 'ended' || lost) {
+    const won = !lost && v.winnerId === myId; const draw = !lost && v.winnerId === null;
+    const note: StrKey | null = lost ? 'online_err' : v.endReason === 'forfeit' && won ? 'player_left' : null;
+    return <DuelEnd won={won} draw={draw} me={me} op={op} note={note}
+      onReport={!op.isBot && opP ? () => ctl.current?.report(opP.id, 'name') ?? Promise.resolve() : undefined} />;
+  }
+
+  const serverNow = now + offset.current;
+  const reveal = v.phase === 'reveal';
+  const q = v.question ? ({ ...v.question, answer: v.question.answer ?? -1 } as unknown as Question) : undefined;
+  const vm: GameVM = {
+    index: v.index, total: v.total, questionMs: v.questionMs,
+    left: serverNow < v.phaseStartedAt ? null : Math.max(0, v.questionMs - (serverNow - v.phaseStartedAt)),
+    question: q, reveal,
+    me: { ...me, chosen: meP?.chosen ?? null },
+    op: { ...op, answered: !!opP?.answered, chosen: opP?.chosen, reaction: opP ? v.reactions[opP.id] : undefined },
+    myReaction,
+  };
+  return <DuelGame vm={vm} onPick={(i) => ctl.current?.answer(i)} onReact={(r) => { setMyReaction(r); ctl.current?.react(r); }} onQuit={() => ctl.current?.leave()} />;
+}
+
+// ─── local (Robo on the phone) ───────────────────────────────────────────────
+
+function LocalDuel({ note }: { note: StrKey | null }) {
+  const t = useT();
+  const { profile, seen, recordDuel } = useStore();
   const myAvatar = useAvatar();
   const bot = useMemo(() => { const name = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)]; return { id: 'bot', name, profile: BOT_PROFILES[profile.age], avatar: avatarFromSeed(name + Date.now()) }; }, []);
   const rand = useMemo(() => rng(Date.now() % 1e9), []);
@@ -26,7 +243,6 @@ export default function Duel() {
     return d;
   });
   const [lobby, setLobby] = useState(true);
-  const [quitting, setQuitting] = useState(false);
   const [now, setNow] = useState(Date.now());
   const botPlan = useRef<{ index: number; atMs: number; chosen: number } | null>(null);
   const recorded = useRef(false);
@@ -57,83 +273,32 @@ export default function Duel() {
     }
   }, [s.phase]);
 
-  const me = s.players.find((p) => p.id === ME); const op = s.players.find((p) => p.id === bot.id);
-  const q = s.questions[s.index];
-  const left = Math.max(0, s.questionMs - (now - s.phaseStartedAt));
+  const meP = s.players.find((p) => p.id === ME); const opP = s.players.find((p) => p.id === bot.id);
+  const me: Side = { name: profile.username, avatar: myAvatar, score: meP?.score ?? 0 };
 
-  if (lobby || !op) {
+  if (lobby || !opP) {
     return (
       <Screen scroll={false}>
         <TopBar close title={t('duel_bot')} onBack={() => router.back()} />
+        {note ? <FadeIn><T v="small" center color={colors.muted}>{t(note)}</T></FadeIn> : null}
         <Matchmaking me={{ name: profile.username, avatar: myAvatar, sub: `${profile.age} ${t('years')}` }} opponent={{ name: bot.name, avatar: bot.avatar, sub: t('robot') }} onDone={startDuel} />
       </Screen>
     );
   }
+  const op: Side = { name: opP.username, avatar: bot.avatar, score: opP.score, isBot: true };
 
-  if (s.phase === 'ended') {
-    const won = s.winnerId === ME; const draw = s.winnerId === null;
-    return (
-      <Screen scroll={false}>
-        {won && <Confetti />}
-        <View style={{ alignItems: 'center', gap: 10, marginTop: 'auto' }}>
-          <Drop><Mascot size={140} mood={won ? 'cheer' : draw ? 'happy' : 'sad'} /></Drop>
-          <Pop delay={450}><T v="display" center>{won ? t('you_win') : draw ? t('draw') : t('you_lose')}</T></Pop>
-          <Row gap={16}>
-            <FadeIn delay={650} x={-40} from={0} style={{ alignItems: 'center', gap: 4 }}><Avatar a={myAvatar} size={64} live={won} /><ScoreNum n={me?.score ?? 0} color={colors.blue} /><T v="small" color={colors.muted}>{profile.username}</T></FadeIn>
-            <T v="h2" color={colors.muted}>{t('vs')}</T>
-            <FadeIn delay={650} x={40} from={0} style={{ alignItems: 'center', gap: 4 }}><Avatar a={bot.avatar} size={64} /><ScoreNum n={op.score} color={colors.red} /><T v="small" color={colors.muted}>🤖 {op.username}</T></FadeIn>
-          </Row>
-          <Pop delay={1100}><Pill text={`+${won ? 40 : draw ? 25 : 15} XP`} color="#5C4600" bg={colors.yellowSoft} icon="pwen" /></Pop>
-          <FadeIn delay={1250}><T v="small" color={colors.muted}>{t('wins')}: {stats.duelWins} / {stats.duels}</T></FadeIn>
-        </View>
-        <View style={{ marginTop: 'auto', gap: 10 }}>
-          <Button title={t('again')} onPress={() => router.replace('/duel')} />
-          <Button variant="secondary" title={t('done')} onPress={() => router.replace('/home')} />
-        </View>
-      </Screen>
-    );
-  }
+  if (s.phase === 'ended') return <DuelEnd won={s.winnerId === ME} draw={s.winnerId === null} me={me} op={op} />;
 
   const reveal = s.phase === 'reveal';
-  return (
-    <Screen>
-      <TopBar close title={`${t('question')} ${s.index + 1} / ${s.questions.length}`} onBack={() => setQuitting(true)} />
-      <FadeIn from={-12}><Card style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10 }}>
-        <Bounce trigger={me?.score || null} amount={0.12}><Avatar a={myAvatar} size={42} /></Bounce>
-        <View style={{ flex: 1 }}><T v="small" color={colors.muted}>{t('you')}</T><T v="bold" numberOfLines={1}>{profile.username}</T></View>
-        <Bounce trigger={me?.score || null} amount={0.25}><ScoreNum n={me?.score ?? 0} color={colors.blue} small /></Bounce>
-        <T v="small" color={colors.muted}>{t('vs')}</T>
-        <Bounce trigger={op.score || null} amount={0.25}><ScoreNum n={op.score} color={colors.red} small /></Bounce>
-        <View style={{ flex: 1, alignItems: 'flex-end' }}><T v="small" color={colors.muted}>{t('opponent')}</T><T v="bold" numberOfLines={1}>{op.username}</T></View>
-        <Bounce trigger={op.score || null} amount={0.12}><Avatar a={bot.avatar} size={42} /></Bounce>
-      </Card></FadeIn>
-      <Row>
-        <Progress style={{ flex: 1 }} linear value={reveal ? 0 : left / s.questionMs} color={left < 4000 ? colors.red : colors.yellowDark} />
-        <T v="small" color={colors.muted} style={{ width: 32, textAlign: 'right' }}>{reveal ? '' : Math.ceil(left / 1000) + ' s'}</T>
-      </Row>
-      {op.answer && !reveal && <Pop><Pill text={t('already_answered', { name: op.username })} color={colors.muted} bg={colors.line} /></Pop>}
-      {q && <SlideSwap id={s.index}><QuestionView q={q} chosen={me?.answer?.chosen ?? null} reveal={reveal} otherChosen={reveal ? op.answer?.chosen : undefined} otherAvatar={bot.avatar} onPick={(i) => { tap(); setS((d) => reduce(d, { type: 'answer', playerId: ME, chosen: i }, Date.now())); }} /></SlideSwap>}
-      {!reveal && (
-        <View style={{ gap: 8 }}>
-          <T v="small" color={colors.muted}>{t('reactions')}</T>
-          <Row gap={8} style={{ flexWrap: 'wrap' }}>
-            {PRESET_REACTIONS.slice(0, 4).map((r) => (
-              <PressScale role="button" key={r} scaleTo={0.9} onPress={() => { tap(); setS((d) => reduce(d, { type: 'react', playerId: ME, reaction: r }, Date.now())); }} style={{ minHeight: 40, paddingHorizontal: 12, borderRadius: 20, borderWidth: 2, borderColor: s.reactions[ME] === r ? colors.blue : colors.line, backgroundColor: colors.card, justifyContent: 'center' }}>
-                <T v="small">{t(`re_${r}` as StrKey)}</T>
-              </PressScale>
-            ))}
-          </Row>
-        </View>
-      )}
-      <Sheet open={quitting} title={t('quit_q')}>
-        <Button title={t('stay')} onPress={() => setQuitting(false)} />
-        <Button variant="secondary" color={colors.red} title={t('quit')} onPress={() => { setQuitting(false); setS((d) => reduce(d, { type: 'leave', playerId: ME }, Date.now())); router.replace('/home'); }} />
-      </Sheet>
-    </Screen>
-  );
-}
-
-function ScoreNum({ n, color, small }: { n: number; color: string; small?: boolean }) {
-  const v = useCountUp(n, undefined, 450);
-  return <T v={small ? 'h1' : 'display'} color={color}>{v}</T>;
+  const vm: GameVM = {
+    index: s.index, total: s.questions.length, questionMs: s.questionMs,
+    left: Math.max(0, s.questionMs - (now - s.phaseStartedAt)), question: s.questions[s.index], reveal,
+    me: { ...me, chosen: meP?.answer?.chosen ?? null },
+    op: { ...op, answered: !!opP.answer, chosen: opP.answer?.chosen },
+    myReaction: s.reactions[ME],
+  };
+  return <DuelGame vm={vm}
+    onPick={(i) => setS((d) => reduce(d, { type: 'answer', playerId: ME, chosen: i }, Date.now()))}
+    onReact={(r) => setS((d) => reduce(d, { type: 'react', playerId: ME, reaction: r }, Date.now()))}
+    onQuit={() => setS((d) => reduce(d, { type: 'leave', playerId: ME }, Date.now()))} />;
 }

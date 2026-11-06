@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { coursePath, courseSummary, courseById, type CourseId } from '@konesans/core';
 import { Screen, T, Card, Row, BottomNav, Progress, Stars, Icon, Motif, PressScale, FadeIn, Pulse } from '@/ui';
 import { colors } from '@/lib/theme';
+import { Illustration } from '@/ui/Illustration';
 import { useStore } from '@/lib/store';
 import { useT, useL } from '@/lib/i18n';
 import { tap } from '@/lib/audio';
@@ -35,8 +36,13 @@ export default function Course() {
 
       <FadeIn key={lang}><View style={{ backgroundColor: accent, borderRadius: 22, padding: 18, gap: 6, borderBottomWidth: 5, borderBottomColor: 'rgba(0,0,0,0.25)', overflow: 'hidden' }}>
         <Motif kind="drapo" opacity={0.2} height={130} />
-        <T v="label" color="#E6ECFB">{t('unit').toUpperCase()} {path.indexOf(current) + 1} · {current.emoji}</T>
-        <T v="h1" color="#fff">{l({ ht: current.title, fr: current.titleFr })}</T>
+        <Row style={{ alignItems: 'center' }}>
+          <View style={{ flex: 1, gap: 6 }}>
+            <T v="label" color="#E6ECFB">{t('unit').toUpperCase()} {path.indexOf(current) + 1}</T>
+            <T v="h1" color="#fff">{l({ ht: current.title, fr: current.titleFr })}</T>
+          </View>
+          <View style={{ backgroundColor: '#fff', borderRadius: 22, padding: 4 }}><Illustration id={'unit_' + current.id} size={64} /></View>
+        </Row>
         <Row>
           <Progress style={{ flex: 1 }} value={sum.lessonsTotal ? sum.lessonsDone / sum.lessonsTotal : 0} color="#fff" track="rgba(255,255,255,0.3)" />
           <T v="small" color="#E6ECFB">{sum.lessonsDone} / {sum.lessonsTotal} {t('lesson')} · {sum.wordsLearned} {t('words')}</T>
@@ -46,7 +52,8 @@ export default function Course() {
       {path.map((u, ui) => (
         <FadeIn key={lang + u.id} delay={Math.min(ui, 4) * 70 + 80} style={{ gap: 10 }}>
           <Row>
-            <T v="h2" style={{ flex: 1 }}>{u.emoji} {l({ ht: u.title, fr: u.titleFr })}</T>
+            <Illustration id={'unit_' + u.id} size={40} />
+            <T v="h2" style={{ flex: 1 }}>{l({ ht: u.title, fr: u.titleFr })}</T>
             <T v="small" color={colors.muted}>{u.done}/{u.total}</T>
           </Row>
           {u.lessons.map((ls, i) => {

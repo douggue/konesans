@@ -36,6 +36,8 @@ export interface DuelState {
   questionMs: number;
   revealMs: number;
   lobbyTimeoutMs: number;
+  /** Pause between "opponent found" and the first question (online: lets both phones play the VS animation). */
+  introMs?: number;
   /** Last reactions (username → preset id), for the UI. */
   reactions: Record<PlayerId, string>;
   endReason?: 'completed' | 'forfeit' | 'timeout';
@@ -52,7 +54,7 @@ export type DuelCommand =
 
 export const DEFAULTS = { questionMs: QUESTION_TIME_MS, revealMs: 3_000, lobbyTimeoutMs: 10_000 };
 
-export function createDuel(matchId: string, questions: Question[], now: number, cfg: Partial<typeof DEFAULTS> = {}): DuelState {
+export function createDuel(matchId: string, questions: Question[], now: number, cfg: Partial<typeof DEFAULTS> & { introMs?: number } = {}): DuelState {
   return { matchId, phase: 'lobby', players: [], questions, index: 0, phaseStartedAt: now, reactions: {}, ...DEFAULTS, ...cfg };
 }
 
@@ -63,12 +65,12 @@ export function reduce(s: DuelState, cmd: DuelCommand, now: number): DuelState {
       if (s.phase !== 'lobby' || s.players.length >= 2 || s.players.some((p) => p.id === cmd.player.id)) return s;
       const players = [...s.players, { ...cmd.player, score: 0, combo: 0, connected: true }];
       const next = { ...s, players };
-      return players.length === 2 ? startQuestion(next, now) : next;
+      return players.length === 2 ? startQuestion(next, now + (s.introMs ?? 0)) : next;
     }
     case 'start':
       return s.phase === 'lobby' && s.players.length === 2 ? startQuestion(s, now) : s;
     case 'answer': {
-      if (s.phase !== 'question') return s;
+      if (s.phase !== 'question' || now < s.phaseStartedAt) return s; // not before the question shows
       const p = s.players.find((x) => x.id === cmd.playerId);
       const q = s.questions[s.index];
       if (!p || p.answer || !Number.isInteger(cmd.chosen) || cmd.chosen < 0 || cmd.chosen >= q.options.length) return s;

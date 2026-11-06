@@ -101,6 +101,16 @@ const S = {
   re_bravo: ['Bravo!', 'Bravo !'], re_wow: ['Wow!', 'Waouh !'], re_byen_jwe: ['Byen jwe!', 'Bien joué !'], re_anko: ['Ankò!', 'Encore !'], re_bon_chans: ['Bòn chans!', 'Bonne chance !'], re_mwen_pare: ['Mwen pare!', 'Je suis prêt !'],
   // matchmaking
   found: ['Nou jwenn yon jwè!', 'Joueur trouvé !'], tap_skip: ['Tape pou kòmanse', 'Touche pour commencer'], get_ready: ['Pare? Ale!', 'Prêt ? Partez !'],
+  // online duels
+  online_duels: ['Defi sou entènèt', 'Duels en ligne'], online_duels_sub: ['Jwe kont lòt timoun menm laj. Yo wè non jwè ak avatar sèlman, pa gen chat.', "Jouer contre d'autres enfants du même âge. Seuls le pseudo et l'avatar sont visibles, pas de chat."],
+  online_on_gate: ['Pou limen defi sou entènèt, yon paran dwe reponn:', 'Pour activer les duels en ligne, un parent doit répondre :'],
+  online_err: ['Pa ka konekte ak sèvè a. Eseye ankò pita.', 'Connexion au serveur impossible. Réessaie plus tard.'],
+  robo_soon: ['Si pa gen lòt jwè, Robo ap jwe avè w.', "S'il n'y a personne, Robo jouera avec toi."],
+  robo_offline: ['Pa gen entènèt: w ap jwe kont Robo.', "Pas d'internet : tu joues contre Robo."],
+  robo_parent: ['W ap jwe kont Robo. Yon paran ka limen defi sou entènèt nan Paramèt.', 'Tu joues contre Robo. Un parent peut activer les duels en ligne dans Réglages.'],
+  duel_sub_online: ['Jwe kont yon lòt timoun', 'Jouer contre un autre enfant'], online_player: ['Sou entènèt', 'En ligne'],
+  report_player: ['Siyale jwè sa a', 'Signaler ce joueur'], reported: ['Mèsi, nou resevwa l.', "Merci, c'est noté."], player_left: ['Lòt jwè a kite pati a.', "L'autre joueur a quitté la partie."],
+  get_set: ['Pare…', 'Prêt…'],
 } as const;
 
 export type StrKey = keyof typeof S;

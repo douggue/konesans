@@ -3,6 +3,8 @@
  *  1. radar rings pulse out of the kid's avatar, "N ap chèche yon jwè" with rotating dots
  *  2. the kid's card slides in from the left, the opponent's from the right
  *  3. a big "VS" slams down and the screen shakes, then onDone().
+ * Online, `opponent` is null while the server is still looking: the radar keeps going until a player is found
+ * (`hint` shows under it after a few seconds).
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Animated, Easing, Pressable, StyleSheet } from 'react-native';
@@ -14,7 +16,7 @@ import { colors } from '@/lib/theme';
 import { useT } from '@/lib/i18n';
 import { tap } from '@/lib/audio';
 
-export function Matchmaking({ me, opponent, onDone }: { me: { name: string; avatar: AvatarConfig; sub?: string }; opponent: { name: string; avatar: AvatarConfig; sub?: string }; onDone: () => void }) {
+export function Matchmaking({ me, opponent, onDone, hint }: { me: { name: string; avatar: AvatarConfig; sub?: string }; opponent: { name: string; avatar: AvatarConfig; sub?: string } | null; onDone: () => void; hint?: string }) {
   const t = useT();
   const [phase, setPhase] = useState<'search' | 'found'>('search');
   const done = useRef(false);
@@ -24,28 +26,40 @@ export function Matchmaking({ me, opponent, onDone }: { me: { name: string; avat
   const vs = useRef(new Animated.Value(0)).current;
   const shake = useRef(new Animated.Value(0)).current;
   const [dots, setDots] = useState(1);
+  const [waited, setWaited] = useState(false); // minimum radar time passed
+  const [longWait, setLongWait] = useState(false);
+  const loopsRef = useRef<Animated.CompositeAnimation[]>([]);
 
+  // 1. radar while searching (at least 1.7 s so it never just flashes)
   useEffect(() => {
-    if (reduceMotion()) { setPhase('found'); slide.setValue(1); vs.setValue(1); const id = setTimeout(finish, 1200); return () => clearTimeout(id); }
-    const loops = rings.map((r) => Animated.loop(Animated.sequence([
+    const minId = setTimeout(() => setWaited(true), reduceMotion() ? 300 : 1700);
+    const longId = setTimeout(() => setLongWait(true), 3500);
+    if (reduceMotion()) return () => { clearTimeout(minId); clearTimeout(longId); };
+    loopsRef.current = rings.map((r) => Animated.loop(Animated.sequence([
       Animated.timing(r, { toValue: 1, duration: 1350, easing: Easing.out(Easing.quad), useNativeDriver: true }),
       Animated.timing(r, { toValue: 0, duration: 0, useNativeDriver: true }),
     ])));
-    const starts = loops.map((l, i) => setTimeout(() => l.start(), i * 450));
+    const starts = loopsRef.current.map((l, i) => setTimeout(() => l.start(), i * 450));
     const dotId = setInterval(() => setDots((d) => (d % 3) + 1), 380);
-    const found = setTimeout(() => {
-      starts.forEach(clearTimeout); loops.forEach((l) => l.stop());
-      setPhase('found'); tap();
-      Animated.sequence([
-        Animated.spring(slide, { toValue: 1, useNativeDriver: true, speed: 9, bounciness: 9 }),
-        Animated.timing(vs, { toValue: 1, duration: 260, easing: Easing.in(Easing.quad), useNativeDriver: true }),
-        Animated.timing(shake, { toValue: 1, duration: 360, easing: Easing.linear, useNativeDriver: true }),
-      ]).start();
-      setTimeout(() => tap('success'), 900);
-    }, 1700);
-    const end = setTimeout(finish, 3300);
-    return () => { starts.forEach(clearTimeout); loops.forEach((l) => l.stop()); clearInterval(dotId); clearTimeout(found); clearTimeout(end); };
+    return () => { starts.forEach(clearTimeout); loopsRef.current.forEach((l) => l.stop()); clearInterval(dotId); clearTimeout(minId); clearTimeout(longId); };
   }, []);
+
+  // 2. an opponent is known → cards slide in, VS slams, then onDone
+  const ready = waited && !!opponent;
+  useEffect(() => {
+    if (!ready) return;
+    loopsRef.current.forEach((l) => l.stop());
+    setPhase('found'); tap();
+    if (reduceMotion()) { slide.setValue(1); vs.setValue(1); const id = setTimeout(finish, 1200); return () => clearTimeout(id); }
+    Animated.sequence([
+      Animated.spring(slide, { toValue: 1, useNativeDriver: true, speed: 9, bounciness: 9 }),
+      Animated.timing(vs, { toValue: 1, duration: 260, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+      Animated.timing(shake, { toValue: 1, duration: 360, easing: Easing.linear, useNativeDriver: true }),
+    ]).start();
+    const s1 = setTimeout(() => tap('success'), 900);
+    const end = setTimeout(finish, 1600);
+    return () => { clearTimeout(s1); clearTimeout(end); };
+  }, [ready]);
 
   const shakeX = shake.interpolate({ inputRange: [0, 0.2, 0.4, 0.6, 0.8, 1], outputRange: [0, -10, 9, -6, 3, 0] });
   return (
@@ -61,6 +75,7 @@ export function Matchmaking({ me, opponent, onDone }: { me: { name: string; avat
             </View>
             <T v="h1" center>{t('finding').replace(/…$/, '')}{'.'.repeat(dots)}<T v="h1" color="transparent">{'.'.repeat(3 - dots)}</T></T>
             <T v="small" center color={colors.muted}>{me.name}{me.sub ? ` · ${me.sub}` : ''}</T>
+            {hint && longWait ? <T v="small" center color={colors.muted} style={{ paddingHorizontal: 24 }}>{hint}</T> : null}
           </>
         ) : (
           <>
@@ -75,7 +90,7 @@ export function Matchmaking({ me, opponent, onDone }: { me: { name: string; avat
                 </View>
               </Animated.View>
               <Animated.View style={{ transform: [{ translateX: slide.interpolate({ inputRange: [0, 1], outputRange: [360, 0] }) }] }}>
-                <PlayerCard p={opponent} color={colors.red} right />
+                {opponent && <PlayerCard p={opponent} color={colors.red} right />}
               </Animated.View>
             </View>
             <Animated.View style={{ opacity: vs }}><T v="small" color={colors.muted}>{t('tap_skip')}</T></Animated.View>

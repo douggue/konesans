@@ -5,6 +5,17 @@ const qs = () => selectQuestions(SAMPLE_QUESTIONS, { age: '9-11', category: 'mix
 const join = (s: DuelState, id: string, now: number, isBot = false) => reduce(s, { type: 'join', player: { id, username: id, isBot } }, now);
 
 describe('duel state machine', () => {
+  it('waits introMs before the first question accepts answers', () => {
+    let s = createDuel('m0', qs(), 0, { introMs: 3000 });
+    s = join(join(s, 'a', 0), 'b', 1000);
+    expect(s.phase).toBe('question'); expect(s.phaseStartedAt).toBe(4000);
+    const early = reduce(s, { type: 'answer', playerId: 'a', chosen: 0 }, 2000);
+    expect(early.players[0].answer).toBeUndefined();
+    expect(reduce(s, { type: 'tick' }, 4000 + s.questionMs - 1).phase).toBe('question');
+    const ok = reduce(s, { type: 'answer', playerId: 'a', chosen: 0 }, 5000);
+    expect(ok.players[0].answer?.atMs).toBe(1000);
+  });
+
   it('starts when two players join, scores first-correct, reveals, ends with a winner', () => {
     let s = createDuel('m1', qs(), 0);
     s = join(s, 'a', 0);

@@ -38,6 +38,7 @@ interface State {
   setAvatar: (a: AvatarConfig) => void;
   finishOnboarding: () => void;
   setSettings: (s: Partial<AppSettings>) => void;
+  setKidSettings: (s: Partial<KidSettings>) => void;
   touch: () => void;
   emit: (e: GameEvent) => number;
   award: (xp: number, coins?: number) => void;
@@ -89,6 +90,7 @@ export const useStore = create<State>()(
       setAvatar: (avatar) => set((s) => ({ profile: { ...s.profile, avatar } })),
       finishOnboarding: () => { set({ onboarded: true }); get().touch(); },
       setSettings: (p) => set((s) => ({ settings: { ...s.settings, ...p } })),
+      setKidSettings: (p) => set((s) => ({ kidSettings: { ...s.kidSettings, ...p } })),
 
       /** Mark activity: streak + today's quests. */
       touch: () => {

@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { startLesson, answerLesson, finishLesson, currentExercise, lessonProgressPct, UNITS, type CourseId, type Exercise, type LessonSession, type Response, type Grade } from '@konesans/core';
-import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Icon, Stars, OptionButton, Pill, PressScale, SlideSwap, FadeIn, Drop, Pop, Confetti } from '@/ui';
+import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Icon, Stars, OptionButton, Pill, PressScale, SlideSwap, FadeIn, Drop, Pop, Confetti, Shake, Bounce } from '@/ui';
+import { Illustration, hasIllustration } from '@/ui/Illustration';
 import { colors, radius } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT, useL } from '@/lib/i18n';
@@ -81,6 +82,26 @@ function Speaker({ audio, big }: { audio: string; big?: boolean }) {
   );
 }
 
+/** A 2-column picture answer (our drawings), with the word underneath. Same states as OptionButton. */
+function PictureOption({ img, label, state, onPress }: { img: string; label: string; state: 'idle' | 'picked' | 'right' | 'wrong' | 'dim'; onPress: () => void }) {
+  const m = {
+    idle: { bg: colors.card, edge: colors.line, fg: colors.ink }, picked: { bg: colors.blueSoft, edge: colors.blue, fg: colors.blue },
+    right: { bg: colors.greenSoft, edge: colors.green, fg: '#12632F' }, wrong: { bg: colors.redSoft, edge: colors.red, fg: '#8F0A22' },
+    dim: { bg: colors.card, edge: colors.line, fg: colors.muted },
+  }[state];
+  return (
+    <View style={{ width: '48%' }}>
+      <Shake trigger={state === 'wrong' ? 'wrong' : null}><Bounce trigger={state === 'right' ? 'right' : null} amount={0.06}>
+        <PressScale role="button" accessibilityLabel={label} scaleTo={0.95} onPress={() => { tap(); onPress(); }}
+          style={{ backgroundColor: m.bg, borderRadius: 20, borderWidth: 2, borderBottomWidth: 5, borderColor: m.edge, paddingVertical: 12, paddingHorizontal: 8, alignItems: 'center', gap: 6, opacity: state === 'dim' ? 0.6 : 1 }}>
+          <Illustration id={img} size={88} />
+          <T v="h3" color={m.fg} center numberOfLines={2}>{label}</T>
+        </PressScale>
+      </Bounce></Shake>
+    </View>
+  );
+}
+
 function ExerciseView({ ex, resp, setResp, reveal }: { ex: Exercise; resp: Response | null; setResp: (r: Response) => void; reveal: boolean }) {
   const l = useL();
   const idx = typeof resp === 'number' ? resp : null;
@@ -91,13 +112,16 @@ function ExerciseView({ ex, resp, setResp, reveal }: { ex: Exercise; resp: Respo
       return (
         <View style={{ gap: 12 }}>
           <Row><Speaker audio={ex.prompt.audio} /><T v="display" style={{ flex: 1 }}>{ex.prompt.target}</T></Row>
-          <View style={{ gap: 10 }}>{ex.options.map((o, i) => <OptionButton key={i} label={(o.img ? '🖼  ' : '') + l(o)} state={st(i, ex.answer)} celebrate={idx === i} onPress={() => setResp(i)} />)}</View>
+          {ex.options.every((o) => hasIllustration(o.img))
+            ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'space-between' }}>{ex.options.map((o, i) => <PictureOption key={i} img={o.img!} label={l(o)} state={st(i, ex.answer)} onPress={() => setResp(i)} />)}</View>
+            : <View style={{ gap: 10 }}>{ex.options.map((o, i) => <OptionButton key={i} label={l(o)} media={hasIllustration(o.img) ? <Illustration id={o.img} size={40} /> : undefined} state={st(i, ex.answer)} celebrate={idx === i} onPress={() => setResp(i)} />)}</View>}
         </View>
       );
     case 'pick_word':
       return (
         <View style={{ gap: 12 }}>
-          <T v="display">{l(ex.prompt)}</T>
+          {hasIllustration(ex.prompt.img) ? <Pop><View style={{ alignItems: 'center' }}><View style={{ backgroundColor: colors.card, borderRadius: 28, borderWidth: 2, borderBottomWidth: 5, borderColor: colors.line, padding: 10 }}><Illustration id={ex.prompt.img} size={132} /></View></View></Pop> : null}
+          <T v="display" center={hasIllustration(ex.prompt.img)}>{l(ex.prompt)}</T>
           <View style={{ gap: 10 }}>{ex.options.map((o, i) => <OptionButton key={i} label={o.target} state={st(i, ex.answer)} celebrate={idx === i} onPress={() => { speak(o.audio); setResp(i); }} />)}</View>
         </View>
       );

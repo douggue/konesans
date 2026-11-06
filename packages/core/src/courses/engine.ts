@@ -90,7 +90,7 @@ const eid = (lang: CourseId, kind: string, ref: string, rand: Rand) => `course:$
 function genPickMeaning(lang: CourseId, c: Concept, lesson: LessonDef, unit: UnitDef, age: AgeBand, rand: Rand): PickMeaning {
   const ds = distractors(lang, c, lesson, unit, rand, age === '6-8' ? 2 : 3, 'ht');
   const opts = shuffle([c, ...ds], rand);
-  const pics = age === '6-8' && opts.every(o => o.img);
+  const pics = opts.every(o => o.img); // our own drawings (design/illustrations), shown with the word for every age
   return { id: eid(lang, 'pm', c.id, rand), kind: 'pick_meaning', ref: c.id, prompt: { target: target(c, lang), audio: tts(lang, target(c, lang)) }, options: opts.map(o => ({ ht: o.ht, fr: o.fr, img: pics ? o.img : undefined })), answer: opts.indexOf(c) };
 }
 

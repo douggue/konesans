@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Switch } from 'react-native';
+import { View, Switch, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import type { Lang } from '@konesans/core';
 import { Screen, T, Card, Row, TopBar, Button, Sheet, PressScale } from '@/ui';
@@ -7,11 +7,22 @@ import { colors } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT } from '@/lib/i18n';
 import { tap } from '@/lib/audio';
+import { setOnlineAllowed } from '@/lib/online';
+import { serverConfigured } from '@/lib/remote';
 
 export default function Settings() {
   const t = useT();
-  const { settings, setSettings, profile, setLang, resetAll } = useStore();
-  const [confirm, setConfirm] = useState(false);
+  const { settings, setSettings, profile, setLang, resetAll, kidSettings, setKidSettings } = useStore();
+  const [gate, setGate] = useState<null | 'reset' | 'online'>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(false);
+  /** Tell the server (it refuses duels against strangers without this), then remember it on the phone. */
+  const applyOnline = async (on: boolean) => {
+    setBusy(true); setErr(false);
+    try { await setOnlineAllowed(on, profile.age); setKidSettings({ randomDuelsAllowed: on }); }
+    catch { if (on) setErr(true); else setKidSettings({ randomDuelsAllowed: false }); }
+    finally { setBusy(false); }
+  };
   const toggles: { key: keyof typeof settings; label: string; locked?: boolean }[] = [
     { key: 'sfx', label: t('sfx') }, { key: 'music', label: t('music') }, { key: 'voice', label: t('voice'), locked: profile.age === '6-8' }, { key: 'haptic', label: t('haptic') },
   ];
@@ -44,15 +55,30 @@ export default function Settings() {
       <T v="label" color={colors.muted}>{t('parent').toUpperCase()}</T>
       <Card style={{ gap: 6 }}>
         <T v="small" color={colors.muted}>{t('parent_only')}</T>
-        <Button variant="secondary" color={colors.red} title={t('reset')} onPress={() => setConfirm(true)} />
+        {serverConfigured() && <>
+          <Row style={{ minHeight: 56 }}>
+            <View style={{ flex: 1, gap: 2 }}>
+              <T v="bold">{t('online_duels')}</T>
+              <T v="small" color={colors.muted}>{t('online_duels_sub')}</T>
+            </View>
+            {busy ? <ActivityIndicator color={colors.blue} /> : <Switch value={!!kidSettings.randomDuelsAllowed} onValueChange={(v) => { tap(); if (v) setGate('online'); else applyOnline(false); }} trackColor={{ true: colors.green, false: '#B9C2D6' }} thumbColor="#fff" />}
+          </Row>
+          {err && <T v="small" color={colors.red}>{t('online_err')}</T>}
+        </>}
+        <Button variant="secondary" color={colors.red} title={t('reset')} onPress={() => setGate('reset')} />
       </Card>
       <T v="small" center color={colors.muted}>{t('app_version', { v: '0.1' })}</T>
-      <Sheet open={confirm} title={t('reset') + '?'}>
+      <Sheet open={!!gate} title={gate === 'online' ? t('online_duels') : t('reset') + '?'}>
+        {gate === 'online' && <T v="small" center color={colors.muted}>{t('online_on_gate')}</T>}
         <T v="body" center color={colors.muted}>{t('parent_gate')}</T>
         <Row>
-          {[36, 42, 48].map((n) => <Button key={n} variant="secondary" title={String(n)} style={{ flex: 1 }} onPress={() => { if (n === 42) { resetAll(); setConfirm(false); router.replace('/onboarding'); } else setConfirm(false); }} />)}
+          {[36, 42, 48].map((n) => <Button key={n} variant="secondary" title={String(n)} style={{ flex: 1 }} onPress={() => {
+            const g = gate; setGate(null);
+            if (n !== 42) return;
+            if (g === 'reset') { resetAll(); router.replace('/onboarding'); } else if (g === 'online') applyOnline(true);
+          }} />)}
         </Row>
-        <Button variant="ghost" title={t('stay')} onPress={() => setConfirm(false)} />
+        <Button variant="ghost" title={t('stay')} onPress={() => setGate(null)} />
       </Sheet>
     </Screen>
   );

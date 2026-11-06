@@ -20,6 +20,8 @@ const OP = { STATE: 1, ANSWER: 2, REACT: 3 } as const;
 const COLL = { PROGRESS: 'progress', LOG: 'eventlog', CONSENT: 'consent', MOD: 'moderation', RATING: 'rating' } as const;
 
 interface MatchLabel { age: AgeBand; category: CategoryId | 'mix'; open: boolean; creator?: string }
+/** "VS" pause on both phones before question 1 (the app's Matchmaking reveal takes ~1.7 s). */
+const INTRO_MS = 3000;
 interface MatchState { duel: DuelState; botPlan?: { atMs: number; chosen: number }; botId?: string; seed: number; presences: Record<string, nkruntime.Presence> }
 
 // ---------- Match handler ----------
@@ -29,7 +31,7 @@ const matchInit: nkruntime.MatchInitFunction<MatchState> = (ctx, logger, nk, par
   const category = (params.category as CategoryId | 'mix') ?? 'mix';
   const seed = Math.floor(Math.random() * 2 ** 31);
   const questions = selectQuestions(loadBank(nk), { age, category, count: 10, seed });
-  const duel = createDuel(ctx.matchId, questions, Date.now());
+  const duel = createDuel(ctx.matchId, questions, Date.now(), { introMs: INTRO_MS });
   const label: MatchLabel = { age, category, open: true, creator: params.creator ? String(params.creator) : undefined };
   return { state: { duel, seed, presences: {} }, tickRate: TICK_RATE, label: JSON.stringify(label) };
 };
@@ -113,7 +115,7 @@ function broadcast(dispatcher: nkruntime.MatchDispatcher, state: MatchState) {
   for (const p of state.duel.players) {
     const pres = state.presences[p.id];
     if (!pres) continue;
-    dispatcher.broadcastMessage(OP.STATE, JSON.stringify(publicView(state.duel, p.id)), [pres]);
+    dispatcher.broadcastMessage(OP.STATE, JSON.stringify({ ...publicView(state.duel, p.id), serverNow: Date.now() }), [pres]); // serverNow: phones correct their clock
   }
 }
 
