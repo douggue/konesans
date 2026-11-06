@@ -37,17 +37,25 @@ export function shuffleArr<T>(a: T[], rand: Rand): T[] {
 }
 
 export const ht = (s: string): LocalizedText => ({ ht: s });
+/** Kreyòl + French text. */
+export const tx = (htText: string, fr: string): LocalizedText => ({ ht: htText, fr });
 
-/** Assemble a Question from parts. `opts` are display strings; `answer` is the correct one. */
-export function q(mod: GenModule, age: AgeBand, rand: Rand, prompt: LocalizedText, opts: string[], answer: string, explain?: string, media?: Question['media']): Question {
-  const uniq = [...new Set(opts)];
-  if (!uniq.includes(answer)) uniq.unshift(answer);
+/** An option or explanation: a plain string is the same in both languages (numbers, symbols); else {ht, fr}. */
+export type Txt = string | LocalizedText;
+const L = (o: Txt): LocalizedText => (typeof o === 'string' ? { ht: o, fr: o } : { ht: o.ht, fr: o.fr ?? o.ht });
+
+/** Assemble a Question from parts. `opts` are display texts; `answer` is the correct one (matched on its Kreyòl text). */
+export function q(mod: GenModule, age: AgeBand, rand: Rand, prompt: LocalizedText, opts: Txt[], answer: Txt, explain?: Txt, media?: Question['media']): Question {
+  const ans = L(answer);
+  const uniq: LocalizedText[] = [];
+  for (const o of opts.map(L)) if (!uniq.some((u) => u.ht === o.ht)) uniq.push(o);
+  if (!uniq.some((u) => u.ht === ans.ht)) uniq.unshift(ans);
   const options = shuffleArr(uniq, rand).slice(0, 4);
-  if (!options.includes(answer)) options[0] = answer;
+  if (!options.some((o) => o.ht === ans.ht)) options[0] = ans;
   return {
     id: `${mod.id}:${age}:${Math.floor(rand() * 1e9).toString(36)}`,
     category: mod.category, difficulty: age === '6-8' ? 1 : age === '9-11' ? 2 : 3, ages: [age],
-    prompt, options: options.map(ht), answer: options.indexOf(answer),
-    explain: explain ? ht(explain) : undefined, media, status: 'approved',
+    prompt, options, answer: options.findIndex((o) => o.ht === ans.ht),
+    explain: explain ? L(explain) : undefined, media, status: 'approved',
   };
 }

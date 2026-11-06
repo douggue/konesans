@@ -1,5 +1,5 @@
 import type { AgeBand } from '../types.js';
-import { type GenModule, type Rand, int, pick, numericOptions, q, ht } from './base.js';
+import { type GenModule, type Rand, int, pick, numericOptions, q, tx } from './base.js';
 
 /** Tab miltiplikasyon — times tables with reverse ("? × 7 = 56") for older kids. */
 export const timesTables: GenModule = {
@@ -7,9 +7,9 @@ export const timesTables: GenModule = {
   generate(age, rand) {
     const a = int(rand, 2, age === '9-11' ? 9 : 12), b = int(rand, 2, 12);
     if (age === '12-14' && rand() < 0.4) {
-      return q(this, age, rand, ht(`? × ${b} = ${a * b}`), numericOptions(rand, a, 4, 3, 1).map(String), String(a), `${a} × ${b} = ${a * b}`);
+      return q(this, age, rand, tx(`? × ${b} = ${a * b}`, `? × ${b} = ${a * b}`), numericOptions(rand, a, 4, 3, 1).map(String), String(a), `${a} × ${b} = ${a * b}`);
     }
-    return q(this, age, rand, ht(`Konbyen ${a} × ${b} fè?`), numericOptions(rand, a * b, 4, 8, 0).map(String), String(a * b));
+    return q(this, age, rand, tx(`Konbyen ${a} × ${b} fè?`, `Combien font ${a} × ${b} ?`), numericOptions(rand, a * b, 4, 8, 0).map(String), String(a * b));
   },
 };
 
@@ -21,23 +21,23 @@ export const fractions: GenModule = {
     if (kind === 'pic') {
       const d = pick(rand, [2, 3, 4, 6, 8]), n = int(rand, 1, d - 1);
       const opts = [`${n}/${d}`, `${d - n}/${d}`, `${n}/${d + 2}`, `${Math.min(d, n + 1)}/${d}`];
-      return q(this, age, rand, ht('Ki fraksyon ki kolore?'), opts, `${n}/${d}`, `${n} moso sou ${d} kolore: ${n}/${d}.`, { kind: 'image', ref: `fraction:${n}/${d}` });
+      return q(this, age, rand, tx('Ki fraksyon ki kolore?', 'Quelle fraction est coloriée ?'), opts, `${n}/${d}`, tx(`${n} moso sou ${d} kolore: ${n}/${d}.`, `${n} parts sur ${d} sont coloriées : ${n}/${d}.`), { kind: 'image', ref: `fraction:${n}/${d}` });
     }
     if (kind === 'cmp') {
       const d1 = pick(rand, [2, 3, 4, 5, 6, 8]), d2 = pick(rand, [2, 3, 4, 5, 6, 8]);
       const n1 = int(rand, 1, d1 - 1), n2 = int(rand, 1, d2 - 1);
       if (n1 / d1 === n2 / d2) return this.generate(age, rand);
       const a = `${n1}/${d1}`, b = `${n2}/${d2}`, big = n1 / d1 > n2 / d2 ? a : b;
-      return q(this, age, rand, ht(`Ki fraksyon ki pi gwo: ${a} oswa ${b}?`), [a, b], big, `${big} pi gwo paske li pi pre 1.`);
+      return q(this, age, rand, tx(`Ki fraksyon ki pi gwo: ${a} oswa ${b}?`, `Quelle fraction est la plus grande : ${a} ou ${b} ?`), [a, b], big, tx(`${big} pi gwo paske li pi pre 1.`, `${big} est plus grande parce qu'elle est plus proche de 1.`));
     }
     if (kind === 'add') {
       const d = pick(rand, [3, 4, 5, 6, 8, 10]), n1 = int(rand, 1, d - 2), n2 = int(rand, 1, d - 1 - n1);
       const ans = `${n1 + n2}/${d}`;
-      return q(this, age, rand, ht(`Konbyen ${n1}/${d} + ${n2}/${d} fè?`), [ans, `${n1 + n2}/${d * 2}`, `${n1 * n2}/${d}`, `${n1 + n2 + 1}/${d}`], ans, 'Lè denominatè yo menm, ou ajoute nimeratè yo sèlman.');
+      return q(this, age, rand, tx(`Konbyen ${n1}/${d} + ${n2}/${d} fè?`, `Combien font ${n1}/${d} + ${n2}/${d} ?`), [ans, `${n1 + n2}/${d * 2}`, `${n1 * n2}/${d}`, `${n1 + n2 + 1}/${d}`], ans, tx('Lè denominatè yo menm, ou ajoute nimeratè yo sèlman.', 'Quand les dénominateurs sont pareils, on additionne seulement les numérateurs.'));
     }
     const n = int(rand, 1, 4), d = int(rand, n + 1, 6), k = pick(rand, [2, 3, 4]);
     const ans = `${n * k}/${d * k}`;
-    return q(this, age, rand, ht(`Ki fraksyon ki egal ak ${n}/${d}?`), [ans, `${n + k}/${d + k}`, `${n * k}/${d}`, `${n}/${d * k}`], ans, `Miltipliye anwo ak anba pa ${k}.`);
+    return q(this, age, rand, tx(`Ki fraksyon ki egal ak ${n}/${d}?`, `Quelle fraction est égale à ${n}/${d} ?`), [ans, `${n + k}/${d + k}`, `${n * k}/${d}`, `${n}/${d * k}`], ans, tx(`Miltipliye anwo ak anba pa ${k}.`, `Multiplie le haut et le bas par ${k}.`));
   },
 };
 
@@ -53,12 +53,12 @@ export const money: GenModule = {
       const pool = age === '6-8' ? [...COINS_HTG, 10, 25, 50] : [...NOTES_HTG];
       const items = Array.from({ length: n }, () => pick(rand, pool));
       const total = items.reduce((a, b) => a + b, 0);
-      return q(this, age, rand, ht(`Konbyen goud sa fè? ${items.map((v) => v + ' G').join(' + ')}`), numericOptions(rand, total, 4, 25, 1).map((v) => `${v} G`), `${total} G`, undefined, { kind: 'image', ref: `money:${items.join(',')}` });
+      return q(this, age, rand, tx(`Konbyen goud sa fè? ${items.map((v) => v + ' G').join(' + ')}`, `Combien de gourdes cela fait-il ? ${items.map((v) => v + ' G').join(' + ')}`), numericOptions(rand, total, 4, 25, 1).map((v) => `${v} G`), `${total} G`, undefined, { kind: 'image', ref: `money:${items.join(',')}` });
     }
     const price = int(rand, 2, age === '9-11' ? 19 : 95) * 5;
     const paid = NOTES_HTG.find((n) => n >= price + 5) ?? 1000;
     const change = paid - price;
-    return q(this, age, rand, ht(`Yon bagay koute ${price} G. Ou bay ${paid} G. Konbyen lajan yo dwe remèt ou?`), numericOptions(rand, change, 4, 20, 0).map((v) => `${v} G`), `${change} G`, `${paid} − ${price} = ${change}.`);
+    return q(this, age, rand, tx(`Yon bagay koute ${price} G. Ou bay ${paid} G. Konbyen lajan yo dwe remèt ou?`, `Un article coûte ${price} G. Tu donnes ${paid} G. Combien doit-on te rendre ?`), numericOptions(rand, change, 4, 20, 0).map((v) => `${v} G`), `${change} G`, `${paid} − ${price} = ${change}.`);
   },
 };
 
@@ -71,12 +71,12 @@ export const clock: GenModule = {
     if (age === '6-8' || rand() < 0.5) {
       const ans = fmt(h, m);
       const opts = [ans, fmt(h + 1, m), fmt(h, (m + 30) % 60), fmt(m === 0 ? h + 2 : h - 1, m)];
-      return q(this, age, rand, ht('Ki lè li ye?'), opts, ans, undefined, { kind: 'image', ref: `clock:${fmt(h, m)}` });
+      return q(this, age, rand, tx('Ki lè li ye?', 'Quelle heure est-il ?'), opts, ans, undefined, { kind: 'image', ref: `clock:${fmt(h, m)}` });
     }
     const add = pick(rand, [15, 30, 45, 60]);
     const total = h * 60 + m + add;
     const ans = fmt(Math.floor(total / 60) || 12, total % 60);
-    return q(this, age, rand, ht(`Li ${fmt(h, m)}. Nan ${add} minit, ki lè li pral ye?`), [ans, fmt(Math.floor(total / 60) + 1 || 12, total % 60), fmt(h, (m + add + 15) % 60), fmt(h, m)], ans);
+    return q(this, age, rand, tx(`Li ${fmt(h, m)}. Nan ${add} minit, ki lè li pral ye?`, `Il est ${fmt(h, m)}. Quelle heure sera-t-il dans ${add} minutes ?`), [ans, fmt(Math.floor(total / 60) + 1 || 12, total % 60), fmt(h, (m + add + 15) % 60), fmt(h, m)], ans);
   },
 };
 
@@ -98,15 +98,29 @@ export function kreyolNumber(n: number): string {
   return u === 0 ? exact : u === 1 ? plusOne : (u >= 8 ? join89 : join27) + ONES[u];
 }
 
-/** Nonb an lèt — number ↔ Kreyòl words. */
+// ---- French number words 0–100 (1990 spelling: hyphens everywhere). ----
+const FR_ONES = ['zéro', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf'];
+const FR_TENS: Record<number, string> = { 20: 'vingt', 30: 'trente', 40: 'quarante', 50: 'cinquante', 60: 'soixante' };
+export function frenchNumber(n: number): string {
+  if (n < 20) return FR_ONES[n];
+  if (n === 100) return 'cent';
+  if (n < 70) { const t = Math.floor(n / 10) * 10, u = n % 10; return u === 0 ? FR_TENS[t] : u === 1 ? `${FR_TENS[t]}-et-un` : `${FR_TENS[t]}-${FR_ONES[u]}`; }
+  if (n < 80) return n === 71 ? 'soixante-et-onze' : `soixante-${FR_ONES[n - 60]}`;
+  if (n === 80) return 'quatre-vingts';
+  return `quatre-vingt-${FR_ONES[n - 80]}`;
+}
+
+/** Nonb an lèt — number ↔ words (Kreyòl words for Kreyòl, French words for French). */
 export const numberWords: GenModule = {
   id: 'nonb', name: { ht: 'Nonb an lèt', fr: 'Nombres en lettres' }, category: 'jeneral', ages: ['6-8', '9-11'],
   generate(age, rand) {
     const max = age === '6-8' ? 20 : 100;
     const n = int(rand, 0, max);
     const alts = numericOptions(rand, n, 4, age === '6-8' ? 3 : 12, 0).filter((v) => v <= 100);
-    if (rand() < 0.5) return q(this, age, rand, ht(`Ki nonb sa a: «${kreyolNumber(n)}»?`), alts.map(String), String(n));
-    return q(this, age, rand, ht(`Kijan yo ekri ${n} an lèt?`), alts.map(kreyolNumber), kreyolNumber(n));
+    // Kreyòl kids read Kreyòl number words, French kids French ones
+    const word = (v: number) => ({ ht: kreyolNumber(v), fr: frenchNumber(v) });
+    if (rand() < 0.5) return q(this, age, rand, tx(`Ki nonb sa a: «${kreyolNumber(n)}»?`, `Quel est ce nombre : « ${frenchNumber(n)} » ?`), alts.map(String), String(n));
+    return q(this, age, rand, tx(`Kijan yo ekri ${n} an lèt?`, `Comment écrit-on ${n} en lettres ?`), alts.map(word), word(n));
   },
 };
 
@@ -116,8 +130,8 @@ export const compare: GenModule = {
   generate(age, rand) {
     const a = int(rand, 1, 50), b = int(rand, 1, 50);
     if (a === b) return this.generate(age, rand);
-    if (rand() < 0.5) return q(this, age, rand, ht(`Ki nonb ki pi gwo: ${a} oswa ${b}?`), [String(a), String(b)], String(Math.max(a, b)));
-    return q(this, age, rand, ht(`Ki nonb ki pi piti: ${a} oswa ${b}?`), [String(a), String(b)], String(Math.min(a, b)));
+    if (rand() < 0.5) return q(this, age, rand, tx(`Ki nonb ki pi gwo: ${a} oswa ${b}?`, `Quel nombre est le plus grand : ${a} ou ${b} ?`), [String(a), String(b)], String(Math.max(a, b)));
+    return q(this, age, rand, tx(`Ki nonb ki pi piti: ${a} oswa ${b}?`, `Quel nombre est le plus petit : ${a} ou ${b} ?`), [String(a), String(b)], String(Math.min(a, b)));
   },
 };
 
@@ -130,7 +144,7 @@ export const sequence: GenModule = {
     const geo = age === '12-14' && rand() < 0.3;
     const seq = Array.from({ length: 4 }, (_, i) => (geo ? start * 2 ** i : start + step * i));
     const next = geo ? start * 16 : start + step * 4;
-    return q(this, age, rand, ht(`Ki nonb ki vini apre? ${seq.join(', ')}, …`), numericOptions(rand, next, 4, Math.max(2, Math.abs(step)), -50).map(String), String(next), geo ? 'Chak nonb double.' : `Chak fwa ou ajoute ${step}.`);
+    return q(this, age, rand, tx(`Ki nonb ki vini apre? ${seq.join(', ')}, …`, `Quel nombre vient ensuite ? ${seq.join(', ')}, …`), numericOptions(rand, next, 4, Math.max(2, Math.abs(step)), -50).map(String), String(next), geo ? tx('Chak nonb double.', 'Chaque nombre double.') : tx(`Chak fwa ou ajoute ${step}.`, `À chaque fois, on ajoute ${step}.`));
   },
 };
 
@@ -140,12 +154,12 @@ export const convert: GenModule = {
   id: 'konv', name: { ht: 'Konvèsyon', fr: 'Conversions' }, category: 'matematik', ages: ['9-11', '12-14'],
   generate(age, rand) {
     const kind = pick(rand, age === '9-11' ? ['km', 'kg', 'min'] : ['km', 'kg', 'min', 'usd', 'temp']);
-    if (kind === 'km') { const k = int(rand, 1, 9); return q(this, age, rand, ht(`${k} km = konbyen mèt?`), numericOptions(rand, k * 1000, 4, 500, 0).map(String), String(k * 1000), '1 km = 1000 m.'); }
-    if (kind === 'kg') { const k = int(rand, 1, 9); return q(this, age, rand, ht(`${k} kg = konbyen gram?`), numericOptions(rand, k * 1000, 4, 500, 0).map(String), String(k * 1000), '1 kg = 1000 g.'); }
-    if (kind === 'min') { const h = int(rand, 1, 5); return q(this, age, rand, ht(`${h} èdtan = konbyen minit?`), numericOptions(rand, h * 60, 4, 30, 0).map(String), String(h * 60), '1 èdtan = 60 minit.'); }
-    if (kind === 'usd') { const d = int(rand, 1, 20); return q(this, age, rand, ht(`Si 1 $ = ${HTG_PER_USD} G, konbyen ${d} $ fè?`), numericOptions(rand, d * HTG_PER_USD, 4, 200, 0).map((v) => `${v} G`), `${d * HTG_PER_USD} G`); }
+    if (kind === 'km') { const k = int(rand, 1, 9); return q(this, age, rand, tx(`${k} km = konbyen mèt?`, `${k} km = combien de mètres ?`), numericOptions(rand, k * 1000, 4, 500, 0).map(String), String(k * 1000), '1 km = 1000 m.'); }
+    if (kind === 'kg') { const k = int(rand, 1, 9); return q(this, age, rand, tx(`${k} kg = konbyen gram?`, `${k} kg = combien de grammes ?`), numericOptions(rand, k * 1000, 4, 500, 0).map(String), String(k * 1000), '1 kg = 1000 g.'); }
+    if (kind === 'min') { const h = int(rand, 1, 5); return q(this, age, rand, tx(`${h} èdtan = konbyen minit?`, `${h} h = combien de minutes ?`), numericOptions(rand, h * 60, 4, 30, 0).map(String), String(h * 60), tx('1 èdtan = 60 minit.', '1 heure = 60 minutes.')); }
+    if (kind === 'usd') { const d = int(rand, 1, 20); return q(this, age, rand, tx(`Si 1 $ = ${HTG_PER_USD} G, konbyen ${d} $ fè?`, `Si 1 $ = ${HTG_PER_USD} G, combien font ${d} $ ?`), numericOptions(rand, d * HTG_PER_USD, 4, 200, 0).map((v) => `${v} G`), `${d * HTG_PER_USD} G`); }
     const c = pick(rand, [0, 10, 20, 25, 30, 35, 40]); const f = c * 9 / 5 + 32;
-    return q(this, age, rand, ht(`${c} °C = konbyen °F?`), numericOptions(rand, f, 4, 12, -40).map((v) => `${v} °F`), `${f} °F`, '°F = °C × 9/5 + 32.');
+    return q(this, age, rand, tx(`${c} °C = konbyen °F?`, `${c} °C = combien de °F ?`), numericOptions(rand, f, 4, 12, -40).map((v) => `${v} °F`), `${f} °F`, '°F = °C × 9/5 + 32.');
   },
 };
 
@@ -153,14 +167,14 @@ export const convert: GenModule = {
 export const geometry: GenModule = {
   id: 'jeo', name: { ht: 'Fòm jewometrik', fr: 'Géométrie' }, category: 'matematik', ages: ['6-8', '9-11', '12-14'],
   generate(age, rand) {
-    const SHAPES: [string, number][] = [['triyang', 3], ['kare', 4], ['rektang', 4], ['pentagòn', 5], ['egzagòn', 6], ['oktogòn', 8]];
+    const SHAPES: [string, number, string][] = [['triyang', 3, 'un triangle'], ['kare', 4, 'un carré'], ['rektang', 4, 'un rectangle'], ['pentagòn', 5, 'un pentagone'], ['egzagòn', 6, 'un hexagone'], ['oktogòn', 8, 'un octogone']];
     if (age === '6-8') {
-      const [name, sides] = pick(rand, SHAPES);
-      return q(this, age, rand, ht(`Konbyen bò yon ${name} genyen?`), numericOptions(rand, sides, 4, 2, 1).map(String), String(sides), undefined, { kind: 'image', ref: `shape:${name}` });
+      const [name, sides, nameFr] = pick(rand, SHAPES);
+      return q(this, age, rand, tx(`Konbyen bò yon ${name} genyen?`, `Combien de côtés a ${nameFr} ?`), numericOptions(rand, sides, 4, 2, 1).map(String), String(sides), undefined, { kind: 'image', ref: `shape:${name}` });
     }
     const w = int(rand, 2, 12), h = int(rand, 2, 12);
-    if (age === '9-11' || rand() < 0.5) return q(this, age, rand, ht(`Yon rektang ${w} cm sou ${h} cm. Ki perimèt li?`), numericOptions(rand, 2 * (w + h), 4, 6, 1).map((v) => `${v} cm`), `${2 * (w + h)} cm`, 'Perimèt = 2 × (lajè + wotè).');
-    return q(this, age, rand, ht(`Yon rektang ${w} cm sou ${h} cm. Ki sipèfisi li?`), numericOptions(rand, w * h, 4, 10, 1).map((v) => `${v} cm²`), `${w * h} cm²`, 'Sipèfisi = lajè × wotè.');
+    if (age === '9-11' || rand() < 0.5) return q(this, age, rand, tx(`Yon rektang ${w} cm sou ${h} cm. Ki perimèt li?`, `Un rectangle de ${w} cm sur ${h} cm. Quel est son périmètre ?`), numericOptions(rand, 2 * (w + h), 4, 6, 1).map((v) => `${v} cm`), `${2 * (w + h)} cm`, tx('Perimèt = 2 × (lajè + wotè).', 'Périmètre = 2 × (largeur + hauteur).'));
+    return q(this, age, rand, tx(`Yon rektang ${w} cm sou ${h} cm. Ki sipèfisi li?`, `Un rectangle de ${w} cm sur ${h} cm. Quelle est son aire ?`), numericOptions(rand, w * h, 4, 10, 1).map((v) => `${v} cm²`), `${w * h} cm²`, tx('Sipèfisi = lajè × wotè.', 'Aire = largeur × hauteur.'));
   },
 };
 
@@ -169,8 +183,8 @@ export const binary: GenModule = {
   id: 'bine', name: { ht: 'Kòd binè', fr: 'Binaire' }, category: 'teknoloji', ages: ['12-14'],
   generate(age, rand) {
     const n = int(rand, 1, 31);
-    if (rand() < 0.5) return q(this, age, rand, ht(`${n.toString(2)} an binè = ki nonb?`), numericOptions(rand, n, 4, 4, 0).map(String), String(n), 'Chak pozisyon vo 1, 2, 4, 8, 16…');
-    return q(this, age, rand, ht(`Ekri ${n} an binè.`), numericOptions(rand, n, 4, 4, 0).map((v) => v.toString(2)), n.toString(2));
+    if (rand() < 0.5) return q(this, age, rand, tx(`${n.toString(2)} an binè = ki nonb?`, `${n.toString(2)} en binaire = quel nombre ?`), numericOptions(rand, n, 4, 4, 0).map(String), String(n), tx('Chak pozisyon vo 1, 2, 4, 8, 16…', 'Chaque position vaut 1, 2, 4, 8, 16…'));
+    return q(this, age, rand, tx(`Ekri ${n} an binè.`, `Écris ${n} en binaire.`), numericOptions(rand, n, 4, 4, 0).map((v) => v.toString(2)), n.toString(2));
   },
 };
 

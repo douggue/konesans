@@ -7,10 +7,17 @@
  *
  * ⚠ Kreyòl spellings follow the official orthography but a native-speaker review is still needed before launch.
  */
+import { WORLD_FR, LANG_FR, CURRENCY_FR } from './world-fr.js';
+
 export type WorldRegion = 'Amerik di Nò' | 'Karayib' | 'Amerik di Sid' | 'Ewòp' | 'Afrik' | 'Azi' | 'Oseyani';
 export type Tier = 1 | 2 | 3;
 
-export interface WorldCountry { iso: string; name: string; capital: string; continent: WorldRegion; tier: Tier; areaKm2: number; langs: string[]; currency: string; /** Natural Earth feature name when it differs */ ne?: string }
+export interface WorldCountry {
+  iso: string; name: string; capital: string; continent: WorldRegion; tier: Tier; areaKm2: number; langs: string[]; currency: string;
+  /** French name, capital, languages and currency (content/world-fr.ts) */
+  nameFr: string; capitalFr: string; langsFr: string[]; currencyFr: string;
+  /** Natural Earth feature name when it differs */ ne?: string;
+}
 
 type Row = [iso: string, name: string, capital: string, continent: WorldRegion, tier: Tier, areaKm2: number, lang: string, currency: string, ne?: string];
 
@@ -221,6 +228,10 @@ const R: Row[] = [
   ['TV', 'Touvalou', 'Founafouti', 'Oseyani', 3, 26, 'Touvalouan', 'Dola'],
 ];
 
-export const WORLD: WorldCountry[] = R.map(([iso, name, capital, continent, tier, areaKm2, lang, currency, ne]) => ({ iso, name, capital, continent, tier, areaKm2, langs: [lang], currency, ne }));
+export const WORLD: WorldCountry[] = R.map(([iso, name, capital, continent, tier, areaKm2, lang, currency, ne]) => {
+  const fr = WORLD_FR[iso];
+  if (!fr) throw new Error(`world-fr.ts is missing ${iso}`);
+  return { iso, name, capital, continent, tier, areaKm2, langs: [lang], currency, nameFr: fr[0], capitalFr: fr[1], langsFr: [LANG_FR[lang] ?? lang], currencyFr: CURRENCY_FR[currency] ?? currency, ne };
+});
 export const worldByIso: Record<string, WorldCountry> = Object.fromEntries(WORLD.map((c) => [c.iso, c]));
 export const REGIONS: WorldRegion[] = ['Karayib', 'Amerik di Nò', 'Amerik di Sid', 'Ewòp', 'Afrik', 'Azi', 'Oseyani'];

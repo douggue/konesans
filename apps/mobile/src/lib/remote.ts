@@ -59,7 +59,7 @@ async function call<T>(id: string, body: object): Promise<T> {
   } finally { clearTimeout(timer); }
 }
 
-const MIN_INTERVAL = 5 * 60 * 1000;
+const MIN_INTERVAL = 60 * 1000; // when the app comes back to the foreground
 
 /** Check the server for newly published content. Safe to call often; does nothing offline. */
 export async function syncContent(force = false): Promise<void> {
@@ -94,9 +94,9 @@ let started = false;
 /** Start syncing: now, and each time the app returns to the foreground. */
 export function startContentSync() {
   if (started) return; started = true;
-  const kick = () => { syncContent().catch(() => {}); };
-  if (useRemote.persist.hasHydrated()) kick(); else useRemote.persist.onFinishHydration(kick);
-  AppState.addEventListener('change', (st) => { if (st === 'active') kick(); });
+  const launch = () => { syncContent(true).catch(() => {}); }; // every app start checks right away
+  if (useRemote.persist.hasHydrated()) launch(); else useRemote.persist.onFinishHydration(launch);
+  AppState.addEventListener('change', (st) => { if (st === 'active') syncContent().catch(() => {}); });
 }
 
 // ---------- selectors ----------
