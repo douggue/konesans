@@ -68,9 +68,10 @@ OnUnitActiveSec=2min
 WantedBy=timers.target
 UNIT
 systemctl daemon-reload
-systemctl enable --now konesans-update.timer
 
+# First start, then turn on the 2-minute check (never both at once)
 FORCE=1 /usr/local/bin/konesans-update
+systemctl enable --now konesans-update.timer
 . "$BASE/.env"
 echo "== Done. Admin panel: https://admin.${DOMAIN}   API: https://api.${DOMAIN}"
 echo "https://admin.${DOMAIN}" > "$BASE/ADMIN_URL.txt"
