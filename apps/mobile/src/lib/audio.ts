@@ -4,6 +4,7 @@ import { Platform } from 'react-native';
 import { useStore } from './store';
 import { AppState } from 'react-native';
 import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
+import { Asset } from 'expo-asset';
 
 const VOICE_LANG: Record<string, string> = { en: 'en-US', es: 'es-MX', fr: 'fr-FR', ht: 'fr-HT' };
 
@@ -93,12 +94,29 @@ const safe = (f: () => void) => { try { f(); } catch (e: any) { if (!audioError)
  *  'active' change may fire before our listener exists — a cached flag then stays false and everything is silent. */
 const appActive = () => AppState.currentState !== 'background';
 
+/** Where each bundled file was found on the phone (for the sound test). */
+const SRC_URI: Record<string, string> = {};
+/**
+ * Make a player for a bundled file. We copy the file to a real path first (expo-asset `downloadAsync`) and give the
+ * player that path: handing it the bare bundled reference left every player unloaded on Android after updates.
+ */
+function makePlayer(mod: number, tag: string): AudioPlayer {
+  const p = createAudioPlayer(null, { updateInterval: 1000 });
+  safe(() => {
+    const a = Asset.fromModule(mod);
+    a.downloadAsync()
+      .then((d) => { const uri = d.localUri ?? d.uri; SRC_URI[tag] = uri; safe(() => p.replace({ uri })); })
+      .catch((e: any) => { SRC_URI[tag] = 'ERR ' + String(e?.message ?? e).slice(0, 80) + ' ' + (a.uri ?? ''); safe(() => p.replace({ uri: a.localUri ?? a.uri })); });
+  });
+  return p;
+}
+
 function init() {
   if (E.ready) return;
   E.ready = true;
   safe(() => { setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'mixWithOthers', shouldPlayInBackground: false }).catch(() => {}); });
   // Preload every SFX now so the first play has no load latency.
-  for (const k of Object.keys(SFX_SRC) as SfxName[]) safe(() => { if (!E.sfx[k]) E.sfx[k] = createAudioPlayer(SFX_SRC[k], { updateInterval: 1000 }); });
+  for (const k of Object.keys(SFX_SRC) as SfxName[]) safe(() => { if (!E.sfx[k]) E.sfx[k] = makePlayer(SFX_SRC[k], k); });
   // Load the music loops too: on Android a player ignores play() until its file has loaded.
   for (const k of Object.keys(MUSIC_SRC) as Loop[]) safe(() => { chan(k); });
   // Watchdog: anything that should be sounding but isn't (play() came before the file loaded, audio focus
@@ -132,9 +150,14 @@ export function sfx(name: SfxName) {
   safe(() => {
     if (!useStore.getState().settings.sfx || !appActive()) return;
     init();
-    const p = E.sfx[name] ?? (E.sfx[name] = createAudioPlayer(SFX_SRC[name], { updateInterval: 1000 }));
+    const p = E.sfx[name] ?? (E.sfx[name] = makePlayer(SFX_SRC[name], name));
     p.volume = 1;
     if (STING_MS[name]) E.busyUntil = Date.now() + STING_MS[name]!;
+    if (!p.isLoaded) { // first use right after start: play as soon as the file is ready (give up after 2 s)
+      const t0 = Date.now();
+      const id = setInterval(() => safe(() => { if (p.isLoaded) { clearInterval(id); p.play(); } else if (Date.now() - t0 > 2000) clearInterval(id); }), 60);
+      return;
+    }
     if (p.playing || p.currentTime > 0) p.seekTo(0).catch(() => {});
     p.play();
   });
@@ -184,6 +207,7 @@ export async function audioTest(): Promise<string> {
     `ready=${E.ready ? 1 : 0}`, `want=${E.want ?? '-'}`,
     p ? `ding: loaded=${p.isLoaded ? 1 : 0} play=${p.playing ? 1 : 0} dur=${Math.round((p.duration ?? 0) * 100) / 100} t=${Math.round((p.currentTime ?? 0) * 100) / 100} vol=${p.volume} mute=${p.muted ? 1 : 0}` : 'ding: none',
     m ? `menu: loaded=${m.p.isLoaded ? 1 : 0} play=${m.p.playing ? 1 : 0} vol=${Math.round((m.p.volume ?? 0) * 100) / 100} on=${m.playing ? 1 : 0}` : 'menu: none',
+    `src=${(SRC_URI.correct ?? '-').slice(0, 90)}`,
     audioError ? `err=${audioError}` : '',
   ];
   return parts.filter(Boolean).join(' · ');
@@ -195,7 +219,7 @@ export function preloadAudio() { safe(init); }
 function chan(k: Loop): Chan {
   let c = E.chans[k];
   if (!c) {
-    const p = createAudioPlayer(MUSIC_SRC[k], { updateInterval: 1000 });
+    const p = makePlayer(MUSIC_SRC[k], k);
     p.loop = true;
     p.volume = 0;
     c = E.chans[k] = { p, vol: 0, target: 0, rate: 1, playing: false };
