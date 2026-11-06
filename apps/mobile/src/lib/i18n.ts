@@ -10,7 +10,7 @@ const S = {
   ...CARDS_STRINGS,
   ...QUESTS_STRINGS,
   // nav
-  home: ['Lakay', 'Accueil'], challenge: ['Defi', 'Défis'], course: ['Kou', 'Cours'], coding: ['Enfòmatik', 'Informatique'], me: ['Mwen', 'Moi'],
+  home: ['Lakay', 'Accueil'], challenge: ['Defi', 'Défis'], course: ['Kou', 'Cours'], coding: ['Enfòmatik', 'Coder'], me: ['Mwen', 'Moi'],
   // onboarding
   welcome_title: ['Byenveni nan Konesans!', 'Bienvenue sur Konesans !'],
   pick_lang: ['Ki lang ou vle itilize?', 'Quelle langue veux-tu utiliser ?'],
@@ -25,7 +25,7 @@ const S = {
   daily: ['DEFI JODI A', 'DÉFI DU JOUR'], daily_title: ['10 kesyon melanje', '10 questions mélangées'],
   daily_sub: ['Tout timoun jwe menm kesyon yo. Ki plas ou pral pran?', 'Tous les enfants jouent les mêmes questions. Quelle place prendras-tu ?'],
   play_now: ['Jwe kounye a', 'Jouer maintenant'], quests: ['Misyon jodi a', 'Missions du jour'], continue_learning: ['Kontinye aprann', 'Continuer à apprendre'],
-  explore: ['Eksplore', 'Explorer'], days: ['jou', 'jours'], day_one: ['jou', 'jour'], duel_bot: ['Defi 1 kont 1', 'Duel 1 contre 1'], duel_sub: ['Jwe kont Robo', 'Jouer contre Robo'],
+  explore: ['Eksplore', 'Explorer'], days: ['jou', 'jours'], day_one: ['jou', 'jour'], duel_bot: ['Defi 1 kont 1', 'Duel 1 vs 1'], duel_sub: ['Jwe kont Robo', 'Jouer contre Robo'],
   // categories
   categories: ['Kategori', 'Catégories'], cat_sub: ['Chwazi yon sijè epi teste konesans ou', 'Choisis un sujet et teste tes connaissances'],
   level: ['Nivo', 'Niveau'], age: ['Laj', 'Âge'],
@@ -39,7 +39,7 @@ const S = {
   you_win: ['Ou genyen!', 'Tu as gagné !'], you_lose: ['Robo genyen fwa sa a.', 'Robo a gagné cette fois.'], draw: ['Egalite!', 'Égalité !'],
   reactions: ['Voye yon reyaksyon', 'Envoyer une réaction'],
   // courses
-  learn_in: ['Aprann {x} an Kreyòl', 'Apprendre {x} en créole'], english: ['Angle', 'Anglais'], spanish: ['Panyòl', 'Espagnol'],
+  learn_in: ['Aprann {x} an Kreyòl', 'Leçons expliquées en français'], english: ['Angle', 'Anglais'], spanish: ['Panyòl', 'Espagnol'],
   unit: ['Inite', 'Unité'], lesson: ['leson', 'leçon'], words: ['mo', 'mots'], locked: ['Fèmen', 'Verrouillé'], start_lesson: ['Kòmanse', 'Commencer'],
   // lesson exercises
   ex_pick_meaning: ['Kisa sa vle di?', "Qu'est-ce que ça veut dire ?"], ex_pick_word: ['Kijan yo di sa?', 'Comment dit-on ?'],
@@ -116,7 +116,7 @@ const S = {
   robo_parent: ['W ap jwe kont Robo. Yon paran ka limen defi sou entènèt nan Paramèt.', 'Tu joues contre Robo. Un parent peut activer les duels en ligne dans Réglages.'],
   duel_sub_online: ['Jwe kont yon lòt timoun', 'Jouer contre un autre enfant'], online_player: ['Sou entènèt', 'En ligne'],
   report_player: ['Siyale jwè sa a', 'Signaler ce joueur'], reported: ['Mèsi, nou resevwa l.', "Merci, c'est noté."], player_left: ['Lòt jwè a kite pati a.', "L'autre joueur a quitté la partie."],
-  sound_test: ['Teste son an', 'Tester le son'], get_set: ['Pare…', 'Prêt…'], they_win: ['{name} genyen fwa sa a.', '{name} a gagné cette fois.'],
+  sound_test: ['Teste son an', 'Tester le son'], get_set: ['Pare…', 'Prêt…'], diff_label: ['Nivo kesyon yo', 'Niveau des questions'], diff_easy: ['Fasil', 'Facile'], diff_mid: ['Mwayen', 'Moyen'], diff_hard: ['Difisil', 'Difficile'], they_win: ['{name} genyen fwa sa a.', '{name} a gagné cette fois.'],
 } as const;
 
 export type StrKey = keyof typeof S;

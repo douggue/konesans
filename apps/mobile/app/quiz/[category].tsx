@@ -9,6 +9,7 @@ import { colors } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT, useL } from '@/lib/i18n';
 import { buildQuestions, categoryInfo, type CatId } from '@/lib/content';
+import { usePrefs } from '@/lib/prefs';
 import { useDailyCount } from '@/lib/remote';
 import { speak, tap, sfx, music, answerSfx } from '@/lib/audio';
 
@@ -22,7 +23,8 @@ export default function Quiz() {
   const { profile, seen, recordQuiz, settings } = useStore();
   // Peyi: never the same country twice in a game; countries from the last games come last
   const build = (seed: number) => {
-    if (!peyiOpts) return buildQuestions(cat, profile.age, count, seed, useStore.getState().seen);
+    // the daily mix is the same for everyone; categories follow the kid's chosen difficulty
+    if (!peyiOpts) return buildQuestions(cat, profile.age, count, seed, useStore.getState().seen, cat === 'mix' ? undefined : usePrefs.getState().difficulty);
     const qs = generateCountryQuiz(peyiOpts, profile.age, count, seed, useStore.getState().recentPeyi);
     const isos = qs.map((x) => peyiIso(x.id)).filter((x): x is string => !!x);
     setTimeout(() => useStore.getState().notePeyi(isos), 0); // after render, not during it

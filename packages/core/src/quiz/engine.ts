@@ -1,4 +1,4 @@
-import type { AgeBand, CategoryId, Question } from '../types.js';
+import type { AgeBand, CategoryId, Difficulty, Question } from '../types.js';
 
 /** Deterministic PRNG (mulberry32) so the server and tests can reproduce a session from a seed. */
 export function rng(seed: number) {
@@ -32,6 +32,8 @@ export interface SelectOptions {
   prefer?: Iterable<string>;
   /** Also serve questions still waiting for proofreading (`review`). Flagged (`draft`) questions are never served. */
   includeReview?: boolean;
+  /** Kid-chosen difficulty (1 easy · 2 medium · 3 hard): those questions first, then the closest levels fill in. */
+  difficulty?: Difficulty;
 }
 
 /**
@@ -46,8 +48,10 @@ export function selectQuestions(bank: Question[], opt: SelectOptions): Question[
   const prefer = new Set(opt.prefer ?? []);
   const pool = bank.filter((q) => (q.status === 'approved' || (opt.includeReview && q.status === 'review')) && q.ages.includes(opt.age) && (!opt.category || opt.category === 'mix' || q.category === opt.category));
   const preferred = shuffle(pool.filter((q) => prefer.has(q.id)), rand);
-  const fresh = shuffle(pool.filter((q) => !prefer.has(q.id) && !exclude.has(q.id)), rand);
-  const seen = shuffle(pool.filter((q) => !prefer.has(q.id) && exclude.has(q.id)), rand);
+  // with a chosen difficulty: exact level first, then the closest one (stable sort keeps the shuffle inside a level)
+  const byLevel = (qs: Question[]) => (opt.difficulty ? qs.sort((a, b) => Math.abs(a.difficulty - opt.difficulty!) - Math.abs(b.difficulty - opt.difficulty!)) : qs);
+  const fresh = byLevel(shuffle(pool.filter((q) => !prefer.has(q.id) && !exclude.has(q.id)), rand));
+  const seen = byLevel(shuffle(pool.filter((q) => !prefer.has(q.id) && exclude.has(q.id)), rand));
   const picked = [...preferred, ...fresh, ...seen].slice(0, opt.count);
   return picked.map((q) => shuffleOptions(q, rand));
 }

@@ -76,3 +76,16 @@ describe('Kalkil Mantal', () => {
     for (let i = 0; i < 40; i++) { if (r.current.kind === 'div') expect(r.current.a! % r.current.b!).toBe(0); r = answerMath(r, r.current.answer, i); }
   });
 });
+
+describe('difficulty choice', () => {
+  it('serves the chosen level first, then the closest', async () => {
+    const { selectQuestions } = await import('../src/index.js');
+    const mk = (i: number, d: 1 | 2 | 3) => ({ id: 'd' + i, category: 'syans', difficulty: d, ages: ['9-11'], prompt: { ht: 'q' + i }, options: [{ ht: 'a' }, { ht: 'b' }], answer: 0, status: 'approved' }) as any;
+    const bank = [...Array.from({ length: 4 }, (_, i) => mk(i, 1)), ...Array.from({ length: 4 }, (_, i) => mk(10 + i, 2)), ...Array.from({ length: 4 }, (_, i) => mk(20 + i, 3))];
+    const hard = selectQuestions(bank, { age: '9-11', count: 6, seed: 3, difficulty: 3 });
+    expect(hard.slice(0, 4).every((q) => q.difficulty === 3)).toBe(true);
+    expect(hard.slice(4).every((q) => q.difficulty === 2)).toBe(true);
+    const easy = selectQuestions(bank, { age: '9-11', count: 4, seed: 5, difficulty: 1 });
+    expect(easy.every((q) => q.difficulty === 1)).toBe(true);
+  });
+});

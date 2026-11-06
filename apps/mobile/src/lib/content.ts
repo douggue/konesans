@@ -2,7 +2,7 @@
  * Question supply for a quiz: the published packs from your server (admin → Pibliye) when we have them,
  * otherwise the bank bundled in the app (content/bank → BANK), plus generated modules.
  */
-import { BANK, SAMPLE_QUESTIONS, MODULES, generateMixed, selectQuestions, shuffle, rng, type AgeBand, type CategoryId, type Question } from '@konesans/core';
+import { BANK, SAMPLE_QUESTIONS, MODULES, generateMixed, selectQuestions, shuffle, rng, type AgeBand, type CategoryId, type Difficulty, type Question } from '@konesans/core';
 import { useRemote, type RemoteCategory } from './remote';
 import { colors, CATEGORY_META } from './theme';
 
@@ -48,8 +48,8 @@ export function modulesFor(category: string, age: AgeBand) {
 }
 
 /** Build a set for a category ('mix' = all), half from the bank, the rest generated when modules exist. */
-export function buildQuestions(category: CatId | 'mix', age: AgeBand, count: number, seed: number, seen: Iterable<string> = []): Question[] {
-  const bank = selectQuestions(allQuestions(), { age, category: (category === 'mix' ? 'mix' : category) as CategoryId | 'mix', count, seed, exclude: seen, includeReview: INCLUDE_REVIEW });
+export function buildQuestions(category: CatId | 'mix', age: AgeBand, count: number, seed: number, seen: Iterable<string> = [], difficulty?: Difficulty): Question[] {
+  const bank = selectQuestions(allQuestions(), { age, category: (category === 'mix' ? 'mix' : category) as CategoryId | 'mix', count, seed, exclude: seen, includeReview: INCLUDE_REVIEW, difficulty });
   const mods = category === 'mix' ? MODULES.filter((m) => m.ages.includes(age)) : modulesFor(category, age);
   const gen = mods.length ? generateMixed(mods.map((m) => m.id), age, count, seed + 7) : [];
   const out: Question[] = [];
