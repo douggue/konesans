@@ -1,0 +1,420 @@
+<title>Konesans Admin</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@600;700;800&display=swap">
+<style>
+/* Layout: a fixed category rail on the left (stacks to a chip row on phones), a sticky toolbar, and one editable card per question. */
+:root {
+  --bg: #F6F7FB; --card: #FFFFFF; --line: #E3E7F1; --line-strong: #D9DEEA;
+  --ink: #14213D; --muted: #5A6480;
+  --blue: #1F47B5; --blue-soft: #E6ECFB; --blue-light: #4D7CFE;
+  --red: #D21034; --red-soft: #FDE7EC; --green: #2F9E44; --green-soft: #E3F4EA; --green-ink: #12632F;
+  --yellow: #F5B700; --yellow-soft: #FFF4D1; --yellow-ink: #7A5A00; --red-ink: #8F0A22;
+  --display: "Baloo 2", "Nunito", system-ui, sans-serif;
+  --body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --shadow: 0 1px 0 var(--line-strong);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0F1526; --card: #182038; --line: #26304D; --line-strong: #2F3A5C; --ink: #EEF2FF; --muted: #A3ADC8;
+  --blue: #7B9DFF; --blue-soft: #1E2A52; --blue-light: #8FB0FF; --red: #FF6B82; --red-soft: #3A1A24; --red-ink: #FFB3BF;
+  --green: #5DD27A; --green-soft: #163A26; --green-ink: #B9F0C7; --yellow: #FFD43B; --yellow-soft: #3A3010; --yellow-ink: #FFE58A;
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #0F1526; --card: #182038; --line: #26304D; --line-strong: #2F3A5C; --ink: #EEF2FF; --muted: #A3ADC8;
+  --blue: #7B9DFF; --blue-soft: #1E2A52; --blue-light: #8FB0FF; --red: #FF6B82; --red-soft: #3A1A24; --red-ink: #FFB3BF;
+  --green: #5DD27A; --green-soft: #163A26; --green-ink: #B9F0C7; --yellow: #FFD43B; --yellow-soft: #3A3010; --yellow-ink: #FFE58A;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.45; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--card); }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--blue-light); outline-offset: 2px; }
+.app { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 100%; }
+/* rail */
+.rail { background: var(--card); border-right: 2px solid var(--line); padding-block: 18px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: 12px; position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.brand { font-family: var(--display); font-weight: 800; font-size: 24px; letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; margin-bottom: 10px; color: var(--ink); }
+.brand .dot { width: 14px; height: 14px; border-radius: 4px; background: linear-gradient(180deg, var(--blue) 50%, var(--red) 50%); }
+.brand small { font-family: var(--body); font-weight: 700; font-size: 12px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+.rail h4 { margin: 10px 0 2px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 800; }
+.cat { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; background: transparent; padding: 8px 10px; border-radius: 12px; font-weight: 700; color: var(--ink); }
+.cat:hover { background: var(--bg); }
+.cat[aria-current="true"] { background: var(--blue-soft); color: var(--blue); }
+.cat .n { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; }
+.cat .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; }
+.catwrap { position: relative; }
+.catwrap .bar { position: absolute; left: 10px; right: 10px; bottom: 2px; height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.catwrap .bar i { display: block; height: 100%; background: var(--green); width: 0; }
+/* main */
+.main { min-width: 0; display: flex; flex-direction: column; }
+.toolbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--card); border-bottom: 2px solid var(--line); padding-block: 12px; padding-left: 20px; padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.toolbar h1 { font-family: var(--display); font-weight: 800; font-size: 22px; margin: 0 8px 0 0; }
+.search { flex: 1 1 220px; min-width: 0; display: flex; align-items: center; gap: 8px; background: var(--bg); border: 2px solid var(--line); border-radius: 14px; padding: 6px 12px; }
+.search input { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; }
+.seg { display: inline-flex; background: var(--bg); border: 2px solid var(--line); border-radius: 14px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: transparent; border-radius: 10px; padding: 5px 10px; font-weight: 700; color: var(--muted); font-size: 13px; }
+.seg button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.seg button .k { display: inline-block; min-width: 18px; margin-left: 4px; font-variant-numeric: tabular-nums; font-size: 12px; opacity: .8; }
+select.sel { background: var(--bg); border: 2px solid var(--line); border-radius: 14px; padding: 7px 10px; font-weight: 700; color: var(--ink); }
+.btn { border: 2px solid var(--line); border-bottom-width: 4px; background: var(--card); border-radius: 14px; padding: 7px 14px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+.btn:active { transform: translateY(2px); border-bottom-width: 2px; }
+.btn.primary { background: var(--blue); border-color: #163A96; color: #fff; }
+.btn.good { background: var(--green); border-color: #1F7A33; color: #fff; }
+.btn.bad { background: var(--red-soft); border-color: var(--red); color: var(--red-ink); }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--muted); }
+.btn[disabled] { opacity: .5; cursor: default; }
+.status-line { padding: 8px 20px; color: var(--muted); font-size: 13px; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.status-line b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.sync { width: 9px; height: 9px; border-radius: 50%; background: var(--line-strong); display: inline-block; }
+.sync.on { background: var(--green); }
+.sync.busy { background: var(--yellow); }
+.sync.off { background: var(--red); }
+.list { padding-block: 10px 60px; padding-left: 20px; padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 12px; }
+.empty { padding: 60px 20px; text-align: center; color: var(--muted); }
+.empty b { display: block; color: var(--ink); font-family: var(--display); font-size: 20px; }
+/* card */
+.q { background: var(--card); border: 2px solid var(--line); border-bottom-width: 4px; border-radius: 18px; padding: 14px 16px; display: grid; gap: 10px; }
+.q[data-status="approved"] { border-color: var(--green); }
+.q[data-status="draft"] { border-color: var(--red); }
+.q.open { border-color: var(--blue); }
+.qhead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.qhead .id { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; color: var(--muted); }
+.chip { font-size: 12px; font-weight: 800; padding: 2px 9px; border-radius: 999px; background: var(--blue-soft); color: var(--blue); letter-spacing: .02em; }
+.chip.st-review { background: var(--yellow-soft); color: var(--yellow-ink); }
+.chip.st-approved { background: var(--green-soft); color: var(--green-ink); }
+.chip.st-draft { background: var(--red-soft); color: var(--red-ink); }
+.chip.age { background: var(--bg); color: var(--muted); }
+.chip.edited { background: var(--blue); color: #fff; }
+.qhead .spacer { flex: 1; }
+.toggle { border: 0; background: transparent; color: var(--blue); font-weight: 800; padding: 4px 8px; border-radius: 10px; }
+.prompt { font-family: var(--display); font-weight: 700; font-size: 18px; line-height: 1.3; text-wrap: balance; }
+.prompt-fr { color: var(--muted); font-size: 14px; margin-top: -4px; }
+.opts { display: grid; gap: 6px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.opt { display: flex; gap: 8px; align-items: baseline; padding: 6px 10px; border-radius: 12px; border: 2px solid var(--line); font-weight: 700; }
+.opt .l { font-size: 12px; color: var(--muted); font-weight: 800; }
+.opt.ok { border-color: var(--green); background: var(--green-soft); color: var(--green-ink); }
+.opt small { display: block; color: var(--muted); font-weight: 600; font-size: 12px; }
+.ex { font-size: 14px; color: var(--muted); border-left: 3px solid var(--line); padding-left: 10px; }
+.note-view { font-size: 14px; color: var(--red-ink); background: var(--red-soft); padding: 6px 10px; border-radius: 10px; }
+/* editor */
+.edit { display: grid; gap: 12px; border-top: 2px dashed var(--line); padding-top: 12px; }
+.row2 { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field label { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.field textarea, .field input[type="text"], .field select { width: 100%; border: 2px solid var(--line); border-radius: 12px; padding: 8px 10px; background: var(--bg); resize: vertical; min-height: 40px; }
+.field textarea.ht { font-family: var(--display); font-weight: 700; font-size: 17px; }
+.optrow { display: grid; grid-template-columns: 34px minmax(0, 1fr) minmax(0, 1fr) 30px; gap: 8px; align-items: center; }
+.optrow input[type="text"] { width: 100%; border: 2px solid var(--line); border-radius: 12px; padding: 8px 10px; background: var(--bg); min-width: 0; }
+.optrow .pick { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--line); background: var(--bg); font-weight: 800; font-size: 12px; color: var(--muted); display: grid; place-items: center; }
+.optrow .pick[aria-checked="true"] { background: var(--green); border-color: var(--green); color: #fff; }
+.optrow .del { border: 0; background: transparent; color: var(--muted); font-size: 18px; line-height: 1; }
+.opthead { display: grid; grid-template-columns: 34px 1fr 1fr 30px; gap: 8px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.ages { display: flex; gap: 6px; flex-wrap: wrap; }
+.ages label { display: inline-flex; align-items: center; gap: 6px; border: 2px solid var(--line); border-radius: 999px; padding: 4px 10px; font-weight: 700; font-size: 13px; }
+.ages input { margin: 0; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.actions .right { margin-left: auto; display: flex; gap: 8px; }
+.warn { color: var(--red-ink); background: var(--red-soft); border-radius: 10px; padding: 6px 10px; font-size: 13px; }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 14px; font-weight: 700; z-index: 20; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.toast.show { opacity: 1; }
+.more { align-self: center; }
+.kbd { font-family: ui-monospace, Menlo, monospace; font-size: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
+@media (max-width: 760px) {
+  .app { grid-template-columns: 1fr; }
+  .rail { position: static; height: auto; border-right: 0; border-bottom: 2px solid var(--line); flex-direction: row; flex-wrap: wrap; gap: 4px; padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 12px; }
+  .rail h4 { display: none; }
+  .brand { width: 100%; margin-bottom: 6px; }
+  #cats { display: flex; gap: 4px; width: 100%; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  #cats::-webkit-scrollbar { display: none; }
+  .catwrap { flex: 0 0 auto; }
+  .cat { width: auto; padding: 6px 10px; font-size: 13px; white-space: nowrap; }
+  .catwrap .bar { display: none; }
+  #btn-add, #btn-export { font-size: 13px; }
+  .toolbar, .list, .status-line { padding-left: max(16px, env(safe-area-inset-left, 0px)); }
+  .optrow { grid-template-columns: 30px minmax(0, 1fr) 26px; }
+  .optrow input.fr { grid-column: 2; }
+  .opthead { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
+
+<div class="app">
+  <nav class="rail" aria-label="Kategori">
+    <div class="brand"><span class="dot"></span><span>Konesans <small>admin</small></span></div>
+    <h4>Kesyon</h4>
+    <div id="cats"></div>
+    <h4>Zouti</h4>
+    <button class="cat" id="btn-add" type="button">➕ Ajoute yon kesyon</button>
+    <button class="cat" id="btn-export" type="button">⬇️ Telechaje JSON</button>
+  </nav>
+  <main class="main">
+    <div class="toolbar">
+      <h1 id="title">Relekti</h1>
+      <label class="search"><span aria-hidden="true">🔎</span><input id="search" type="search" placeholder="Chèche yon mo, yon id, yon sijè…" autocomplete="off"></label>
+      <div class="seg" id="statusseg" role="group" aria-label="Estati">
+        <button type="button" data-st="all" aria-pressed="true">Tout<span class="k" id="k-all">0</span></button>
+        <button type="button" data-st="review" aria-pressed="false">Pou relekti<span class="k" id="k-review">0</span></button>
+        <button type="button" data-st="approved" aria-pressed="false">Apwouve<span class="k" id="k-approved">0</span></button>
+        <button type="button" data-st="draft" aria-pressed="false">Pwoblèm<span class="k" id="k-draft">0</span></button>
+      </div>
+      <select class="sel" id="agesel" aria-label="Laj">
+        <option value="">Tout laj</option><option value="6-8">6–8 an</option><option value="9-11">9–11 an</option><option value="12-14">12–14 an</option>
+      </select>
+    </div>
+    <div class="status-line">
+      <span><span class="sync" id="sync"></span> <span id="synctext">N ap konekte…</span></span>
+      <span>Montre <b id="shown">0</b> sou <b id="total">0</b></span>
+      <span id="who"></span>
+    </div>
+    <div class="list" id="list"></div>
+  </main>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  const CATS = [
+    ['istwa', 'Istwa', '🏛️'], ['jewografi', 'Jewografi', '🗺️'], ['kilti', 'Kilti', '🎭'], ['syans', 'Syans', '🔬'],
+    ['matematik', 'Matematik', '➗'], ['jeneral', 'Jeneral', '💡'], ['espo', 'Espò', '⚽'], ['teknoloji', 'Teknoloji', '💻'], ['peyi', 'Peyi', '🌍'],
+  ];
+  const CATNAME = Object.fromEntries(CATS.map(([id, n]) => [id, n]));
+  const PREFIX = { istwa: 'ist', jewografi: 'jeo', kilti: 'kil', syans: 'sya', matematik: 'mat', jeneral: 'jen', espo: 'esp', teknoloji: 'tek', peyi: 'pey' };
+  const STNAME = { review: 'Pou relekti', approved: 'Apwouve', draft: 'Pwoblèm' };
+  const AGES = ['6-8', '9-11', '12-14'];
+  const PAGE = 40;
+
+  const $ = (s, el = document) => el.querySelector(s);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  // ---- state
+  let base = new Map();      // id -> compact question (from bank.json)
+  let edits = new Map();     // id -> overlay doc (from db)
+  let order = [];            // ids in bank order (+ new ones)
+  const ui = { cat: 'istwa', st: 'all', age: '', q: '', open: null, limit: PAGE, canWrite: null };
+  let db = null, downloads = null, unsub = null;
+  const pending = new Map(); // id -> timer
+
+  // ---- merge
+  function merged(id) {
+    const b = base.get(id), e = edits.get(id);
+    if (!b && !e) return null;
+    const m = Object.assign({ status: 'review', opts: [], optsFr: [], ages: [], d: 1 }, b || {}, e || {});
+    if (!m.optsFr || m.optsFr.length !== m.opts.length) m.optsFr = m.opts.map((_, i) => (m.optsFr || [])[i] ?? '');
+    return m;
+  }
+  const isEdited = (id) => edits.has(id) && !edits.get(id).deleted;
+  function allIds() {
+    const seen = new Set(order);
+    const extra = [...edits.keys()].filter((id) => !seen.has(id)).sort();
+    return [...order, ...extra];
+  }
+  function visible() {
+    const q = ui.q.trim().toLowerCase();
+    return allIds().map(merged).filter((m) => m && !m.deleted && m.category === ui.cat
+      && (ui.st === 'all' || m.status === ui.st)
+      && (!ui.age || m.ages.includes(ui.age))
+      && (!q || [m.id, m.ht, m.fr, m.ex, m.topic, ...(m.opts || []), ...(m.optsFr || [])].join(' ').toLowerCase().includes(q)));
+  }
+
+  // ---- render
+  function renderCats() {
+    const el = $('#cats');
+    el.innerHTML = CATS.map(([id, name, ico]) => {
+      const ms = allIds().map(merged).filter((m) => m && !m.deleted && m.category === id);
+      const ok = ms.filter((m) => m.status === 'approved').length;
+      return `<div class="catwrap"><button class="cat" type="button" data-cat="${id}" aria-current="${ui.cat === id}"><span>${ico}</span><span>${name}</span><span class="n">${ms.length}</span></button><div class="bar"><i style="width:${ms.length ? Math.round(100 * ok / ms.length) : 0}%"></i></div></div>`;
+    }).join('');
+  }
+  function renderCounts() {
+    const ms = allIds().map(merged).filter((m) => m && !m.deleted && m.category === ui.cat && (!ui.age || m.ages.includes(ui.age)));
+    const c = { all: ms.length, review: 0, approved: 0, draft: 0 };
+    for (const m of ms) c[m.status] = (c[m.status] || 0) + 1;
+    for (const k of Object.keys(c)) $('#k-' + k).textContent = c[k];
+    $('#total').textContent = allIds().map(merged).filter((m) => m && !m.deleted).length;
+    $('#title').textContent = 'Relekti · ' + CATNAME[ui.cat];
+  }
+  function cardView(m) {
+    const ed = isEdited(m.id);
+    return `<article class="q" data-id="${esc(m.id)}" data-status="${m.status}">
+      <div class="qhead"><span class="id">${esc(m.id)}</span><span class="chip st-${m.status}">${STNAME[m.status] || m.status}</span><span class="chip age">Nivo ${m.d} · ${m.ages.join(', ')}</span>${m.topic ? `<span class="chip age">#${esc(m.topic)}</span>` : ''}${ed ? '<span class="chip edited">modifye</span>' : ''}<span class="spacer"></span><button class="toggle" type="button" data-act="open">Korije ✎</button></div>
+      <div class="prompt">${esc(m.ht)}</div>
+      <div class="prompt-fr">${esc(m.fr)}</div>
+      <div class="opts">${m.opts.map((o, i) => `<div class="opt ${i === m.a ? 'ok' : ''}"><span class="l">${'ABCD'[i]}</span><span>${esc(o)}<small>${esc(m.optsFr[i])}</small></span></div>`).join('')}</div>
+      ${m.ex ? `<div class="ex">${esc(m.ex)}<br><span style="opacity:.8">${esc(m.exFr)}</span></div>` : ''}
+      ${m.note ? `<div class="note-view">📝 ${esc(m.note)}</div>` : ''}
+    </article>`;
+  }
+  function cardEdit(m) {
+    const problems = lint(m);
+    return `<article class="q open" data-id="${esc(m.id)}" data-status="${m.status}">
+      <div class="qhead"><span class="id">${esc(m.id)}</span><span class="chip st-${m.status}">${STNAME[m.status] || m.status}</span><span class="spacer"></span><button class="toggle" type="button" data-act="close">Fèmen ✕</button></div>
+      <div class="edit">
+        <div class="row2">
+          <div class="field"><label for="ht-${m.id}">Kesyon (Kreyòl)</label><textarea class="ht" id="ht-${m.id}" data-f="ht" rows="2">${esc(m.ht)}</textarea></div>
+          <div class="field"><label for="fr-${m.id}">Question (Français)</label><textarea id="fr-${m.id}" data-f="fr" rows="2">${esc(m.fr)}</textarea></div>
+        </div>
+        <div>
+          <div class="opthead"><span>Bon</span><span>Kreyòl</span><span>Français</span><span></span></div>
+          <div style="display:grid;gap:6px;margin-top:4px" id="opts-${m.id}">
+            ${m.opts.map((o, i) => `<div class="optrow"><button type="button" class="pick" role="radio" aria-checked="${i === m.a}" data-act="pick" data-i="${i}" aria-label="Bon repons ${'ABCD'[i]}">${'ABCD'[i]}</button><input type="text" id="o-${m.id}-${i}" data-f="opt" data-i="${i}" value="${esc(o)}" aria-label="Opsyon ${'ABCD'[i]} Kreyòl"><input type="text" class="fr" id="of-${m.id}-${i}" data-f="optFr" data-i="${i}" value="${esc(m.optsFr[i])}" aria-label="Option ${'ABCD'[i]} français">${m.opts.length > 3 ? `<button type="button" class="del" data-act="delopt" data-i="${i}" aria-label="Retire opsyon ${'ABCD'[i]}">×</button>` : '<span></span>'}</div>`).join('')}
+          </div>
+          ${m.opts.length < 4 ? `<button type="button" class="btn ghost" data-act="addopt" style="margin-top:6px">+ Ajoute yon opsyon</button>` : ''}
+        </div>
+        <div class="row2">
+          <div class="field"><label for="ex-${m.id}">Esplikasyon (Kreyòl)</label><textarea id="ex-${m.id}" data-f="ex" rows="2">${esc(m.ex)}</textarea></div>
+          <div class="field"><label for="exfr-${m.id}">Explication (Français)</label><textarea id="exfr-${m.id}" data-f="exFr" rows="2">${esc(m.exFr)}</textarea></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Laj</label><div class="ages">${AGES.map((a) => `<label><input type="checkbox" data-f="age" value="${a}" ${m.ages.includes(a) ? 'checked' : ''}> ${a} an</label>`).join('')}</div></div>
+          <div class="field"><label for="d-${m.id}">Nivo difikilte</label><select id="d-${m.id}" data-f="d"><option value="1" ${m.d == 1 ? 'selected' : ''}>1 · Fasil (6–8)</option><option value="2" ${m.d == 2 ? 'selected' : ''}>2 · Mwayen (9–11)</option><option value="3" ${m.d == 3 ? 'selected' : ''}>3 · Difisil (12–14)</option></select></div>
+          <div class="field"><label for="tp-${m.id}">Sijè (tag)</label><input type="text" id="tp-${m.id}" data-f="topic" value="${esc(m.topic || '')}"></div>
+        </div>
+        <div class="field"><label for="nt-${m.id}">Nòt pou korektè a / pou Claude</label><textarea id="nt-${m.id}" data-f="note" rows="1" placeholder="Egz. « mo sa a pa bon an Kreyòl », « verifye dat la »…">${esc(m.note || '')}</textarea></div>
+        ${problems.length ? `<div class="warn">⚠️ ${problems.map(esc).join(' · ')}</div>` : ''}
+        <div class="actions">
+          <button type="button" class="btn good" data-act="status" data-st="approved" ${m.status === 'approved' ? 'disabled' : ''}>✓ Apwouve</button>
+          <button type="button" class="btn bad" data-act="status" data-st="draft" ${m.status === 'draft' ? 'disabled' : ''}>⚑ Pwoblèm</button>
+          <button type="button" class="btn" data-act="status" data-st="review" ${m.status === 'review' ? 'disabled' : ''}>↺ Pou relekti</button>
+          <div class="right">${isEdited(m.id) && base.has(m.id) ? `<button type="button" class="btn ghost" data-act="revert">Remete orijinal la</button>` : ''}<button type="button" class="btn ghost" data-act="delete">Efase kesyon an</button></div>
+        </div>
+      </div>
+    </article>`;
+  }
+  function lint(m) {
+    const p = [];
+    if (!m.ht?.trim()) p.push('Kesyon Kreyòl la vid');
+    if (!m.fr?.trim()) p.push('Question française vide');
+    if (m.opts.length < 3) p.push('Fòk gen omwen 3 opsyon');
+    if (m.opts.some((o) => !o?.trim())) p.push('Gen yon opsyon ki vid');
+    if (new Set(m.opts.map((o) => o.trim().toLowerCase())).size !== m.opts.length) p.push('De opsyon ki menm');
+    if (m.a == null || m.a < 0 || m.a >= m.opts.length) p.push('Chwazi bon repons lan');
+    if (!m.ages.length) p.push('Chwazi omwen yon laj');
+    const bad = [m.ht, m.ex, ...m.opts].join(' ').match(/\b[a-zàèòù]*(?:c(?!h)|q|x)[a-zàèòù]*\b/gi);
+    if (bad) p.push('Lèt ki pa Kreyòl: ' + [...new Set(bad)].slice(0, 4).join(', '));
+    return p;
+  }
+  function renderList(force) {
+    const vis = visible();
+    const slice = vis.slice(0, ui.limit);
+    $('#shown').textContent = slice.length;
+    const list = $('#list');
+    if (!vis.length) {
+      list.innerHTML = `<div class="empty"><b>${base.size ? 'Pa gen kesyon isit la' : 'N ap chaje bank kesyon an…'}</b>${base.size ? 'Chanje filtè yo, oswa ajoute yon kesyon.' : ''}</div>`;
+      return;
+    }
+    list.innerHTML = slice.map((m) => (ui.open === m.id ? cardEdit(m) : cardView(m))).join('')
+      + (vis.length > slice.length ? `<button type="button" class="btn more" id="more">Montre ${Math.min(PAGE, vis.length - slice.length)} ankò (${vis.length - slice.length} rete)</button>` : '');
+  }
+  function renderAll(force) { renderCats(); renderCounts(); renderList(force); }
+
+  // ---- edits
+  function current(id) { return merged(id); }
+  function stage(id, patch, immediate) {
+    const m = Object.assign({}, current(id), patch);
+    const doc = {
+      id, category: m.category, d: Number(m.d), ages: m.ages, ht: m.ht, fr: m.fr, opts: m.opts, optsFr: m.optsFr, a: m.a,
+      ex: m.ex || '', exFr: m.exFr || '', topic: m.topic || '', status: m.status, note: m.note || '', updatedAt: new Date().toISOString(),
+    };
+    if (m.deleted) doc.deleted = true;
+    edits.set(id, doc);
+    clearTimeout(pending.get(id));
+    const flush = async () => {
+      pending.delete(id);
+      if (!db) { setSync('off', 'Pa konekte: chanjman yo pa sove'); return; }
+      setSync('busy', 'N ap sove…');
+      try { await db.doc('edits/' + id).set(doc); setSync('on', 'Tout bagay sove'); }
+      catch (e) { setSync('off', e?.code === 'invalid_argument' && ui.canWrite !== true ? 'Ou pa gen dwa modifye' : 'Erè pandan n ap sove'); }
+    };
+    if (immediate) flush(); else pending.set(id, setTimeout(flush, 700));
+  }
+  function setSync(state, text) { $('#sync').className = 'sync ' + state; $('#synctext').textContent = text; }
+  function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 1800); }
+
+  // ---- events
+  $('#cats').addEventListener('click', (e) => { const b = e.target.closest('[data-cat]'); if (!b) return; ui.cat = b.dataset.cat; ui.open = null; ui.limit = PAGE; renderAll(true); window.scrollTo(0, 0); });
+  $('#statusseg').addEventListener('click', (e) => { const b = e.target.closest('[data-st]'); if (!b) return; ui.st = b.dataset.st; ui.limit = PAGE; for (const x of $('#statusseg').children) x.setAttribute('aria-pressed', String(x === b)); renderList(true); });
+  $('#agesel').addEventListener('change', (e) => { ui.age = e.target.value; ui.limit = PAGE; renderAll(true); });
+  let st; $('#search').addEventListener('input', (e) => { clearTimeout(st); st = setTimeout(() => { ui.q = e.target.value; ui.limit = PAGE; renderList(true); }, 150); });
+
+  $('#list').addEventListener('click', (e) => {
+    if (e.target.id === 'more') { ui.limit += PAGE; renderList(true); return; }
+    const btn = e.target.closest('[data-act]'); if (!btn) return;
+    const card = btn.closest('.q'); const id = card?.dataset.id; if (!id) return;
+    const m = current(id);
+    switch (btn.dataset.act) {
+      case 'open': ui.open = id; renderList(true); $(`#ht-${CSS.escape(id)}`)?.focus(); break;
+      case 'close': ui.open = null; renderList(true); break;
+      case 'pick': stage(id, { a: Number(btn.dataset.i) }); renderList(true); break;
+      case 'addopt': stage(id, { opts: [...m.opts, ''], optsFr: [...m.optsFr, ''] }); renderList(true); break;
+      case 'delopt': { const i = Number(btn.dataset.i); const opts = m.opts.filter((_, k) => k !== i), optsFr = m.optsFr.filter((_, k) => k !== i); let a = m.a; if (a === i) a = 0; else if (a > i) a -= 1; stage(id, { opts, optsFr, a }); renderList(true); break; }
+      case 'status': {
+        const stt = btn.dataset.st;
+        if (stt === 'approved' && lint(m).length) { toast('Korije pwoblèm yo anvan ou apwouve'); return; }
+        stage(id, { status: stt }, true); ui.open = stt === 'approved' ? null : id; renderAll(true); toast(stt === 'approved' ? '✓ Apwouve' : stt === 'draft' ? '⚑ Make kòm pwoblèm' : 'Remete pou relekti'); break;
+      }
+      case 'revert': { edits.delete(id); if (db) db.doc('edits/' + id).delete().catch(() => {}); renderAll(true); toast('Orijinal la tounen'); break; }
+      case 'delete': { if (!card.dataset.confirm) { card.dataset.confirm = '1'; btn.textContent = 'Ou sèten? Klike ankò'; return; } stage(id, { deleted: true }, true); ui.open = null; renderAll(true); toast('Kesyon an efase'); break; }
+    }
+  });
+  $('#list').addEventListener('input', (e) => {
+    const el = e.target; const f = el.dataset.f; if (!f) return;
+    const card = el.closest('.q'); const id = card?.dataset.id; if (!id) return;
+    const m = current(id);
+    if (f === 'opt' || f === 'optFr') { const arr = (f === 'opt' ? m.opts : m.optsFr).slice(); arr[Number(el.dataset.i)] = el.value; stage(id, f === 'opt' ? { opts: arr } : { optsFr: arr }); }
+    else if (f === 'age') { const ages = AGES.filter((a) => card.querySelector(`input[data-f="age"][value="${a}"]`).checked); stage(id, { ages }); }
+    else if (f === 'd') stage(id, { d: Number(el.value) });
+    else stage(id, { [f]: el.value });
+    if (!card.querySelector('.chip.edited')) card.querySelector('.qhead .spacer').insertAdjacentHTML('beforebegin', '<span class="chip edited">modifye</span>');
+  });
+
+  $('#btn-add').addEventListener('click', () => {
+    const p = PREFIX[ui.cat] || 'new';
+    const nums = allIds().filter((id) => id.startsWith(p + '-')).map((id) => Number(id.slice(p.length + 1))).filter((n) => !isNaN(n));
+    const id = `${p}-${String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3, '0')}`;
+    edits.set(id, { id, category: ui.cat, d: 1, ages: ['6-8', '9-11', '12-14'], ht: '', fr: '', opts: ['', '', '', ''], optsFr: ['', '', '', ''], a: 0, ex: '', exFr: '', topic: '', status: 'review', note: '', created: true, updatedAt: new Date().toISOString() });
+    ui.st = 'all'; for (const x of $('#statusseg').children) x.setAttribute('aria-pressed', String(x.dataset.st === 'all'));
+    ui.q = ''; $('#search').value = ''; ui.open = id; ui.limit = Math.max(ui.limit, allIds().length);
+    renderAll(true);
+    $(`[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'center' });
+    $(`#ht-${CSS.escape(id)}`)?.focus();
+  });
+  $('#btn-export').addEventListener('click', async () => {
+    const all = allIds().map(merged).filter((m) => m && !m.deleted);
+    const data = JSON.stringify({ exportedAt: new Date().toISOString(), edits: [...edits.values()], questions: all }, null, 1);
+    if (!downloads) { toast('Telechajman pa disponib isit la'); return; }
+    try { await downloads.save({ filename: 'konesans-bank.json', data }); toast('Fichye a sove'); } catch (e) { if (e?.code !== 'cancelled') toast('Telechajman an pa pase'); }
+  });
+
+  // ---- boot
+  async function loadBase() {
+    try {
+      const r = await fetch('bank.json'); const j = await r.json();
+      for (const q of j.questions) {
+        base.set(q.id, { id: q.id, category: q.category, d: q.difficulty, ages: q.ages, ht: q.prompt.ht, fr: q.prompt.fr || '', opts: q.options.map((o) => o.ht), optsFr: q.options.map((o) => o.fr || ''), a: q.answer, ex: q.explain?.ht || '', exFr: q.explain?.fr || '', topic: q.topic || '', status: q.status, note: q.note || '' });
+        order.push(q.id);
+      }
+    } catch (e) { $('#list').innerHTML = '<div class="empty"><b>Bank kesyon an pa chaje</b>Eseye ankò pita.</div>'; }
+    renderAll(true);
+  }
+  async function connect() {
+    if (!window.claude?.use) { setSync('off', 'Sove pa disponib isit la (ouvri paj la sou claude.ai)'); return; }
+    const [d, u, dl] = await Promise.all([claude.use('db'), claude.use('user'), claude.use('downloads')]);
+    db = d; downloads = dl;
+    if (u) { ui.canWrite = await u.can('data.write'); const me = await u.me().catch(() => null); if (me?.name) $('#who').textContent = me.name; if (ui.canWrite === false) setSync('off', 'Ou ka li sèlman'); }
+    if (!db) { setSync('off', 'Pa konekte ak baz done a'); return; }
+    setSync('busy', 'N ap chaje koreksyon yo…');
+    const timer = setTimeout(() => setSync('busy', 'Baz done a pran tan pou reponn…'), 10000);
+    unsub = db.collection('edits').onSnapshot((snap) => {
+      for (const ch of snap.docChanges()) {
+        if (ch.type === 'removed') edits.delete(ch.doc.id); else if (!pending.has(ch.doc.id)) edits.set(ch.doc.id, ch.doc.data());
+      }
+      if (!snap.metadata.fromCache) { clearTimeout(timer); setSync('on', edits.size ? `${edits.size} kesyon modifye` : 'Konekte · pa gen koreksyon ankò'); }
+      if (ui.open) { renderCats(); renderCounts(); } else renderAll(true);
+    }, (e) => { clearTimeout(timer); setSync('off', 'Koneksyon ak baz done a pèdi'); });
+  }
+  loadBase();
+  connect();
+})();
+</script>

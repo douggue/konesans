@@ -26,8 +26,12 @@ export interface Question {
   explain?: LocalizedText;
   /** Optional media: an SVG path (country shape), a flag code, an image key, an audio key. */
   media?: { kind: 'shape' | 'flag' | 'image' | 'audio'; ref: string };
-  /** Reserved for content review workflow. Only `approved` questions are served. */
+  /** Review workflow: `review` = written, waiting for a proofreader; `approved` = checked; `draft` = flagged, needs rework (never served). */
   status: 'draft' | 'review' | 'approved';
+  /** Sub-topic tag for grouping in the admin panel (e.g. 'revolisyon'). */
+  topic?: string;
+  /** Reviewer's note from the admin panel. */
+  note?: string;
 }
 
 export interface Profile {

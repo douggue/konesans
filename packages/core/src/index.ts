@@ -1,5 +1,6 @@
 export * from './types.js';
 export * from './content/questions.js';
+export * from './content/bank.js';
 export * from './content/packs.js';
 export * from './content/shapes.js';
 export * from './content/world.js';

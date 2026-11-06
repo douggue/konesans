@@ -30,11 +30,13 @@ export interface SelectOptions {
   exclude?: Iterable<string>;
   /** Ids to prioritize (e.g. due review items). */
   prefer?: Iterable<string>;
+  /** Also serve questions still waiting for proofreading (`review`). Flagged (`draft`) questions are never served. */
+  includeReview?: boolean;
 }
 
 /**
  * Pick questions for a session. Rules:
- *  - only `approved` questions, matching the age band (and category unless 'mix')
+ *  - only `approved` questions (plus `review` when includeReview), matching the age band (and category unless 'mix')
  *  - preferred ids first (review), then unseen, then seen (if needed)
  *  - options are shuffled per question, answer index remapped
  */
@@ -42,7 +44,7 @@ export function selectQuestions(bank: Question[], opt: SelectOptions): Question[
   const rand = rng(opt.seed);
   const exclude = new Set(opt.exclude ?? []);
   const prefer = new Set(opt.prefer ?? []);
-  const pool = bank.filter((q) => q.status === 'approved' && q.ages.includes(opt.age) && (!opt.category || opt.category === 'mix' || q.category === opt.category));
+  const pool = bank.filter((q) => (q.status === 'approved' || (opt.includeReview && q.status === 'review')) && q.ages.includes(opt.age) && (!opt.category || opt.category === 'mix' || q.category === opt.category));
   const preferred = shuffle(pool.filter((q) => prefer.has(q.id)), rand);
   const fresh = shuffle(pool.filter((q) => !prefer.has(q.id) && !exclude.has(q.id)), rand);
   const seen = shuffle(pool.filter((q) => !prefer.has(q.id) && exclude.has(q.id)), rand);
