@@ -5,7 +5,7 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Modal, Pressable, View } from 'react-native';
-import Svg, { Path, Circle, Rect, G } from 'react-native-svg';
+import Svg, { Path, Circle, Rect, G, Defs, ClipPath } from 'react-native-svg';
 import { router } from 'expo-router';
 import { cardById, type CardRarity, type HeroCard } from '@konesans/core';
 import { colors, fonts } from '@/lib/theme';
@@ -77,23 +77,19 @@ export function MiniCard({ card, owned, selected, fresh, index, onPress, label }
   return (
     <Animated.View style={{ flex: 1, transform: [{ rotate: lift.interpolate({ inputRange: [0, 1], outputRange: [`${tilt}deg`, '0deg'] }) }, { translateY: lift.interpolate({ inputRange: [0, 1], outputRange: [0, -4] }) }] }}>
       <Pressable role="button" accessibilityLabel={label} accessibilityState={{ selected }} onPress={onPress}
-        style={({ pressed }) => [{ backgroundColor: colors.card, borderRadius: 16, overflow: 'hidden', alignItems: 'center', paddingBottom: 8, gap: 6, borderWidth: selected ? 3 : 2, borderBottomWidth: selected ? 6 : 5, borderColor: selected ? colors.ink : colors.line }, pressed && { transform: [{ scale: 0.96 }] }]}>
-        <View style={{ alignSelf: 'stretch', height: 58, alignItems: 'center', justifyContent: 'center', backgroundColor: owned ? card.color : '#DCE1EE', overflow: 'hidden' }}>
+        style={({ pressed }) => [{ flexGrow: 1, backgroundColor: colors.card, borderRadius: 16, overflow: 'hidden', alignItems: 'center', paddingBottom: 8, gap: 6, borderWidth: selected ? 3 : 2, borderBottomWidth: selected ? 6 : 5, borderColor: selected ? colors.ink : colors.line }, pressed && { transform: [{ scale: 0.96 }] }]}>
+        <View style={{ alignSelf: 'stretch', height: 56, alignItems: 'center', justifyContent: 'center', backgroundColor: owned ? card.color : '#DCE1EE', overflow: 'hidden' }}>
           {owned ? (
             <>
               <Rays />
-              {card.rarity === 'lejand' && <View pointerEvents="none" style={{ position: 'absolute', left: 4, right: 4, top: 4, bottom: 4, borderRadius: 10, borderWidth: 2, borderColor: GOLD, opacity: 0.9 }} />}
+              {card.rarity === 'lejand' && <View pointerEvents="none" style={{ position: 'absolute', left: 4, right: 4, top: 4, bottom: 4, borderRadius: 10, borderWidth: 1.5, borderColor: GOLD }} />}
               <T style={{ fontFamily: fonts.display, fontSize: 24, lineHeight: 28, color: '#FFFFFF' }}>{card.mono}</T>
               <View style={{ position: 'absolute', top: 5, right: 5 }}><RarityBadge rarity={card.rarity} size={17} tint={card.color} /></View>
             </>
           ) : <T style={{ fontFamily: fonts.display, fontSize: 26, lineHeight: 30, color: '#8A93A8' }}>?</T>}
         </View>
-        <T center numberOfLines={2} style={{ fontFamily: fonts.bodyHeavy, fontSize: 12, lineHeight: 14, paddingHorizontal: 4, minHeight: 28, textAlignVertical: 'center' }} color={owned ? colors.ink : colors.muted}>{owned ? card.short : '???'}</T>
-        {fresh && owned && (
-          <View style={{ position: 'absolute', top: 4, left: 4, backgroundColor: colors.red, borderRadius: 999, paddingHorizontal: 6, paddingVertical: 1, borderWidth: 1.5, borderColor: '#FFFFFF' }}>
-            <T style={{ fontFamily: fonts.bodyHeavy, fontSize: 9, lineHeight: 12, letterSpacing: 0.5 }} color="#FFFFFF">{t('kt_new')}</T>
-          </View>
-        )}
+        <T center numberOfLines={2} style={{ fontFamily: fonts.bodyHeavy, fontSize: 12, lineHeight: 14, paddingHorizontal: 4 }} color={owned ? colors.ink : colors.muted}>{owned ? card.short : '???'}</T>
+        {fresh && owned && <View accessibilityLabel={t('kt_new')} style={{ position: 'absolute', top: 5, left: 5, width: 13, height: 13, borderRadius: 7, backgroundColor: colors.red, borderWidth: 2, borderColor: '#FFFFFF' }} />}
       </Pressable>
     </Animated.View>
   );
@@ -139,7 +135,7 @@ export function HeroFront({ card, hint }: { card: HeroCard; hint: string }) {
       </View>
       <View style={{ flex: 1, minWidth: 0, gap: 6 }}>
         <TagPill text={t(RARITY_TAG[card.rarity])} />
-        <T style={{ fontFamily: fonts.display, fontSize: 23, lineHeight: 26 }} color="#FFFFFF" numberOfLines={3}>{card.name}</T>
+        <T style={card.name.length > 22 ? { fontFamily: fonts.display, fontSize: 20, lineHeight: 23 } : { fontFamily: fonts.display, fontSize: 23, lineHeight: 26 }} color="#FFFFFF" numberOfLines={3}>{card.name}</T>
         <T style={{ fontFamily: fonts.bodyHeavy, fontSize: 13, lineHeight: 17, opacity: 0.85 }} color="#FFFFFF">{l(card.years)}</T>
         <T style={{ fontFamily: fonts.body, fontSize: 14, lineHeight: 19 }} color="#FFFFFF" numberOfLines={3}>{l(card.role)}</T>
         <View style={{ marginTop: 'auto' }}><FlipHint text={hint} /></View>
@@ -174,13 +170,15 @@ export function TallFront({ card, w = 210 }: { card: HeroCard; w?: number }) {
 export function TallBack({ w = 210 }: { w?: number }) {
   const h = w * 1.36;
   return (
-    <View style={{ width: w, height: h, borderRadius: 22, borderWidth: 3, borderBottomWidth: 7, borderColor: colors.ink, backgroundColor: '#1F2F57', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
-      <Rays color={GOLD} opacity={0.16} count={18} />
+    <View style={{ width: w, height: h, borderRadius: 22, borderWidth: 3, borderBottomWidth: 7, borderColor: colors.ink, backgroundColor: '#1B2A52', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+      <Rays color="#4D7CFE" opacity={0.22} count={18} />
       <View pointerEvents="none" style={{ position: 'absolute', left: 9, right: 9, top: 9, bottom: 9, borderRadius: 14, borderWidth: 2, borderColor: 'rgba(255,212,59,0.55)' }} />
+      <View>{/* a View so it paints above the absolutely positioned rays on web */}
       <Svg width={w * 0.46} height={w * 0.46} viewBox="0 0 48 48">
         <Circle cx={24} cy={24} r={21} fill={colors.blue} stroke={GOLD} strokeWidth={3} />
         <Path d="M24 9l4.4 9 9.9 1.4-7.2 7 1.7 9.8L24 31.6l-8.8 4.6 1.7-9.8-7.2-7 9.9-1.4z" fill={GOLD} stroke={colors.ink} strokeWidth={2} strokeLinejoin="round" />
       </Svg>
+      </View>
     </View>
   );
 }
@@ -192,7 +190,8 @@ function Pack({ w = 170 }: { w?: number }) {
     <Svg width={w} height={h} viewBox="0 0 170 221">
       <Path d="M14 18 L156 18 L156 205 Q156 213 148 213 L22 213 Q14 213 14 205 Z" fill="#E0A100" stroke={colors.ink} strokeWidth={4} strokeLinejoin="round" />
       <Path d="M14 14 L156 14 L156 200 Q156 208 148 208 L22 208 Q14 208 14 200 Z" fill={GOLD} stroke={colors.ink} strokeWidth={4} strokeLinejoin="round" />
-      <G opacity={0.35}>{[0, 1, 2, 3, 4, 5, 6].map((i) => <Path key={i} d={`M${-20 + i * 34} 208 L${40 + i * 34} 14 L${52 + i * 34} 14 L${-8 + i * 34} 208 Z`} fill="#FFFFFF" />)}</G>
+      <Defs><ClipPath id="kt-pack"><Rect x={14} y={14} width={142} height={194} rx={8} /></ClipPath></Defs>
+      <G opacity={0.35} clipPath="url(#kt-pack)">{[0, 1, 2, 3, 4, 5, 6].map((i) => <Path key={i} d={`M${-20 + i * 34} 208 L${40 + i * 34} 14 L${52 + i * 34} 14 L${-8 + i * 34} 208 Z`} fill="#FFFFFF" />)}</G>
       <Rect x={14} y={14} width={142} height={194} rx={8} fill="none" stroke={colors.ink} strokeWidth={4} />
       <Path d="M10 30 L18 22 L26 30 L34 22 L42 30 L50 22 L58 30 L66 22 L74 30 L82 22 L90 30 L98 22 L106 30 L114 22 L122 30 L130 22 L138 30 L146 22 L154 30 L160 24" fill="none" stroke={colors.ink} strokeWidth={3} strokeLinejoin="round" strokeLinecap="round" />
       <Circle cx={85} cy={112} r={42} fill="#FFF4D1" stroke={colors.ink} strokeWidth={4} />
@@ -275,7 +274,7 @@ export function CardReveal({ drawKey, delay = 2000, kind = 'defi', onClose }: { 
   const tag = t('kt_new_card', { x: t(RARITY_TAG[card.rarity]) });
   return (
     <Modal visible transparent animationType="none" statusBarTranslucent onRequestClose={() => close()}>
-      <Animated.View style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: 'rgba(20,33,61,0.78)', opacity: backdrop }} />
+      <Animated.View style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: 'rgba(20,33,61,0.96)', opacity: backdrop }} />
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 14 }}>
         <Pop><Mascot size={96} mood={mood} /></Pop>
         <T v="h1" center color="#FFFFFF">{phase === 'shown' ? (win.isNew ? t('kt_bravo', { name: card.short }) : t('kt_duplicate', { name: card.short, n: win.coins })) : t('kt_won_title')}</T>
@@ -301,7 +300,10 @@ export function CardReveal({ drawKey, delay = 2000, kind = 'defi', onClose }: { 
               </View>
             </Animated.View>
           )}
-          <Burst trigger={phase === 'opening' ? 'open' : null} count={16} radius={150} />
+          {phase === 'opening' && (
+            <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 220, height: 220, borderRadius: 110, backgroundColor: '#FFF4D1', opacity: packOut.interpolate({ inputRange: [0, 0.25, 1], outputRange: [0, 0.75, 0] }), transform: [{ scale: packOut.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1.7] }) }] }} />
+          )}
+          <Burst trigger={phase === 'opening' ? 'open' : null} count={18} radius={160} />
         </View>
         {phase === 'pack' && <FadeIn delay={400}><T v="h3" center color="#FFF4D1">{t('kt_open_pack')}</T></FadeIn>}
         {phase === 'shown' && (

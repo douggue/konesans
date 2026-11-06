@@ -5,6 +5,7 @@ import { createDuel, reduce, planBotAnswer, BOT_PROFILES, BOT_NAMES, PRESET_REAC
 import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Pill, Avatar, avatarFromSeed, PressScale, Bounce, Drop, FadeIn, Pop, Confetti, SlideSwap, useCountUp } from '@/ui';
 import { Matchmaking } from '@/ui/Matchmaking';
 import { QuestionView } from '@/ui/QuestionView';
+import { CardReveal } from '@/ui/CardReveal';
 import { colors } from '@/lib/theme';
 import { useStore, useAvatar } from '@/lib/store';
 import { useT, type StrKey } from '@/lib/i18n';
@@ -122,6 +123,7 @@ function DuelEnd({ won, draw, me, op, note, onReport }: { won: boolean; draw: bo
   return (
     <Screen scroll={false}>
       {won && <Confetti />}
+      <CardReveal delay={2200} />
       <View style={{ alignItems: 'center', gap: 10, marginTop: 'auto' }}>
         <Drop><Mascot size={140} mood={won ? 'cool' : draw ? 'happy' : 'angry'} /></Drop>
         <Pop delay={450}><T v="display" center>{won ? t('you_win') : draw ? t('draw') : op.isBot ? t('you_lose') : t('they_win', { name: op.name })}</T></Pop>

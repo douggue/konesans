@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { startSolo, answerSolo, soloSummary, QUESTION_TIME_MS, generateCountryQuiz, peyiIso, REGION_LABEL, type SoloSession, type CountryQuizOptions } from '@konesans/core';
 import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Pill, CountPill, Stars, FadeIn, Pop, Drop, SlideSwap, Confetti, Bounce, useCountUp } from '@/ui';
 import { QuestionView } from '@/ui/QuestionView';
+import { CardReveal } from '@/ui/CardReveal';
 import { colors } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT, useL } from '@/lib/i18n';
@@ -83,6 +84,7 @@ export default function Quiz() {
     return (
       <Screen scroll={false}>
         {good && <Confetti />}
+        {!trial && <CardReveal drawKey={`quiz-${s.startedAt}`} delay={2200} />}
         <View style={{ alignItems: 'center', gap: 10, marginTop: 'auto' }}>
           <Drop><Mascot size={150} mood={good ? 'cheer' : 'happy'} /></Drop>
           <FadeIn delay={500}><T v="display" center>{t('result')}</T></FadeIn>
