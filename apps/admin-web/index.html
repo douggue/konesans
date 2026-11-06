@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="ht">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Konesans Admin</title>
+<meta name="theme-color" content="#1F47B5">
+<link rel="icon" href="favicon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@600;700;800&display=swap">
+<style>
+/* Layout: fixed section rail on the left (a chip row on phones), sticky toolbar, editable cards. Same look as the Relekti preview. */
+:root {
+  --bg: #F6F7FB; --card: #FFFFFF; --line: #E3E7F1; --line-strong: #D9DEEA;
+  --ink: #14213D; --muted: #5A6480;
+  --blue: #1F47B5; --blue-dark: #163A96; --blue-soft: #E6ECFB; --blue-light: #4D7CFE;
+  --red: #D21034; --red-soft: #FDE7EC; --red-ink: #8F0A22;
+  --green: #2F9E44; --green-dark: #1F7A33; --green-soft: #E3F4EA; --green-ink: #12632F;
+  --yellow: #F5B700; --yellow-soft: #FFF4D1; --yellow-ink: #7A5A00;
+  --display: "Baloo 2", "Nunito", system-ui, sans-serif;
+  --body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0F1526; --card: #182038; --line: #26304D; --line-strong: #2F3A5C; --ink: #EEF2FF; --muted: #A3ADC8;
+  --blue: #7B9DFF; --blue-dark: #5677D9; --blue-soft: #1E2A52; --blue-light: #8FB0FF; --red: #FF6B82; --red-soft: #3A1A24; --red-ink: #FFB3BF;
+  --green: #5DD27A; --green-dark: #3FA85C; --green-soft: #163A26; --green-ink: #B9F0C7; --yellow: #FFD43B; --yellow-soft: #3A3010; --yellow-ink: #FFE58A;
+  color-scheme: dark;
+} }
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.45; padding-top: env(safe-area-inset-top, 0px); }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--blue-light); outline-offset: 2px; }
+[hidden] { display: none !important; }
+h1, h2, h3 { font-family: var(--display); font-weight: 800; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+.muted { color: var(--muted); }
+.mono { font-family: var(--mono); font-size: 12px; }
+
+/* login */
+.login { min-height: 100%; display: grid; place-items: center; padding: 24px max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px)); }
+.login form { width: min(420px, 100%); background: var(--card); border: 2px solid var(--line); border-bottom-width: 5px; border-radius: 24px; padding: 28px; display: grid; gap: 14px; }
+.login .flag { width: 48px; height: 32px; border-radius: 8px; background: linear-gradient(180deg, var(--blue) 50%, var(--red) 50%); }
+
+/* app shell */
+.app { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100%; }
+.rail { background: var(--card); border-right: 2px solid var(--line); padding: 18px 12px 18px max(16px, env(safe-area-inset-left, 0px)); position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+.brand { font-family: var(--display); font-weight: 800; font-size: 24px; display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.brand .dot { width: 14px; height: 14px; border-radius: 4px; background: linear-gradient(180deg, var(--blue) 50%, var(--red) 50%); flex: none; }
+.brand small { font-family: var(--body); font-weight: 800; font-size: 11px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; }
+.rail h4 { margin: 12px 0 2px 10px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 800; }
+.nav { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; background: transparent; padding: 8px 10px; border-radius: 12px; font-weight: 700; color: var(--ink); text-decoration: none; }
+.nav:hover { background: var(--bg); }
+.nav[aria-current="page"] { background: var(--blue-soft); color: var(--blue); }
+.nav .ic { width: 24px; height: 24px; flex: none; display: block; }
+[data-icon] svg { width: 100%; height: 100%; display: block; }
+.catrow .ic { display: block; }
+.nav .n { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; }
+.nav.sub { padding-left: 18px; font-size: 14px; }
+.rail .spacer { flex: 1; }
+.pubbox { border: 2px solid var(--line); border-radius: 16px; padding: 12px; display: grid; gap: 8px; margin-top: 10px; }
+.pubbox b { font-variant-numeric: tabular-nums; }
+.main { min-width: 0; display: flex; flex-direction: column; }
+.toolbar { position: sticky; top: 0; z-index: 5; background: var(--card); border-bottom: 2px solid var(--line); padding: 12px max(16px, env(safe-area-inset-right, 0px)) 12px 20px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; min-height: 64px; }
+.toolbar h1 { font-size: 22px; margin-right: 8px; }
+.content { padding: 16px max(16px, env(safe-area-inset-right, 0px)) 80px 20px; display: grid; gap: 14px; align-content: start; }
+
+/* controls */
+.search { flex: 1 1 220px; min-width: 0; display: flex; align-items: center; gap: 8px; background: var(--bg); border: 2px solid var(--line); border-radius: 14px; padding: 6px 12px; }
+.search input { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; }
+.seg { display: inline-flex; background: var(--bg); border: 2px solid var(--line); border-radius: 14px; padding: 3px; gap: 2px; flex-wrap: wrap; }
+.seg button { border: 0; background: transparent; border-radius: 10px; padding: 5px 10px; font-weight: 700; color: var(--muted); font-size: 13px; }
+.seg button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.seg .k { margin-left: 4px; font-variant-numeric: tabular-nums; font-size: 12px; opacity: .8; }
+select.sel, .inp { background: var(--bg); border: 2px solid var(--line); border-radius: 12px; padding: 8px 10px; font-weight: 700; color: var(--ink); width: 100%; min-width: 0; }
+textarea.inp { resize: vertical; font-weight: 600; }
+.btn { border: 2px solid var(--line); border-bottom-width: 4px; background: var(--card); border-radius: 14px; padding: 7px 14px; font-weight: 800; color: var(--ink); white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; justify-content: center; }
+.btn:active:not([disabled]) { transform: translateY(2px); border-bottom-width: 2px; }
+.btn.primary { background: var(--blue); border-color: var(--blue-dark); color: #fff; }
+.btn.good { background: var(--green); border-color: var(--green-dark); color: #fff; }
+.btn.bad { background: var(--red-soft); border-color: var(--red); color: var(--red-ink); }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--muted); }
+.btn.big { padding: 12px 18px; font-size: 16px; border-radius: 16px; }
+.btn[disabled] { opacity: .5; cursor: default; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field > label, .lbl { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.row2 { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.switch { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.switch:last-child { border-bottom: 0; }
+.switch .t { flex: 1; min-width: 0; }
+.switch .t small { display: block; color: var(--muted); font-weight: 600; }
+.tg { appearance: none; width: 48px; height: 28px; border-radius: 14px; background: var(--line-strong); position: relative; flex: none; cursor: pointer; transition: background .15s; margin: 0; }
+.tg::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .15s; }
+.tg:checked { background: var(--green); }
+.tg:checked::after { transform: translateX(20px); }
+.panel { background: var(--card); border: 2px solid var(--line); border-bottom-width: 4px; border-radius: 18px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.panel h2 { font-size: 19px; }
+
+/* dashboard */
+.tiles { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.tile { background: var(--card); border: 2px solid var(--line); border-bottom-width: 4px; border-radius: 18px; padding: 14px 16px; display: grid; gap: 2px; }
+.tile .v { font-family: var(--display); font-weight: 800; font-size: 30px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tile .l { color: var(--muted); font-weight: 700; font-size: 13px; }
+.tile.warn { border-color: var(--yellow); background: var(--yellow-soft); }
+.catrows { display: grid; gap: 10px; }
+.catrow { display: grid; grid-template-columns: 28px minmax(110px, 160px) minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.stack { height: 12px; border-radius: 6px; background: var(--line); overflow: hidden; display: flex; }
+.stack i { display: block; height: 100%; }
+.stack .ap { background: var(--green); } .stack .rv { background: var(--yellow); } .stack .dr { background: var(--red); }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); font-weight: 700; }
+.legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; background: var(--c); }
+
+/* question cards */
+.q { background: var(--card); border: 2px solid var(--line); border-bottom-width: 4px; border-radius: 18px; padding: 14px 16px; display: grid; gap: 10px; min-width: 0; }
+.q[data-status="approved"] { border-color: var(--green); }
+.q[data-status="draft"] { border-color: var(--red); }
+.q.open { border-color: var(--blue); }
+.qhead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.qhead .grow { flex: 1; }
+.chip { font-size: 12px; font-weight: 800; padding: 2px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); white-space: nowrap; }
+.chip.st-review { background: var(--yellow-soft); color: var(--yellow-ink); }
+.chip.st-approved { background: var(--green-soft); color: var(--green-ink); }
+.chip.st-draft { background: var(--red-soft); color: var(--red-ink); }
+.chip.blue { background: var(--blue); color: #fff; }
+.link { border: 0; background: transparent; color: var(--blue); font-weight: 800; padding: 4px 8px; border-radius: 10px; }
+.prompt { font-family: var(--display); font-weight: 700; font-size: 18px; line-height: 1.3; }
+.prompt-fr { color: var(--muted); font-size: 14px; margin-top: -6px; }
+.opts { display: grid; gap: 6px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.opt { display: flex; gap: 8px; align-items: baseline; padding: 6px 10px; border-radius: 12px; border: 2px solid var(--line); font-weight: 700; min-width: 0; }
+.opt .l { font-size: 12px; color: var(--muted); font-weight: 800; }
+.opt.ok { border-color: var(--green); background: var(--green-soft); color: var(--green-ink); }
+.opt small { display: block; color: var(--muted); font-weight: 600; font-size: 12px; }
+.ex { font-size: 14px; color: var(--muted); border-left: 3px solid var(--line); padding-left: 10px; }
+.note { font-size: 14px; color: var(--red-ink); background: var(--red-soft); padding: 6px 10px; border-radius: 10px; }
+.edit { display: grid; gap: 12px; border-top: 2px dashed var(--line); padding-top: 12px; }
+.optrow { display: grid; grid-template-columns: 34px minmax(0, 1fr) minmax(0, 1fr) 30px; gap: 8px; align-items: center; }
+.pick { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--line); background: var(--bg); font-weight: 800; font-size: 12px; color: var(--muted); display: grid; place-items: center; padding: 0; }
+.pick[aria-checked="true"] { background: var(--green); border-color: var(--green); color: #fff; }
+.del { border: 0; background: transparent; color: var(--muted); font-size: 20px; line-height: 1; }
+.ages { display: flex; gap: 6px; flex-wrap: wrap; }
+.ages label { display: inline-flex; align-items: center; gap: 6px; border: 2px solid var(--line); border-radius: 999px; padding: 4px 10px; font-weight: 700; font-size: 13px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.actions .right { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+.warn { color: var(--red-ink); background: var(--red-soft); border-radius: 10px; padding: 6px 10px; font-size: 13px; }
+.empty { padding: 50px 20px; text-align: center; color: var(--muted); }
+.empty b { display: block; color: var(--ink); font-family: var(--display); font-size: 20px; }
+.more { justify-self: center; }
+
+/* categories editor */
+.catcard { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: start; }
+.catcard .ico { width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; }
+.catcard .ico svg { width: 36px; height: 36px; }
+.swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+.sw { width: 28px; height: 28px; border-radius: 8px; border: 2px solid transparent; padding: 0; }
+.sw[aria-pressed="true"] { border-color: var(--ink); }
+.iconpick { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; max-height: 200px; overflow: auto; border: 2px solid var(--line); border-radius: 12px; padding: 6px; }
+.iconpick button { border: 2px solid transparent; background: var(--bg); border-radius: 10px; padding: 4px; aspect-ratio: 1; }
+.iconpick button[aria-pressed="true"] { border-color: var(--blue); background: var(--blue-soft); }
+.iconpick svg { width: 100%; height: 100%; }
+.order { display: grid; gap: 4px; }
+.order button { width: 32px; height: 28px; border-radius: 8px; border: 2px solid var(--line); background: var(--bg); font-weight: 800; padding: 0; }
+
+/* strings + tables */
+.strrow { display: grid; grid-template-columns: minmax(120px, 180px) minmax(0, 1fr) minmax(0, 1fr); gap: 8px; align-items: start; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.strrow .key { font-family: var(--mono); font-size: 12px; color: var(--muted); padding-top: 10px; word-break: break-all; }
+.strrow .def { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.strrow.changed .key { color: var(--blue); font-weight: 800; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tbl th { text-align: left; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 6px 8px; border-bottom: 2px solid var(--line); }
+.tbl td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.scroll { overflow-x: auto; }
+
+/* banner preview */
+.banner { border-radius: 14px; padding: 10px 14px; font-weight: 800; }
+.banner.blue { background: var(--blue-soft); color: var(--blue); } .banner.yellow { background: var(--yellow-soft); color: var(--yellow-ink); }
+.banner.red { background: var(--red-soft); color: var(--red-ink); } .banner.green { background: var(--green-soft); color: var(--green-ink); }
+
+/* overlays */
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(10px); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 14px; font-weight: 700; z-index: 30; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; max-width: calc(100% - 32px); }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.err { background: var(--red); color: #fff; }
+.modal { position: fixed; inset: 0; background: rgba(10,15,30,.45); display: grid; place-items: center; z-index: 25; padding: 16px; }
+.modal .box { background: var(--card); border-radius: 22px; border: 2px solid var(--line); border-bottom-width: 5px; padding: 22px; width: min(460px, 100%); display: grid; gap: 12px; }
+.spin { width: 18px; height: 18px; border-radius: 50%; border: 3px solid currentColor; border-right-color: transparent; animation: sp .7s linear infinite; display: inline-block; }
+@keyframes sp { to { transform: rotate(360deg); } }
+
+@media (max-width: 800px) {
+  .app { grid-template-columns: 1fr; }
+  .rail { position: static; height: auto; border-right: 0; border-bottom: 2px solid var(--line); flex-direction: row; flex-wrap: wrap; padding: 12px max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px)); }
+  .rail h4, .rail .spacer, #catnav { display: none; }
+  .brand { width: 100%; margin-bottom: 4px; }
+  .nav { width: auto; padding: 6px 10px; font-size: 13px; }
+  .nav .ic { width: 20px; height: 20px; }
+  .pubbox { width: 100%; grid-template-columns: 1fr auto; align-items: center; margin-top: 4px; }
+  .toolbar, .content { padding-left: max(16px, env(safe-area-inset-left, 0px)); }
+  .toolbar { position: static; }
+  .optrow { grid-template-columns: 30px minmax(0, 1fr) 26px; }
+  .optrow .fr { grid-column: 2; }
+  .catrow { grid-template-columns: 24px minmax(0, 1fr) auto; }
+  .catrow .stack { grid-column: 1 / -1; }
+  .strrow { grid-template-columns: 1fr; }
+  .strrow .key { padding-top: 0; }
+  .catcard { grid-template-columns: auto minmax(0, 1fr); }
+  .catcard .order { grid-column: 1 / -1; display: flex; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<div id="login" class="login" hidden>
+  <form id="loginform" autocomplete="on">
+    <div class="flag" aria-hidden="true"></div>
+    <h1>Konesans Admin</h1>
+    <p class="muted" style="margin:0">Konekte ak kont administratè w la.</p>
+    <div class="field"><label for="lg-email">Imèl</label><input class="inp" id="lg-email" type="email" autocomplete="username" required></div>
+    <div class="field"><label for="lg-pass">Modpas</label><input class="inp" id="lg-pass" type="password" autocomplete="current-password" required minlength="8"></div>
+    <div class="warn" id="lg-err" hidden></div>
+    <button class="btn primary big" id="lg-btn" type="submit">Konekte</button>
+  </form>
+</div>
+
+<div id="app" class="app" hidden>
+  <nav class="rail" aria-label="Seksyon">
+    <div class="brand"><span class="dot"></span><span>Konesans <small>admin</small></span></div>
+    <a class="nav" href="#tablo" data-nav="tablo"><span class="ic" data-icon="lakay"></span>Tablo</a>
+    <a class="nav" href="#kesyon" data-nav="kesyon"><span class="ic" data-icon="kesyon"></span>Kesyon<span class="n" id="nav-q"></span></a>
+    <div id="catnav"></div>
+    <a class="nav" href="#kategori" data-nav="kategori"><span class="ic" data-icon="kilti"></span>Kategori</a>
+    <a class="nav" href="#paramet" data-nav="paramet"><span class="ic" data-icon="paramet"></span>Paramèt app la</a>
+    <a class="nav" href="#teks" data-nav="teks"><span class="ic" data-icon="lang"></span>Tèks app la</a>
+    <a class="nav" href="#rapo" data-nav="rapo"><span class="ic" data-icon="siyale"></span>Rapò<span class="n" id="nav-r"></span></a>
+    <a class="nav" href="#istorik" data-nav="istorik"><span class="ic" data-icon="kalandriye"></span>Istorik</a>
+    <div class="spacer"></div>
+    <div class="pubbox">
+      <div><div class="lbl">Sou telefòn timoun yo</div><div>Vèsyon <b id="pub-v">–</b> · <span id="pub-changes" class="muted">…</span></div></div>
+      <button class="btn good" id="btn-publish" type="button">Pibliye</button>
+    </div>
+    <button class="nav" id="btn-logout" type="button" style="margin-top:6px"><span class="ic" data-icon="retounen"></span><span id="who">Dekonekte</span></button>
+  </nav>
+  <main class="main">
+    <div class="toolbar" id="toolbar"></div>
+    <div class="content" id="content"></div>
+  </main>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="modal" id="modal" hidden><div class="box" id="modalbox" role="dialog" aria-modal="true"></div></div>
+
+<script src="config.js"></script>
+<script src="icons.js"></script>
+<script>
+(() => {
+'use strict';
+const CFG = Object.assign({ api: '', serverKey: 'konesans-server-key' }, window.KONESANS || {});
+const qs = new URLSearchParams(location.search);
+if (qs.get('api')) CFG.api = qs.get('api');
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const AGES = ['6-8', '9-11', '12-14'];
+const STNAME = { review: 'Pou relekti', approved: 'Apwouve', draft: 'Pwoblèm' };
+const COLORS = ['#1F47B5', '#4D7CFE', '#0E7C86', '#2F9E44', '#51CF66', '#F5B700', '#FFD43B', '#FF9F43', '#D21034', '#FF5A6E', '#B197FC', '#14213D'];
+const icon = (name) => (window.KICONS && window.KICONS[name]) || (window.KICONS && window.KICONS.kesyon) || '';
+const store = { get(k) { try { return JSON.parse(localStorage.getItem('kns.' + k)); } catch { return null; } }, set(k, v) { try { localStorage.setItem('kns.' + k, JSON.stringify(v)); } catch {} }, del(k) { try { localStorage.removeItem('kns.' + k); } catch {} } };
+
+// ---------- API ----------
+let session = store.get('session');
+const basic = () => 'Basic ' + btoa(CFG.serverKey + ':');
+async function http(path, body, auth) {
+  let r;
+  try { r = await fetch(CFG.api + path, { method: 'POST', headers: { 'content-type': 'application/json', authorization: auth }, body: JSON.stringify(body ?? {}) }); }
+  catch { throw Object.assign(new Error('Pa ka jwenn sèvè a. Tcheke entènèt ou.'), { status: 0 }); }
+  const text = await r.text(); let j; try { j = JSON.parse(text); } catch { j = { message: text }; }
+  if (!r.ok) throw Object.assign(new Error(j.message || ('Erè ' + r.status)), { status: r.status });
+  return j;
+}
+async function login(email, password) {
+  const s = await http('/v2/account/authenticate/email?create=false', { email, password }, basic());
+  session = { token: s.token, refresh: s.refresh_token }; store.set('session', session);
+}
+async function refresh() {
+  const s = await http('/v2/account/session/refresh', { token: session.refresh }, basic());
+  session = { token: s.token, refresh: s.refresh_token || session.refresh }; store.set('session', session);
+}
+async function rpc(id, body) {
+  if (!session) throw Object.assign(new Error('Konekte ankò'), { status: 401 });
+  try { return await http(`/v2/rpc/${id}?unwrap`, body, 'Bearer ' + session.token); }
+  catch (e) {
+    if (e.status !== 401) throw e;
+    try { await refresh(); } catch { logout(); throw e; }
+    return http(`/v2/rpc/${id}?unwrap`, body, 'Bearer ' + session.token);
+  }
+}
+function logout() { session = null; store.del('session'); showLogin(); }
+
+// ---------- state ----------
+const S = { stats: null, cats: null, me: null, bank: {}, view: 'tablo', cat: null, st: 'all', age: '', q: '', open: null, limit: 30, config: null, strings: null, stringsDirty: {}, catsDraft: null };
+
+// ---------- ui helpers ----------
+function toast(t, err) { const el = $('#toast'); el.textContent = t; el.classList.toggle('err', !!err); el.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), err ? 4000 : 2000); }
+function confirmBox(title, body, okLabel, kind = 'primary') {
+  return new Promise((res) => {
+    $('#modalbox').innerHTML = `<h2>${esc(title)}</h2><div class="muted">${body}</div><div class="actions"><div class="right"><button class="btn ghost" data-r="0" type="button">Anile</button><button class="btn ${kind}" data-r="1" type="button">${esc(okLabel)}</button></div></div>`;
+    $('#modal').hidden = false; $('#modalbox [data-r="1"]').focus();
+    $('#modal').onclick = (e) => { const b = e.target.closest('[data-r]'); if (!b && e.target !== $('#modal')) return; $('#modal').hidden = true; res(b?.dataset.r === '1'); };
+  });
+}
+async function busy(btn, fn) { const html = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spin"></span>'; try { return await fn(); } finally { btn.disabled = false; btn.innerHTML = html; } }
+const catName = (id) => S.cats?.find((c) => c.id === id)?.name.ht ?? id;
+function paintIcons(root = document) { for (const el of root.querySelectorAll('[data-icon]')) if (!el.firstChild) el.innerHTML = icon(el.dataset.icon); }
+
+// ---------- shell ----------
+function showLogin() { $('#app').hidden = true; $('#login').hidden = false; $('#lg-email').value = store.get('email') || ''; ($('#lg-email').value ? $('#lg-pass') : $('#lg-email')).focus(); }
+async function showApp() {
+  $('#login').hidden = true; $('#app').hidden = false; paintIcons();
+  try { S.me = await rpc('admin_me'); $('#who').textContent = 'Dekonekte (' + S.me.email + ')'; }
+  catch (e) { if (e.status === 403) { toast('Kont sa a pa administratè.', true); logout(); return; } }
+  await Promise.all([loadStats(), loadCats()]);
+  route();
+}
+async function loadStats() {
+  try {
+    S.stats = await rpc('admin_stats');
+    $('#pub-v').textContent = S.stats.published.version || '–';
+    const n = S.stats.draftChanges;
+    $('#pub-changes').textContent = n ? `${n} chanjman poko pibliye` : 'Tout bagay pibliye';
+    $('#pub-changes').style.color = n ? 'var(--yellow-ink)' : '';
+    $('#nav-q').textContent = S.stats.questions.total;
+    $('#nav-r').textContent = S.stats.reports.open || '';
+  } catch (e) { toast(e.message, true); }
+}
+async function loadCats() {
+  S.cats = (await rpc('admin_categories')).categories;
+  $('#catnav').innerHTML = S.cats.map((c) => `<a class="nav sub" href="#kesyon/${c.id}" data-nav="kesyon/${c.id}"><span class="ic" data-icon="${esc(c.icon)}"></span>${esc(c.name.ht)}<span class="n">${S.stats?.questions.byCategory[c.id]?.total ?? 0}</span></a>`).join('');
+  paintIcons($('#catnav'));
+}
+function route() {
+  const [view, arg] = (location.hash.slice(1) || 'tablo').split('/');
+  S.view = view; if (view === 'kesyon') { S.cat = arg || S.cat || S.cats?.find((c) => c.id !== 'peyi')?.id || 'istwa'; S.open = null; S.limit = 30; }
+  for (const a of document.querySelectorAll('[data-nav]')) a.setAttribute('aria-current', a.dataset.nav === (view === 'kesyon' ? 'kesyon/' + S.cat : view) || (view === 'kesyon' && a.dataset.nav === 'kesyon' && false) ? 'page' : 'false');
+  const V = { tablo: viewDash, kesyon: viewQuestions, kategori: viewCategories, paramet: viewSettings, teks: viewStrings, rapo: viewReports, istorik: viewAudit }[view] || viewDash;
+  window.scrollTo(0, 0);
+  V();
+}
+window.addEventListener('hashchange', route);
+
+// ---------- dashboard ----------
+function viewDash() {
+  $('#toolbar').innerHTML = `<h1>Tablo</h1><span class="grow"></span><button class="btn" id="d-refresh" type="button">Rafrechi</button>`;
+  $('#d-refresh').onclick = async (e) => { await busy(e.currentTarget, loadStats); viewDash(); };
+  const st = S.stats; if (!st) { $('#content').innerHTML = '<div class="empty"><b>N ap chaje…</b></div>'; return; }
+  const q = st.questions;
+  const pct = q.total ? Math.round(100 * q.approved / q.total) : 0;
+  $('#content').innerHTML = `
+    <div class="tiles">
+      <div class="tile"><span class="v">${q.total}</span><span class="l">kesyon an tout</span></div>
+      <div class="tile"><span class="v">${q.approved}</span><span class="l">apwouve (${pct}%)</span></div>
+      <div class="tile ${q.review ? 'warn' : ''}"><span class="v">${q.review}</span><span class="l">ap tann relekti</span></div>
+      <div class="tile"><span class="v">${q.draft}</span><span class="l">make kòm pwoblèm</span></div>
+      <div class="tile"><span class="v">${st.players.total}</span><span class="l">jwè · ${st.players.last7d} sou 7 jou</span></div>
+      <div class="tile ${st.reports.open ? 'warn' : ''}"><span class="v">${st.reports.open}</span><span class="l">rapò pou gade</span></div>
+    </div>
+    <section class="panel"><div class="qhead"><h2>Relekti pa kategori</h2><span class="grow"></span><div class="legend"><span style="--c:var(--green)">Apwouve</span><span style="--c:var(--yellow)">Pou relekti</span><span style="--c:var(--red)">Pwoblèm</span></div></div>
+      <div class="catrows">${S.cats.map((c) => { const b = q.byCategory[c.id] || { total: 0, approved: 0, review: 0, draft: 0 }; const w = (n) => b.total ? (100 * n / b.total).toFixed(1) + '%' : '0'; return `<a class="catrow" href="#kesyon/${c.id}" style="color:inherit;text-decoration:none"><span class="ic" data-icon="${esc(c.icon)}" style="width:26px;height:26px"></span><b>${esc(c.name.ht)}</b><div class="stack" aria-label="${b.approved} apwouve, ${b.review} pou relekti, ${b.draft} pwoblèm"><i class="ap" style="width:${w(b.approved)}"></i><i class="rv" style="width:${w(b.review)}"></i><i class="dr" style="width:${w(b.draft)}"></i></div><span class="muted" style="font-variant-numeric:tabular-nums">${b.approved}/${b.total}</span></a>`; }).join('')}</div>
+    </section>
+    <section class="panel"><h2>Piblikasyon</h2>
+      <p style="margin:0">Vèsyon <b>${st.published.version || 'okenn'}</b>${st.published.publishedAt ? ' · ' + new Date(st.published.publishedAt).toLocaleString('fr-HT') : ''}. ${st.draftChanges ? `<b>${st.draftChanges}</b> chanjman ap tann pou rive sou telefòn timoun yo.` : 'Telefòn yo gen dènye vèsyon an.'}</p>
+      <div><button class="btn good" id="d-pub" type="button">Pibliye kounye a</button></div>
+    </section>
+    ${q.total === 0 ? `<section class="panel"><h2>Bank kesyon an vid</h2><p class="muted" style="margin:0">Enpòte ${''}kesyon ki vini ak app la pou kòmanse relekti.</p><div><button class="btn primary" id="d-import" type="button">Enpòte bank kesyon an</button></div></section>` : ''}`;
+  paintIcons($('#content'));
+  $('#d-pub').onclick = publish;
+  $('#d-import') && ($('#d-import').onclick = (e) => busy(e.currentTarget, importBank));
+}
+async function importBank() {
+  const r = await fetch('bank.json'); if (!r.ok) { toast('bank.json pa disponib sou sèvè a', true); return; }
+  const qs = (await r.json()).questions.map((q) => ({ id: q.id, category: q.category, d: q.difficulty, ages: q.ages, ht: q.prompt.ht, fr: q.prompt.fr || '', opts: q.options.map((o) => o.ht), optsFr: q.options.map((o) => o.fr || ''), a: q.answer, ex: q.explain?.ht || '', exFr: q.explain?.fr || '', topic: q.topic, status: q.status || 'review' }));
+  let added = 0;
+  for (let i = 0; i < qs.length; i += 400) { const res = await rpc('admin_import', { questions: qs.slice(i, i + 400) }); added += res.added; toast(`Enpòte ${Math.min(i + 400, qs.length)}/${qs.length}…`); }
+  toast(`${added} kesyon enpòte`); await loadStats(); await loadCats(); viewDash();
+}
+async function publish() {
+  await loadStats();
+  const n = S.stats.draftChanges;
+  const ok = await confirmBox('Pibliye pou tout timoun yo?', n ? `${n} chanjman ap rive sou telefòn yo lè yo louvri app la. Kesyon ki <b>apwouve</b>${S.config?.serveReview !== false ? ' ak sa ki <b>pou relekti</b>' : ''} ap pibliye; sa ki make <b>pwoblèm</b> pa janm pibliye.` : 'Pa gen chanjman depi dènye fwa a, men ou ka pibliye ankò.', 'Pibliye', 'good');
+  if (!ok) return;
+  try { const r = await rpc('admin_publish'); toast(`Vèsyon ${r.version} pibliye ✓`); await loadStats(); if (S.view === 'tablo') viewDash(); }
+  catch (e) { toast(e.message, true); }
+}
+$('#btn-publish').onclick = publish;
+
+// ---------- questions ----------
+async function ensureBank(cat, force) {
+  if (!S.bank[cat] || force) S.bank[cat] = (await rpc('admin_questions', { category: cat })).questions;
+  return S.bank[cat];
+}
+function lint(m) {
+  const p = [];
+  if (!m.ht?.trim()) p.push('Kesyon Kreyòl la vid');
+  if (!m.fr?.trim()) p.push('Question française vide');
+  if (m.opts.length < 3) p.push('Fòk gen omwen 3 opsyon');
+  if (m.opts.some((o) => !o?.trim()) || m.optsFr.some((o) => !o?.trim())) p.push('Gen yon opsyon ki vid');
+  if (new Set(m.opts.map((o) => o.trim().toLowerCase())).size !== m.opts.length) p.push('De opsyon ki menm');
+  if (m.a == null || m.a < 0 || m.a >= m.opts.length) p.push('Chwazi bon repons lan');
+  if (!m.ages.length) p.push('Chwazi omwen yon laj');
+  const bad = [m.ht, m.ex, ...m.opts].join(' ').match(/\b[a-zàèòù]*(?:c(?!h)|q|x)[a-zàèòù]*\b/gi);
+  if (bad) p.push('Lèt ki pa Kreyòl: ' + [...new Set(bad)].slice(0, 4).join(', '));
+  return p;
+}
+function visibleQs() {
+  const list = S.bank[S.cat] || []; const q = S.q.trim().toLowerCase();
+  return list.filter((m) => (S.st === 'all' || m.status === S.st) && (!S.age || m.ages.includes(S.age))
+    && (!q || [m.id, m.ht, m.fr, m.ex, m.exFr, m.topic, ...m.opts, ...m.optsFr].join(' ').toLowerCase().includes(q)));
+}
+async function viewQuestions() {
+  const cat = S.cat;
+  $('#toolbar').innerHTML = `<h1>${esc(catName(cat))}</h1>
+    <label class="search"><span aria-hidden="true">🔎</span><input id="q-search" type="search" placeholder="Chèche yon mo, yon id, yon sijè…" value="${esc(S.q)}"></label>
+    <div class="seg" id="q-seg" role="group" aria-label="Estati">${[['all', 'Tout'], ['review', 'Pou relekti'], ['approved', 'Apwouve'], ['draft', 'Pwoblèm']].map(([k, l]) => `<button type="button" data-st="${k}" aria-pressed="${S.st === k}">${l}<span class="k" id="k-${k}"></span></button>`).join('')}</div>
+    <select class="sel" id="q-age" aria-label="Laj" style="width:auto"><option value="">Tout laj</option>${AGES.map((a) => `<option value="${a}" ${S.age === a ? 'selected' : ''}>${a} an</option>`).join('')}</select>
+    <button class="btn primary" id="q-add" type="button">+ Nouvo kesyon</button>`;
+  $('#content').innerHTML = '<div class="empty"><b>N ap chaje kesyon yo…</b></div>';
+  let t; $('#q-search').oninput = (e) => { clearTimeout(t); t = setTimeout(() => { S.q = e.target.value; S.limit = 30; renderQs(); }, 150); };
+  $('#q-seg').onclick = (e) => { const b = e.target.closest('[data-st]'); if (!b) return; S.st = b.dataset.st; S.limit = 30; for (const x of $('#q-seg').children) x.setAttribute('aria-pressed', String(x === b)); renderQs(); };
+  $('#q-age').onchange = (e) => { S.age = e.target.value; S.limit = 30; renderQs(); };
+  $('#q-add').onclick = (e) => busy(e.currentTarget, addQuestion);
+  try { await ensureBank(cat); } catch (e) { $('#content').innerHTML = `<div class="empty"><b>Pa ka chaje kesyon yo</b>${esc(e.message)}</div>`; return; }
+  if (S.view === 'kesyon' && S.cat === cat) renderQs();
+}
+function counts() {
+  const list = (S.bank[S.cat] || []).filter((m) => !S.age || m.ages.includes(S.age));
+  const c = { all: list.length, review: 0, approved: 0, draft: 0 }; for (const m of list) c[m.status]++;
+  for (const k in c) { const el = $('#k-' + k); if (el) el.textContent = c[k]; }
+}
+function cardView(m) {
+  return `<article class="q" data-id="${esc(m.id)}" data-status="${m.status}">
+    <div class="qhead"><span class="mono muted">${esc(m.id)}</span><span class="chip st-${m.status}">${STNAME[m.status]}</span><span class="chip">Nivo ${m.d} · ${m.ages.join(', ')}</span>${m.topic ? `<span class="chip">#${esc(m.topic)}</span>` : ''}<span class="grow"></span>
+      ${m.status !== 'approved' ? `<button class="link" type="button" data-act="quick-approve" title="Apwouve san louvri">✓ Apwouve</button>` : ''}<button class="link" type="button" data-act="open">Korije ✎</button></div>
+    <div class="prompt">${esc(m.ht)}</div><div class="prompt-fr">${esc(m.fr)}</div>
+    <div class="opts">${m.opts.map((o, i) => `<div class="opt ${i === m.a ? 'ok' : ''}"><span class="l">${'ABCD'[i]}</span><span>${esc(o)}<small>${esc(m.optsFr[i])}</small></span></div>`).join('')}</div>
+    ${m.ex ? `<div class="ex">${esc(m.ex)}<br><span style="opacity:.8">${esc(m.exFr)}</span></div>` : ''}
+    ${m.note ? `<div class="note">📝 ${esc(m.note)}</div>` : ''}
+    ${m.updatedBy ? `<div class="muted" style="font-size:12px">Dènye chanjman: ${esc(m.updatedBy)} · ${new Date(m.updatedAt).toLocaleString('fr-HT')}</div>` : ''}
+  </article>`;
+}
+function cardEdit(m) {
+  const id = esc(m.id); const probs = lint(m);
+  return `<article class="q open" data-id="${id}" data-status="${m.status}">
+    <div class="qhead"><span class="mono muted">${id}</span><span class="chip st-${m.status}">${STNAME[m.status]}</span>${m._new ? '<span class="chip blue">nouvo</span>' : ''}<span class="grow"></span><button class="link" type="button" data-act="close">Fèmen ✕</button></div>
+    <div class="edit">
+      <div class="row2"><div class="field"><label for="ht-${id}">Kesyon (Kreyòl)</label><textarea class="inp" style="font-family:var(--display);font-size:17px" id="ht-${id}" data-f="ht" rows="2">${esc(m.ht)}</textarea></div>
+        <div class="field"><label for="fr-${id}">Question (Français)</label><textarea class="inp" id="fr-${id}" data-f="fr" rows="2">${esc(m.fr)}</textarea></div></div>
+      <div class="field"><span class="lbl">Opsyon yo · klike lèt la pou chwazi bon repons lan</span>
+        ${m.opts.map((o, i) => `<div class="optrow"><button type="button" class="pick" role="radio" aria-checked="${i === m.a}" data-act="pick" data-i="${i}" aria-label="Bon repons ${'ABCD'[i]}">${'ABCD'[i]}</button><input class="inp" type="text" id="o-${id}-${i}" data-f="opt" data-i="${i}" value="${esc(o)}" aria-label="Opsyon ${'ABCD'[i]} Kreyòl"><input class="inp fr" type="text" id="of-${id}-${i}" data-f="optFr" data-i="${i}" value="${esc(m.optsFr[i])}" aria-label="Option ${'ABCD'[i]} français">${m.opts.length > 3 ? `<button type="button" class="del" data-act="delopt" data-i="${i}" aria-label="Retire opsyon ${'ABCD'[i]}">×</button>` : '<span></span>'}</div>`).join('')}
+        ${m.opts.length < 4 ? `<div><button type="button" class="btn ghost" data-act="addopt">+ Ajoute yon opsyon</button></div>` : ''}</div>
+      <div class="row2"><div class="field"><label for="ex-${id}">Esplikasyon (Kreyòl)</label><textarea class="inp" id="ex-${id}" data-f="ex" rows="2">${esc(m.ex)}</textarea></div>
+        <div class="field"><label for="exfr-${id}">Explication (Français)</label><textarea class="inp" id="exfr-${id}" data-f="exFr" rows="2">${esc(m.exFr)}</textarea></div></div>
+      <div class="row2"><div class="field"><span class="lbl">Laj</span><div class="ages">${AGES.map((a) => `<label><input type="checkbox" data-f="age" value="${a}" ${m.ages.includes(a) ? 'checked' : ''}> ${a} an</label>`).join('')}</div></div>
+        <div class="field"><label for="d-${id}">Nivo difikilte</label><select class="sel" id="d-${id}" data-f="d"><option value="1" ${m.d == 1 ? 'selected' : ''}>1 · Fasil (6–8)</option><option value="2" ${m.d == 2 ? 'selected' : ''}>2 · Mwayen (9–11)</option><option value="3" ${m.d == 3 ? 'selected' : ''}>3 · Difisil (12–14)</option></select></div>
+        <div class="field"><label for="tp-${id}">Sijè (tag)</label><input class="inp" type="text" id="tp-${id}" data-f="topic" value="${esc(m.topic || '')}"></div></div>
+      <div class="field"><label for="nt-${id}">Nòt</label><textarea class="inp" id="nt-${id}" data-f="note" rows="1" placeholder="Egz. « mo sa a pa bon an Kreyòl », « verifye dat la »…">${esc(m.note || '')}</textarea></div>
+      <div class="warn" data-lint ${probs.length ? '' : 'hidden'}>⚠️ ${probs.map(esc).join(' · ')}</div>
+      <div class="actions">
+        <button type="button" class="btn good" data-act="save" data-st="approved">✓ Sove epi apwouve</button>
+        <button type="button" class="btn" data-act="save" data-st="${m.status}">Sove</button>
+        <button type="button" class="btn bad" data-act="save" data-st="draft">⚑ Pwoblèm</button>
+        <div class="right"><button type="button" class="btn ghost" data-act="cancel">Anile</button>${m._new ? '' : '<button type="button" class="btn ghost" data-act="delete">Efase</button>'}</div>
+      </div>
+    </div></article>`;
+}
+let editing = null; // working copy of the open question
+function renderQs() {
+  counts();
+  const vis = visibleQs(); const slice = vis.slice(0, S.limit);
+  if (editing && !slice.some((m) => m.id === editing.id)) slice.unshift(editing);
+  $('#content').innerHTML = slice.length
+    ? slice.map((m) => (S.open === m.id ? cardEdit(editing) : cardView(m))).join('') + (vis.length > S.limit ? `<button class="btn more" id="q-more" type="button">Montre ${Math.min(30, vis.length - S.limit)} ankò (${vis.length - S.limit} rete)</button>` : '')
+    : `<div class="empty"><b>Pa gen kesyon isit la</b>Chanje filtè yo, oswa kreye yon nouvo kesyon.</div>`;
+  $('#q-more') && ($('#q-more').onclick = () => { S.limit += 30; renderQs(); });
+}
+async function addQuestion() {
+  const { id } = await rpc('admin_next_id', { category: S.cat });
+  editing = { id, category: S.cat, d: 1, ages: AGES.slice(), ht: '', fr: '', opts: ['', '', '', ''], optsFr: ['', '', '', ''], a: 0, ex: '', exFr: '', topic: '', note: '', status: 'review', _new: true };
+  S.open = id; S.st = 'all'; S.q = ''; renderQs(); $('#ht-' + CSS.escape(id))?.focus();
+}
+function openQ(id) { const m = (S.bank[S.cat] || []).find((x) => x.id === id); if (!m) return; editing = JSON.parse(JSON.stringify(m)); S.open = id; renderQs(); $(`[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'nearest' }); }
+function closeQ() { editing = null; S.open = null; renderQs(); }
+function upsertLocal(q) { const list = S.bank[q.category] || (S.bank[q.category] = []); const i = list.findIndex((x) => x.id === q.id); if (i >= 0) list[i] = q; else { list.push(q); list.sort((a, b) => a.id.localeCompare(b.id)); } }
+$('#content').addEventListener('click', async (e) => {
+  if (S.view !== 'kesyon') return;
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const card = b.closest('.q'); const id = card?.dataset.id;
+  switch (b.dataset.act) {
+    case 'open': openQ(id); break;
+    case 'close': case 'cancel': closeQ(); break;
+    case 'pick': editing.a = Number(b.dataset.i); renderQs(); break;
+    case 'addopt': editing.opts.push(''); editing.optsFr.push(''); renderQs(); break;
+    case 'delopt': { const i = Number(b.dataset.i); editing.opts.splice(i, 1); editing.optsFr.splice(i, 1); if (editing.a === i) editing.a = 0; else if (editing.a > i) editing.a--; renderQs(); break; }
+    case 'quick-approve': await busy(b, async () => {
+      try { const r = await rpc('admin_question_status', { ids: [id], status: 'approved' }); if (r.refused?.length) { toast('Kesyon sa a pa konplè: louvri l pou korije l', true); return; } const m = S.bank[S.cat].find((x) => x.id === id); m.status = 'approved'; toast('✓ Apwouve'); loadStats(); renderQs(); } catch (er) { toast(er.message, true); }
+    }); break;
+    case 'save': {
+      const st = b.dataset.st;
+      if (st === 'approved' && lint(editing).length) { toast('Korije pwoblèm yo anvan ou apwouve', true); return; }
+      await busy(b, async () => {
+        try { const { _new, ...q } = editing; const r = await rpc('admin_question_save', { question: { ...q, status: st } }); upsertLocal(r.question); editing = null; S.open = null; toast(st === 'approved' ? '✓ Sove epi apwouve' : st === 'draft' ? '⚑ Make kòm pwoblèm' : 'Sove'); loadStats(); loadCats(); renderQs(); }
+        catch (er) { toast(er.message, true); }
+      }); break;
+    }
+    case 'delete': {
+      if (!(await confirmBox('Efase kesyon sa a?', `<span class="mono">${esc(id)}</span> ap disparèt nan bank lan. Li p ap sou telefòn yo apre pwochen piblikasyon an.`, 'Efase', 'bad'))) return;
+      try { await rpc('admin_question_delete', { id }); S.bank[S.cat] = S.bank[S.cat].filter((x) => x.id !== id); editing = null; S.open = null; toast('Kesyon an efase'); loadStats(); loadCats(); renderQs(); } catch (er) { toast(er.message, true); }
+      break;
+    }
+  }
+});
+$('#content').addEventListener('input', (e) => {
+  if (S.view !== 'kesyon' || !editing) return;
+  const el = e.target; const f = el.dataset.f; if (!f) return;
+  if (f === 'opt') editing.opts[Number(el.dataset.i)] = el.value;
+  else if (f === 'optFr') editing.optsFr[Number(el.dataset.i)] = el.value;
+  else if (f === 'age') editing.ages = AGES.filter((a) => el.closest('.q').querySelector(`input[data-f="age"][value="${a}"]`).checked);
+  else if (f === 'd') editing.d = Number(el.value);
+  else editing[f] = el.value;
+  const w = el.closest('.q').querySelector('[data-lint]'); const p = lint(editing); w.hidden = !p.length; w.textContent = '⚠️ ' + p.join(' · ');
+});
+
+// ---------- categories ----------
+function viewCategories() {
+  S.catsDraft = JSON.parse(JSON.stringify(S.cats));
+  $('#toolbar').innerHTML = `<h1>Kategori</h1><span class="grow" style="flex:1"></span><button class="btn" id="c-add" type="button">+ Nouvo kategori</button><button class="btn primary" id="c-save" type="button">Sove</button>`;
+  $('#c-add').onclick = () => { const n = S.catsDraft.length + 1; S.catsDraft.push({ id: 'nouvo-' + n, name: { ht: 'Nouvo kategori', fr: 'Nouvelle catégorie' }, icon: 'kesyon', color: '#1F47B5', order: n, enabled: false, isNew: true, ages: AGES.slice(), _fresh: true }); renderCats(); };
+  $('#c-save').onclick = (e) => busy(e.currentTarget, async () => {
+    try { const r = await rpc('admin_categories_save', { categories: S.catsDraft.map(({ _fresh, _icons, ...c }) => c) }); S.cats = r.categories; await loadStats(); await loadCats(); toast('Kategori yo sove · pibliye pou timoun yo wè yo'); viewCategories(); } catch (er) { toast(er.message, true); }
+  });
+  renderCats();
+}
+function renderCats() {
+  $('#content').innerHTML = `<p class="muted" style="margin:0">Lòd la se lòd timoun yo wè yo nan app la. Yon kategori ki pa aktive pa parèt.</p>` + S.catsDraft.map((c, i) => `
+    <section class="panel catcard" data-i="${i}">
+      <div class="ico" style="background:${c.color}22"><span data-icon="${esc(c.icon)}" style="display:block;width:36px;height:36px"></span></div>
+      <div style="display:grid;gap:10px;min-width:0">
+        <div class="row2"><div class="field"><label>Non (Kreyòl)</label><input class="inp" data-cf="ht" value="${esc(c.name.ht)}"></div><div class="field"><label>Nom (Français)</label><input class="inp" data-cf="fr" value="${esc(c.name.fr)}"></div></div>
+        <div class="row2">
+          <div class="field"><label>Idantifyan</label><input class="inp mono" data-cf="id" value="${esc(c.id)}" ${c._fresh ? '' : 'readonly title="Idantifyan an pa chanje: kesyon yo konekte ak li"'}></div>
+          <div class="field"><span class="lbl">Koulè</span><div class="swatches">${COLORS.map((k) => `<button type="button" class="sw" style="background:${k}" data-cf="color" data-v="${k}" aria-pressed="${c.color.toLowerCase() === k.toLowerCase()}" aria-label="${k}"></button>`).join('')}</div></div>
+        </div>
+        <div class="row2">
+          <label class="switch"><span class="t">Aktive<small>Timoun yo ka wè l</small></span><input type="checkbox" class="tg" data-cf="enabled" ${c.enabled ? 'checked' : ''}></label>
+          <label class="switch"><span class="t">Badj «Nouvo»<small>Montre l kòm nouvo</small></span><input type="checkbox" class="tg" data-cf="isNew" ${c.isNew ? 'checked' : ''}></label>
+        </div>
+        <div class="field"><span class="lbl">Laj</span><div class="ages">${AGES.map((a) => `<label><input type="checkbox" data-cf="age" value="${a}" ${c.ages.includes(a) ? 'checked' : ''}> ${a} an</label>`).join('')}</div></div>
+        <details ${c._icons ? 'open' : ''}><summary class="lbl" style="cursor:pointer">Chanje imaj la</summary><div class="iconpick" style="margin-top:8px">${Object.keys(window.KICONS || {}).map((k) => `<button type="button" data-cf="icon" data-v="${k}" aria-pressed="${c.icon === k}" title="${k}">${icon(k)}</button>`).join('')}</div></details>
+      </div>
+      <div class="order"><button type="button" data-cf="up" aria-label="Monte" ${i === 0 ? 'disabled' : ''}>↑</button><button type="button" data-cf="down" aria-label="Desann" ${i === S.catsDraft.length - 1 ? 'disabled' : ''}>↓</button></div>
+    </section>`).join('');
+  paintIcons($('#content'));
+}
+$('#content').addEventListener('click', (e) => {
+  if (S.view !== 'kategori') return;
+  const b = e.target.closest('button[data-cf]'); if (!b) return;
+  const i = Number(b.closest('[data-i]').dataset.i); const c = S.catsDraft[i];
+  if (b.dataset.cf === 'color') c.color = b.dataset.v;
+  else if (b.dataset.cf === 'icon') { c.icon = b.dataset.v; c._icons = true; }
+  else if (b.dataset.cf === 'up' && i > 0) [S.catsDraft[i - 1], S.catsDraft[i]] = [S.catsDraft[i], S.catsDraft[i - 1]];
+  else if (b.dataset.cf === 'down' && i < S.catsDraft.length - 1) [S.catsDraft[i + 1], S.catsDraft[i]] = [S.catsDraft[i], S.catsDraft[i + 1]];
+  renderCats();
+});
+$('#content').addEventListener('input', (e) => {
+  if (S.view !== 'kategori') return;
+  const el = e.target; const f = el.dataset.cf; if (!f) return;
+  const c = S.catsDraft[Number(el.closest('[data-i]').dataset.i)];
+  if (f === 'ht' || f === 'fr') c.name[f] = el.value;
+  else if (f === 'id') c.id = el.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+  else if (f === 'enabled' || f === 'isNew') c[f] = el.checked;
+  else if (f === 'age') c.ages = AGES.filter((a) => el.closest('.ages').querySelector(`input[value="${a}"]`).checked);
+});
+
+// ---------- settings ----------
+async function viewSettings() {
+  $('#toolbar').innerHTML = `<h1>Paramèt app la</h1><span style="flex:1"></span><button class="btn primary" id="s-save" type="button">Sove</button>`;
+  $('#content').innerHTML = '<div class="empty"><b>N ap chaje…</b></div>';
+  try { S.config = (await rpc('admin_config')).config; } catch (e) { toast(e.message, true); return; }
+  const c = S.config; const F = [['duels', 'Defi 1 kont 1', 'Duel ak Robo ak lòt jwè'], ['courses', 'Kou lang', 'Angle ak Panyòl'], ['coding', 'Enfòmatik', 'Jwèt robo ak blòk'], ['math', 'Kalkil Mantal', '60 segonn kalkil'], ['peyi', 'Peyi', 'Drapo, kapital, fòm']];
+  $('#content').innerHTML = `
+    <section class="panel"><h2>Sa timoun yo ka jwe</h2><div>${F.map(([k, t, s]) => `<label class="switch"><span class="t">${t}<small>${s}</small></span><input type="checkbox" class="tg" data-sf="features.${k}" ${c.features[k] ? 'checked' : ''}></label>`).join('')}</div></section>
+    <section class="panel"><h2>Anons</h2><p class="muted" style="margin:0">Yon ti mesaj anlè paj Lakay la.</p>
+      <label class="switch"><span class="t">Montre anons lan</span><input type="checkbox" class="tg" data-sf="announcement.on" ${c.announcement.on ? 'checked' : ''}></label>
+      <div class="row2"><div class="field"><label>Mesaj (Kreyòl)</label><textarea class="inp" rows="2" data-sf="announcement.ht">${esc(c.announcement.ht)}</textarea></div><div class="field"><label>Message (Français)</label><textarea class="inp" rows="2" data-sf="announcement.fr">${esc(c.announcement.fr)}</textarea></div></div>
+      <div class="field"><span class="lbl">Koulè</span><div class="seg" id="s-color">${['blue', 'yellow', 'green', 'red'].map((k) => `<button type="button" data-v="${k}" aria-pressed="${c.announcement.color === k}">${{ blue: 'Ble', yellow: 'Jòn', green: 'Vèt', red: 'Wouj' }[k]}</button>`).join('')}</div></div>
+      <div class="banner ${c.announcement.color}" id="s-preview">${esc(c.announcement.ht || 'Apèsi anons lan')}</div>
+    </section>
+    <section class="panel"><h2>Kesyon</h2>
+      <label class="switch"><span class="t">Sèvi kesyon ki poko relekti<small>Lè l fèmen, se sèlman kesyon ki apwouve ki rive sou telefòn yo</small></span><input type="checkbox" class="tg" data-sf="serveReview" ${c.serveReview ? 'checked' : ''}></label>
+      <div class="row2"><div class="field"><label for="s-daily">Kesyon nan Defi jodi a</label><input class="inp" id="s-daily" type="number" min="5" max="20" data-sf="dailyCount" value="${c.dailyCount}"></div>
+      <div class="field"><label for="s-minv">Vèsyon app minimòm</label><input class="inp mono" id="s-minv" data-sf="minAppVersion" value="${esc(c.minAppVersion)}"></div></div>
+    </section>
+    <section class="panel"><h2>Antretyen</h2><p class="muted" style="margin:0">Bloke app la ak yon mesaj pandan w ap fè gwo chanjman.</p>
+      <label class="switch"><span class="t">Mòd antretyen</span><input type="checkbox" class="tg" data-sf="maintenance.on" ${c.maintenance.on ? 'checked' : ''}></label>
+      <div class="row2"><div class="field"><label>Mesaj (Kreyòl)</label><textarea class="inp" rows="2" data-sf="maintenance.ht">${esc(c.maintenance.ht)}</textarea></div><div class="field"><label>Message (Français)</label><textarea class="inp" rows="2" data-sf="maintenance.fr">${esc(c.maintenance.fr)}</textarea></div></div>
+    </section>`;
+  $('#s-color').onclick = (e) => { const b = e.target.closest('[data-v]'); if (!b) return; c.announcement.color = b.dataset.v; for (const x of $('#s-color').children) x.setAttribute('aria-pressed', String(x === b)); $('#s-preview').className = 'banner ' + b.dataset.v; };
+  $('#s-save').onclick = (e) => busy(e.currentTarget, async () => { try { S.config = (await rpc('admin_config_save', { config: S.config })).config; toast('Paramèt yo sove · pibliye pou yo rive sou telefòn yo'); loadStats(); } catch (er) { toast(er.message, true); } });
+}
+$('#content').addEventListener('input', (e) => {
+  if (S.view !== 'paramet' || !S.config) return;
+  const el = e.target; const f = el.dataset.sf; if (!f) return;
+  const [a, b] = f.split('.'); const v = el.type === 'checkbox' ? el.checked : el.type === 'number' ? Number(el.value) : el.value;
+  if (b) S.config[a][b] = v; else S.config[a] = v;
+  if (f === 'announcement.ht') $('#s-preview').textContent = el.value || 'Apèsi anons lan';
+});
+
+// ---------- UI strings ----------
+async function viewStrings() {
+  $('#toolbar').innerHTML = `<h1>Tèks app la</h1><label class="search"><span aria-hidden="true">🔎</span><input id="t-search" type="search" placeholder="Chèche yon tèks…"></label><button class="btn primary" id="t-save" type="button">Sove</button>`;
+  $('#content').innerHTML = '<div class="empty"><b>N ap chaje…</b></div>';
+  try { S.strings = await rpc('admin_strings'); } catch (e) { toast(e.message, true); return; }
+  S.stringsDirty = JSON.parse(JSON.stringify(S.strings.overrides));
+  const render = (q = '') => {
+    const ql = q.toLowerCase();
+    const keys = Object.keys(S.strings.defaults).filter((k) => !ql || k.includes(ql) || S.strings.defaults[k].join(' ').toLowerCase().includes(ql) || (S.stringsDirty[k] || []).join(' ').toLowerCase().includes(ql));
+    $('#content').innerHTML = `<section class="panel"><p class="muted" style="margin:0">Chanje nenpòt tèks nan app la. Kite yon kaz vid pou tounen nan tèks orijinal la.</p><div>${keys.map((k) => { const d = S.strings.defaults[k], o = S.stringsDirty[k]; return `<div class="strrow ${o ? 'changed' : ''}" data-k="${k}"><div class="key">${k}</div><div><input class="inp" data-l="0" value="${esc(o?.[0] ?? '')}" placeholder="${esc(d[0])}" aria-label="${k} Kreyòl"><div class="def">${esc(d[0])}</div></div><div><input class="inp" data-l="1" value="${esc(o?.[1] ?? '')}" placeholder="${esc(d[1])}" aria-label="${k} français"><div class="def">${esc(d[1])}</div></div></div>`; }).join('')}</div></section>`;
+  };
+  render();
+  let t; $('#t-search').oninput = (e) => { clearTimeout(t); t = setTimeout(() => render(e.target.value), 150); };
+  $('#t-save').onclick = (e) => busy(e.currentTarget, async () => { try { S.strings.overrides = (await rpc('admin_strings_save', { overrides: S.stringsDirty })).overrides; S.stringsDirty = JSON.parse(JSON.stringify(S.strings.overrides)); toast('Tèks yo sove · pibliye pou yo rive sou telefòn yo'); loadStats(); render($('#t-search').value); } catch (er) { toast(er.message, true); } });
+}
+$('#content').addEventListener('input', (e) => {
+  if (S.view !== 'teks') return;
+  const row = e.target.closest('[data-k]'); if (!row) return;
+  const k = row.dataset.k; const v = [row.querySelector('[data-l="0"]').value.trim(), row.querySelector('[data-l="1"]').value.trim()];
+  if (!v[0] && !v[1]) delete S.stringsDirty[k]; else S.stringsDirty[k] = v;
+  row.classList.toggle('changed', !!S.stringsDirty[k]);
+});
+
+// ---------- reports + audit ----------
+async function viewReports() {
+  $('#toolbar').innerHTML = `<h1>Rapò</h1>`;
+  let reports = [];
+  try { reports = (await rpc('admin_reports')).reports; } catch (e) { toast(e.message, true); }
+  $('#content').innerHTML = reports.length ? `<section class="panel scroll"><table class="tbl"><thead><tr><th>Dat</th><th>Rezon</th><th>Jwè ki rapòte</th><th>Jwè ki rapòte a</th><th></th></tr></thead><tbody>${reports.map((r, i) => `<tr><td>${new Date(r.at).toLocaleString('fr-HT')}</td><td>${esc(r.reason || '–')}</td><td class="mono">${esc(r.reporterId).slice(0, 8)}</td><td class="mono">${esc(r.targetId).slice(0, 8)}</td><td>${r.resolved ? '<span class="chip st-approved">Regle</span>' : `<button class="btn" data-resolve="${i}" type="button">Make regle</button>`}</td></tr>`).join('')}</tbody></table></section>`
+    : `<div class="empty"><b>Pa gen rapò</b>Lè yon timoun rapòte yon jwè nan yon duel, li parèt isit la.</div>`;
+  $('#content').onclick = async (e) => { const b = e.target.closest('[data-resolve]'); if (!b || S.view !== 'rapo') return; await busy(b, () => rpc('admin_report_resolve', { index: Number(b.dataset.resolve) })); loadStats(); viewReports(); };
+}
+async function viewAudit() {
+  $('#toolbar').innerHTML = `<h1>Istorik</h1>`;
+  let entries = [];
+  try { entries = (await rpc('admin_audit')).entries; } catch (e) { toast(e.message, true); }
+  const L = { save: 'Sove', delete: 'Efase', import: 'Enpòte', publish: 'Pibliye', categories: 'Kategori', config: 'Paramèt', strings: 'Tèks', 'resolve-report': 'Rapò regle', 'status:approved': 'Apwouve', 'status:draft': 'Pwoblèm', 'status:review': 'Pou relekti' };
+  $('#content').innerHTML = entries.length ? `<section class="panel scroll"><table class="tbl"><thead><tr><th>Lè</th><th>Ki moun</th><th>Aksyon</th><th>Sou</th></tr></thead><tbody>${entries.map((e) => `<tr><td>${new Date(e.at).toLocaleString('fr-HT')}</td><td>${esc(e.by)}</td><td>${esc(L[e.action] || e.action)}</td><td class="mono">${esc(e.target)}</td></tr>`).join('')}</tbody></table></section>` : `<div class="empty"><b>Pa gen anyen ankò</b></div>`;
+}
+$('#content').addEventListener('click', () => {}, { passive: true });
+
+// ---------- boot ----------
+$('#loginform').onsubmit = async (e) => {
+  e.preventDefault(); $('#lg-err').hidden = true;
+  const email = $('#lg-email').value.trim(), pass = $('#lg-pass').value;
+  await busy($('#lg-btn'), async () => {
+    try { await login(email, pass); store.set('email', email); $('#lg-pass').value = ''; await showApp(); }
+    catch (er) { $('#lg-err').hidden = false; $('#lg-err').textContent = er.status === 401 || er.status === 404 ? 'Imèl oswa modpas la pa bon.' : er.message; }
+  });
+};
+$('#btn-logout').onclick = logout;
+if (session) showApp(); else showLogin();
+})();
+</script>
+</body>
+</html>

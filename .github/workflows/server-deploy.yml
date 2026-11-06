@@ -1,0 +1,47 @@
+name: Server build → deploy branch
+
+# Builds the Nakama module, the admin panel and the question bank, and publishes them to the
+# `deploy` branch. The server pulls that branch every 2 minutes (server/deploy/update.sh).
+on:
+  push:
+    branches: [main]
+    paths: ['server/**', 'packages/core/**', 'apps/admin-web/**', 'content/bank/**', 'tools/**', 'apps/mobile/src/lib/i18n.ts', '.github/workflows/server-deploy.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - name: Check and build the question bank
+        run: node tools/check-bank.mjs && node tools/build-bank.mjs
+      - name: UI texts for the admin
+        run: node tools/gen-strings.mjs
+      - name: Core tests
+        run: npx vitest run --root packages/core
+      - name: Build Nakama module
+        run: npm run build -w @konesans/nakama
+      - name: Assemble deploy folder
+        run: |
+          rm -rf out && mkdir -p out/modules out/admin
+          cp server/deploy/docker-compose.yml server/deploy/Caddyfile server/deploy/update.sh server/deploy/keys.env out/
+          cp server/nakama/build/index.js out/modules/
+          cp apps/admin-web/index.html apps/admin-web/icons.js apps/admin-web/manifest.webmanifest apps/admin-web/favicon.png out/admin/
+          cp apps/admin/bank.json out/admin/bank.json
+          echo "${GITHUB_SHA}" > out/BUILD
+          printf '# Konesans deploy build\nGenerated from %s. Do not edit; see server/deploy on main.\n' "${GITHUB_SHA}" > out/README.md
+      - name: Push to the deploy branch
+        run: |
+          cd out
+          git init -q -b deploy
+          git config user.name "konesans-bot"
+          git config user.email "konesans-bot@users.noreply.github.com"
+          git add -A
+          git commit -q -m "deploy ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" deploy
