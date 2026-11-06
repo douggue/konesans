@@ -79,7 +79,7 @@ export function named(dep: DepartmentId, wrong: DepartmentId[]): Raw {
   const [ht, fr] = DEP_NAME[dep];
   const { opts, a } = withAnswer(dep, wrong, 'named-' + dep);
   return [1, 'A', 'non', `Kijan yo rele depatman "${fr}" an Kreyòl?`, `Comment dit-on « ${fr} » en créole ?`,
-    opts.map((x) => DEP_NAME[x][0]), a, `An Kreyòl nou di ${ht} pou ${fr}.`, `En créole, on dit ${ht} pour ${fr}.`];
+    opts.map((x) => DEP_NAME[x][0]), a, `An Kreyòl nou di ${ht} pou "${fr}".`, `En créole, on dit ${ht} pour « ${fr} ».`];
 }
 
 /** "Ki depatman ki gen Jakmèl kòm chèf-lye?" */

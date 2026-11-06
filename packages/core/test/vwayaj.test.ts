@@ -19,7 +19,7 @@ function validQuestion(q: Question) {
   expect(q.ages.length).toBeGreaterThan(0);
   for (const a of q.ages) expect(AGES).toContain(a);
   // Kreyòl orthography: no c (outside ch), q, x; no apostrophe short forms
-  const ht = [q.prompt.ht, q.explain!.ht, ...q.options.map((o) => o.ht)].join(' ').replace(/\b(UNESCO|FIFA|NASA|Santa Maria|La Navidad|Mayflower|Santo Domingo|Santiago|Les Cayes|Cap-Haïtien)\b/g, '');
+  const ht = [q.prompt.ht, q.explain!.ht, ...q.options.map((o) => o.ht)].join(' ').replace(/"[^"]*"/g, '').replace(/\b(UNESCO|FIFA|NASA|Santa Maria|La Navidad|Mayflower|Santo Domingo|Santiago|Les Cayes|Cap-Haïtien)\b/g, '');
   expect(ht.match(/\b[a-zàèòù]*(?:c(?!h)|q|x)[a-zàèòù]*\b/gi), `${q.id} non-Kreyòl letters`).toBeNull();
   expect(/\b(m|l|n|w|y|t)'/i.test(ht), `${q.id} apostrophe short form`).toBe(false);
 }
@@ -29,17 +29,17 @@ describe('department pack', () => {
     expect(DEPARTMENT_ORDER).toEqual(['lwes', 'sides', 'sid', 'grandans', 'nip', 'sant', 'latibonit', 'nodwes', 'no', 'nodes']);
     for (const d of DEPARTMENTS) {
       expect(d.name.ht && d.name.fr && d.chefLieu.ht && d.chefLieu.fr).toBeTruthy();
-      expect(d.facts.length).toBeGreaterThanOrEqual(3);
+      expect(d.facts.length).toBeGreaterThanOrEqual(6);
       for (const f of d.facts) expect(f.ht && f.fr).toBeTruthy();
     }
   });
 
-  it('every department has ≥ 12 valid questions with answers in range', () => {
+  it('every department has ≥ 28 valid questions with answers in range', () => {
     for (const d of DEPARTMENTS) {
-      expect(d.questions.length, d.id).toBeGreaterThanOrEqual(12);
+      expect(d.questions.length, d.id).toBeGreaterThanOrEqual(28);
       d.questions.forEach(validQuestion);
       // every age band has some questions of its own
-      for (const a of AGES) expect(d.questions.filter((q) => q.ages.includes(a)).length, `${d.id} ${a}`).toBeGreaterThanOrEqual(5);
+      for (const a of AGES) expect(d.questions.filter((q) => q.ages.includes(a)).length, `${d.id} ${a}`).toBeGreaterThanOrEqual(10);
     }
   });
 
