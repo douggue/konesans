@@ -98,6 +98,7 @@ export default function Home() {
           { icon: 'defi', bg: colors.redSoft, label: t('duel_bot'), href: '/duel', on: features.duels },
           { icon: 'lang', bg: colors.blueSoft, label: t('course'), href: '/course', on: features.courses },
           { icon: 'robo', bg: colors.purpleSoft, label: t('coding'), href: '/coding', on: features.coding },
+          { icon: 'vwayaj', bg: colors.greenSoft, label: t('vw_title'), href: '/vwayaj', on: true },
           { icon: 'kalkil', bg: colors.greenSoft, label: t('math_title'), href: '/math', on: features.math },
           { icon: 'drapo', bg: colors.orangeSoft, label: categoryInfo('peyi')[profile.lang], href: '/peyi', on: features.peyi },
         ].filter((x) => x.on).map((x, i) => (

@@ -3,8 +3,10 @@ import { useStore } from './store';
 import { useRemote } from './remote';
 import { QUESTS_STRINGS } from './strings/quests';
 import { CARDS_STRINGS } from './strings/cards';
+import { VWAYAJ_STRINGS } from './strings/vwayaj';
 
 const S = {
+  ...VWAYAJ_STRINGS,
   ...CARDS_STRINGS,
   ...QUESTS_STRINGS,
   // nav
