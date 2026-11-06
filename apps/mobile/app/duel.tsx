@@ -98,7 +98,7 @@ function DuelEnd({ won, draw, me, op, note, onReport }: { won: boolean; draw: bo
       {won && <Confetti />}
       <View style={{ alignItems: 'center', gap: 10, marginTop: 'auto' }}>
         <Drop><Mascot size={140} mood={won ? 'cheer' : draw ? 'happy' : 'sad'} /></Drop>
-        <Pop delay={450}><T v="display" center>{won ? t('you_win') : draw ? t('draw') : t('you_lose')}</T></Pop>
+        <Pop delay={450}><T v="display" center>{won ? t('you_win') : draw ? t('draw') : op.isBot ? t('you_lose') : t('they_win', { name: op.name })}</T></Pop>
         {note ? <FadeIn delay={500}><T v="small" center color={colors.muted}>{t(note)}</T></FadeIn> : null}
         <Row gap={16}>
           <FadeIn delay={650} x={-40} from={0} style={{ alignItems: 'center', gap: 4 }}><Avatar a={me.avatar} size={64} live={won} /><ScoreNum n={me.score} color={colors.blue} /><T v="small" color={colors.muted}>{me.name}</T></FadeIn>
