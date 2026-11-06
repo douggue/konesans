@@ -4,6 +4,6 @@
  * The HTTP key is public on purpose: it only allows reading published content.
  */
 export const SERVER = {
-  apiUrl: 'https://api.CHANGE-ME',
+  apiUrl: 'https://api.107-170-50-239.sslip.io',
   httpKey: 'konesans-hk-se6HZd0260kH',
 };

@@ -50,7 +50,7 @@
     },
     "owner": "tjeangardys-team",
     "extra": {
-      "apiUrl": "https://api.CHANGE-ME",
+      "apiUrl": "https://api.107-170-50-239.sslip.io",
       "serverKey": "konesans-sk-nY9_5rth9pUY",
       "eas": {
         "projectId": "1ddd2cb0-9076-421e-aff2-9b1b9b013e22"
