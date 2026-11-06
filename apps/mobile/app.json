@@ -48,6 +48,17 @@
       "typedRoutes": false,
       "baseUrl": "."
     },
-    "owner": "tjeangardy"
+    "owner": "tjeangardy",
+    "extra": {
+      "eas": {
+        "projectId": "e6f86514-7040-4ad8-a495-ef8463a684c6"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/e6f86514-7040-4ad8-a495-ef8463a684c6"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }
