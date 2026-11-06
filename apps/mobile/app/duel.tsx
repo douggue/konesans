@@ -166,6 +166,7 @@ function safeAvatar(a: unknown, seed: string): AvatarConfig {
     skin: n('skin'), hairColor: n('hairColor'), shirt: n('shirt'), bg: n('bg'),
     hair: HAIR.includes(o.hair as never) ? (o.hair as AvatarConfig['hair']) : base.hair,
     extra: EXTRA.includes(o.extra as never) ? (o.extra as AvatarConfig['extra']) : base.extra,
+    ...(typeof o.frame === 'number' && Number.isInteger(o.frame) && o.frame >= 0 && o.frame < 8 ? { frame: o.frame } : {}),
   };
 }
 

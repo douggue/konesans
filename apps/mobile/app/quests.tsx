@@ -7,7 +7,8 @@ import { chestReady, canOpenChest, weekProgress, emptyMissionLog, msToLocalMidni
 import { Screen, T, Row, TopBar, Icon, Progress, CountPill, PressScale, FadeIn, Pop, Bounce, Burst, Confetti, reduceMotion } from '@/ui';
 import { RankUpListener } from '@/ui/RankUp';
 import { colors } from '@/lib/theme';
-import { useStore, todayLocal, KID_TZ } from '@/lib/store';
+import { useStore, todayLocal, KID_TZ, useWeeklyLegendEarned } from '@/lib/store';
+import { CardReveal } from '@/ui/CardReveal';
 import { useT, type StrKey } from '@/lib/i18n';
 import { useDailyCount } from '@/lib/remote';
 import { sfx, tap } from '@/lib/audio';
@@ -132,6 +133,10 @@ export default function Quests() {
   const [justOpened, setJustOpened] = useState(false);
   const week = weekProgress(missions, day);
   const days = t('q_days').split(' ');
+  // 7/7 week → a guaranteed Lejand hero card (once per week)
+  const legendEarned = useWeeklyLegendEarned();
+  const [legend, setLegend] = useState<string | null>(null);
+  useEffect(() => { if (legendEarned && !legend && useStore.getState().claimWeeklyLegend()) setLegend('week-' + day); }, [legendEarned]);
 
   function open() {
     if (!canOpenChest(missions, progress, day)) return;
@@ -213,6 +218,7 @@ export default function Quests() {
             </Row>
           </View>
         </FadeIn>
+        {legend && <CardReveal kind="legend" drawKey={legend} delay={1600} onClose={() => setLegend(null)} />}
       </Screen>
       {justOpened && <Confetti count={22} />}
       <RankUpListener delayMs={1600} />

@@ -48,6 +48,9 @@ export default function RootLayout() {
         <Stack.Screen name="course/[lang]/[lesson]" options={MODAL} />
         <Stack.Screen name="coding/[level]" options={MODAL} />
         <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
+        <Stack.Screen name="quests" options={PUSH} />
+        <Stack.Screen name="ranks" options={PUSH} />
+        <Stack.Screen name="cards" options={PUSH} />
       </Stack>
       {maint && !intro && <Maintenance text={(lang === 'fr' && maint.fr) || maint.ht || maint.fr} lang={lang} />}
       {intro && <Intro onDone={() => setIntro(false)} />}
