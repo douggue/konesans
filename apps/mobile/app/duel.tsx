@@ -9,7 +9,7 @@ import { colors } from '@/lib/theme';
 import { useStore, useAvatar } from '@/lib/store';
 import { useT, type StrKey } from '@/lib/i18n';
 import { buildQuestions } from '@/lib/content';
-import { tap } from '@/lib/audio';
+import { tap, sfx, music, musicIntensity, answerSfx } from '@/lib/audio';
 import { serverConfigured } from '@/lib/remote';
 import { findDuel, setProfile, lastOnlineError, type OnlineDuel as OnlineCtl, type OnlineView } from '@/lib/online';
 
@@ -46,6 +46,26 @@ function DuelGame({ vm, onPick, onReact, onQuit }: { vm: GameVM; onPick: (i: num
   const [quitting, setQuitting] = useState(false);
   const { me, op, reveal } = vm;
   const waiting = vm.left === null;
+  // ── sound: battle loop, hurry + ticks in the last seconds, pings, answer feedback ──
+  const results = useRef<boolean[]>([]);
+  const lastTick = useRef<number | null>(null);
+  useEffect(() => { music('duel_battle'); }, []);
+  useEffect(() => { musicIntensity('normal'); lastTick.current = null; }, [vm.index]);
+  const secs = vm.left === null || reveal ? null : Math.ceil(vm.left / 1000);
+  useEffect(() => {
+    if (secs === null) return;
+    if (secs <= 4) musicIntensity('hurry');
+    if (secs >= 1 && secs <= 3 && lastTick.current !== secs) { lastTick.current = secs; sfx('tick'); }
+  }, [secs]);
+  useEffect(() => { if (op.answered && !reveal) sfx('ping'); }, [op.answered]);
+  useEffect(() => { if (op.reaction) sfx('pop'); }, [op.reaction]);
+  useEffect(() => {
+    if (!reveal || !vm.question) return;
+    musicIntensity('normal');
+    const timedOut = me.chosen === null;
+    results.current.push(!timedOut && me.chosen === vm.question.answer);
+    sfx(answerSfx(results.current, timedOut));
+  }, [reveal, vm.index]);
   return (
     <Screen>
       <TopBar close title={`${t('question')} ${vm.index + 1} / ${vm.total}`} onBack={() => setQuitting(true)} />
@@ -93,11 +113,17 @@ function DuelEnd({ won, draw, me, op, note, onReport }: { won: boolean; draw: bo
   const t = useT();
   const stats = useStore((s) => s.stats);
   const [reported, setReported] = useState(false);
+  useEffect(() => {
+    music(null);
+    sfx(won ? 'win' : draw ? 'draw' : 'lose');
+    const id = setTimeout(() => sfx('coin'), 1200); // with the XP pill
+    return () => clearTimeout(id);
+  }, []);
   return (
     <Screen scroll={false}>
       {won && <Confetti />}
       <View style={{ alignItems: 'center', gap: 10, marginTop: 'auto' }}>
-        <Drop><Mascot size={140} mood={won ? 'cheer' : draw ? 'happy' : 'sad'} /></Drop>
+        <Drop><Mascot size={140} mood={won ? 'cool' : draw ? 'happy' : 'angry'} /></Drop>
         <Pop delay={450}><T v="display" center>{won ? t('you_win') : draw ? t('draw') : op.isBot ? t('you_lose') : t('they_win', { name: op.name })}</T></Pop>
         {note ? <FadeIn delay={500}><T v="small" center color={colors.muted}>{t(note)}</T></FadeIn> : null}
         <Row gap={16}>
@@ -226,7 +252,7 @@ function OnlineDuel({ onFallback }: { onFallback: (note: StrKey) => void }) {
     op: { ...op, answered: !!opP?.answered, chosen: opP?.chosen, reaction: opP ? v.reactions[opP.id] : undefined },
     myReaction,
   };
-  return <DuelGame vm={vm} onPick={(i) => ctl.current?.answer(i)} onReact={(r) => { setMyReaction(r); ctl.current?.react(r); }} onQuit={() => ctl.current?.leave()} />;
+  return <DuelGame vm={vm} onPick={(i) => ctl.current?.answer(i)} onReact={(r) => { sfx('pop'); setMyReaction(r); ctl.current?.react(r); }} onQuit={() => ctl.current?.leave()} />;
 }
 
 // ─── local (Robo on the phone) ───────────────────────────────────────────────
@@ -299,6 +325,6 @@ function LocalDuel({ note }: { note: StrKey | null }) {
   };
   return <DuelGame vm={vm}
     onPick={(i) => setS((d) => reduce(d, { type: 'answer', playerId: ME, chosen: i }, Date.now()))}
-    onReact={(r) => setS((d) => reduce(d, { type: 'react', playerId: ME, reaction: r }, Date.now()))}
+    onReact={(r) => { sfx('pop'); setS((d) => reduce(d, { type: 'react', playerId: ME, reaction: r }, Date.now())); }}
     onQuit={() => setS((d) => reduce(d, { type: 'leave', playerId: ME }, Date.now()))} />;
 }

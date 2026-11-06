@@ -14,7 +14,7 @@ import { Avatar } from './avatar';
 import { reduceMotion } from './motion';
 import { colors } from '@/lib/theme';
 import { useT } from '@/lib/i18n';
-import { tap } from '@/lib/audio';
+import { tap, sfx, music } from '@/lib/audio';
 
 export function Matchmaking({ me, opponent, onDone, hint }: { me: { name: string; avatar: AvatarConfig; sub?: string }; opponent: { name: string; avatar: AvatarConfig; sub?: string } | null; onDone: () => void; hint?: string }) {
   const t = useT();
@@ -32,6 +32,7 @@ export function Matchmaking({ me, opponent, onDone, hint }: { me: { name: string
 
   // 1. radar while searching (at least 1.7 s so it never just flashes)
   useEffect(() => {
+    music('duel_search');
     const minId = setTimeout(() => setWaited(true), reduceMotion() ? 300 : 1700);
     const longId = setTimeout(() => setLongWait(true), 3500);
     if (reduceMotion()) return () => { clearTimeout(minId); clearTimeout(longId); };
@@ -49,16 +50,17 @@ export function Matchmaking({ me, opponent, onDone, hint }: { me: { name: string
   useEffect(() => {
     if (!ready) return;
     loopsRef.current.forEach((l) => l.stop());
-    setPhase('found'); tap();
+    setPhase('found'); tap(); sfx('found');
     if (reduceMotion()) { slide.setValue(1); vs.setValue(1); const id = setTimeout(finish, 1200); return () => clearTimeout(id); }
     Animated.sequence([
       Animated.spring(slide, { toValue: 1, useNativeDriver: true, speed: 9, bounciness: 9 }),
       Animated.timing(vs, { toValue: 1, duration: 260, easing: Easing.in(Easing.quad), useNativeDriver: true }),
       Animated.timing(shake, { toValue: 1, duration: 360, easing: Easing.linear, useNativeDriver: true }),
     ]).start();
+    const vsId = setTimeout(() => sfx('vs'), 620); // as the VS badge lands
     const s1 = setTimeout(() => tap('success'), 900);
     const end = setTimeout(finish, 1600);
-    return () => { clearTimeout(s1); clearTimeout(end); };
+    return () => { clearTimeout(vsId); clearTimeout(s1); clearTimeout(end); };
   }, [ready]);
 
   const shakeX = shake.interpolate({ inputRange: [0, 0.2, 0.4, 0.6, 0.8, 1], outputRange: [0, -10, 9, -6, 3, 0] });
