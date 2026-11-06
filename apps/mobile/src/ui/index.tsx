@@ -232,50 +232,8 @@ export function Sheet({ open, title, children }: { open: boolean; title: string;
   );
 }
 
-// ─── Mascot: Ti Zwazo ──────────────────────────────────────────────────────
-/** Ti Zwazo. `live` = idle bob + blink (+ hop when cheering, droop when sad), as in the mockup. */
-export function Mascot({ size = 120, mood = 'happy', live = true }: { size?: number; mood?: 'happy' | 'think' | 'sad' | 'cheer'; live?: boolean }) {
-  if (!live) return <MascotArt size={size} mood={mood} />;
-  return <LiveMascot size={size} mood={mood} />;
-}
-function LiveMascot({ size, mood }: { size: number; mood: 'happy' | 'think' | 'sad' | 'cheer' }) {
-  const blink = useBlink();
-  const art = <MascotArt size={size} mood={mood} blink={blink} />;
-  if (mood === 'cheer') return <Hop height={size / 10}>{art}</Hop>;
-  return <Bob amount={mood === 'sad' ? 2 : size / 20} duration={mood === 'sad' ? 4000 : 3000}>{art}</Bob>;
-}
-export function MascotArt({ size = 120, mood = 'happy', blink }: { size?: number; mood?: 'happy' | 'think' | 'sad' | 'cheer'; blink?: boolean }) {
-  const smile = mood === 'sad' ? 'M68 128q12-8 24 0' : mood === 'cheer' ? 'M64 122q16 18 32 0' : 'M68 124q12 10 24 0';
-  return (
-    <Svg width={size} height={size} viewBox="0 0 160 170">
-      <Ellipse cx="80" cy="160" rx="42" ry="6" fill={colors.ink} opacity={0.15} />
-      <Path d="M30 110q-14-12-10-34 10 4 18 18z" fill="#1F47B5" stroke={colors.ink} strokeWidth={3} strokeLinejoin="round" />
-      <Path d="M130 110q14-12 10-34-10 4-18 18z" fill="#1F47B5" stroke={colors.ink} strokeWidth={3} strokeLinejoin="round" />
-      <Ellipse cx="80" cy="100" rx="46" ry="54" fill="#2F5FD8" stroke={colors.ink} strokeWidth={3} />
-      <Ellipse cx="80" cy="112" rx="28" ry="34" fill="#DCEBFF" />
-      <Path d="M58 88a22 22 0 0 1 44 0" fill="none" stroke="#1F47B5" strokeWidth={3} />
-      {blink ? (
-        <G><Path d="M55 85h18M87 85h18" stroke={colors.ink} strokeWidth={3} strokeLinecap="round" /></G>
-      ) : (
-        <G>
-          <Circle cx="64" cy="84" r="9" fill="#FFFFFF" stroke={colors.ink} strokeWidth={3} />
-          <Circle cx="96" cy="84" r="9" fill="#FFFFFF" stroke={colors.ink} strokeWidth={3} />
-          <Circle cx={mood === 'think' ? 67 : 66} cy="85" r="4" fill={colors.ink} />
-          <Circle cx={mood === 'think' ? 99 : 98} cy="85" r="4" fill={colors.ink} />
-        </G>
-      )}
-      <Path d="M70 98l10 12 10-12z" fill="#FFB800" stroke={colors.ink} strokeWidth={3} strokeLinejoin="round" />
-      <Path d={smile} fill="none" stroke={colors.ink} strokeWidth={3} strokeLinecap="round" />
-      <G>
-        <Path d="M46 62l34-22 34 22-34 10z" fill={colors.ink} />
-        <Rect x="58" y="60" width="44" height="12" rx="4" fill={colors.ink} />
-        <Path d="M114 62v22" stroke="#D21034" strokeWidth={4} strokeLinecap="round" />
-        <Circle cx="114" cy="86" r="5" fill="#D21034" />
-      </G>
-      <Path d="M64 150l-6 10M96 150l6 10M80 152v10" stroke="#FFB800" strokeWidth={5} strokeLinecap="round" />
-    </Svg>
-  );
-}
+// ─── Mascot: Ti Zwazo (art in ./mascot-art.ts, live rig in ./mascot.tsx) ─────
+export { Mascot, MascotArt, MascotRig, MASCOT_MOODS, type MascotMood, type RigValues } from './mascot';
 // ─── Haitian motifs for blue hero cards: Sitadèl Laferyè, Monument Vètyè, the flag's white panel ──
 // The arms are the real emblem (from the MIT-licensed flag-icons flag) flattened to white; the two monuments are hand-drawn silhouettes pending traced photos.
 const MOTIF_SVG = {
