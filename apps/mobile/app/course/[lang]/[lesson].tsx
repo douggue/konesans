@@ -5,7 +5,7 @@ import { startLesson, answerLesson, finishLesson, currentExercise, lessonProgres
 import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Icon, Stars, OptionButton, Pill, PressScale, SlideSwap, FadeIn, Drop, Pop, Confetti } from '@/ui';
 import { colors, radius } from '@/lib/theme';
 import { useStore } from '@/lib/store';
-import { useT } from '@/lib/i18n';
+import { useT, useL } from '@/lib/i18n';
 import { speak, tap } from '@/lib/audio';
 
 const TITLE: Record<Exercise['kind'], 'ex_pick_meaning' | 'ex_pick_word' | 'ex_listen' | 'ex_match' | 'ex_translate' | 'ex_build' | 'ex_fill'> = {
@@ -16,7 +16,8 @@ export default function Lesson() {
   const { lang, lesson } = useLocalSearchParams<{ lang: CourseId; lesson: string }>();
   const t = useT();
   const { profile, recordLessonDone } = useStore();
-  const title = useMemo(() => UNITS.flatMap((u) => u.lessons).find((l) => l.id === lesson)?.title ?? '', [lesson]);
+  const fr = profile.lang === 'fr';
+  const title = useMemo(() => { const d = UNITS.flatMap((u) => u.lessons).find((x) => x.id === lesson); return d ? (fr ? d.titleFr : d.title) : ''; }, [lesson, fr]);
   const [s, setS] = useState<LessonSession>(() => startLesson(lang!, lesson!, profile.age));
   const [resp, setResp] = useState<Response | null>(null);
   const [grade, setGrade] = useState<Grade | null>(null);
@@ -57,7 +58,7 @@ export default function Lesson() {
       {grade ? (
         <FadeIn from={40} duration={320}><Card edge={grade.correct ? colors.green : colors.red} soft={grade.correct ? colors.greenSoft : colors.redSoft} style={{ gap: 4 }}>
           <T v="h3" color={grade.correct ? '#12632F' : '#8F0A22'}>{grade.correct ? t('correct') : t('wrong')}</T>
-          {!grade.correct && <T v="body">{t('answer_was')}: <T v="bold">{grade.expected}</T></T>}
+          {!grade.correct && <T v="body">{t('answer_was')}: <T v="bold">{fr ? grade.expectedFr ?? grade.expected : grade.expected}</T></T>}
           <Button small title={t('continue')} color={grade.correct ? colors.green : colors.blue} onPress={next} style={{ marginTop: 6 }} />
         </Card></FadeIn>
       ) : (
@@ -72,14 +73,16 @@ export default function Lesson() {
 }
 
 function Speaker({ audio, big }: { audio: string; big?: boolean }) {
+  const t = useT();
   return (
-    <PressScale debounceMs={0} role="button" accessibilityLabel="Koute" onPress={() => speak(audio)} style={{ width: big ? 88 : 44, height: big ? 88 : 44, borderRadius: big ? 28 : 14, backgroundColor: colors.blueLight, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center', borderBottomWidth: big ? 6 : 2 }}>
+    <PressScale debounceMs={0} role="button" accessibilityLabel={t('listen')} onPress={() => speak(audio)} style={{ width: big ? 88 : 44, height: big ? 88 : 44, borderRadius: big ? 28 : 14, backgroundColor: colors.blueLight, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center', borderBottomWidth: big ? 6 : 2 }}>
       <Icon name="koute" size={big ? 48 : 26} />
     </PressScale>
   );
 }
 
 function ExerciseView({ ex, resp, setResp, reveal }: { ex: Exercise; resp: Response | null; setResp: (r: Response) => void; reveal: boolean }) {
+  const l = useL();
   const idx = typeof resp === 'number' ? resp : null;
   const st = (i: number, answer: number): 'idle' | 'picked' | 'right' | 'wrong' | 'dim' => (!reveal ? (idx === i ? 'picked' : 'idle') : i === answer ? 'right' : idx === i ? 'wrong' : 'dim');
 
@@ -88,13 +91,13 @@ function ExerciseView({ ex, resp, setResp, reveal }: { ex: Exercise; resp: Respo
       return (
         <View style={{ gap: 12 }}>
           <Row><Speaker audio={ex.prompt.audio} /><T v="display" style={{ flex: 1 }}>{ex.prompt.target}</T></Row>
-          <View style={{ gap: 10 }}>{ex.options.map((o, i) => <OptionButton key={i} label={(o.img ? '🖼  ' : '') + o.ht} state={st(i, ex.answer)} celebrate={idx === i} onPress={() => setResp(i)} />)}</View>
+          <View style={{ gap: 10 }}>{ex.options.map((o, i) => <OptionButton key={i} label={(o.img ? '🖼  ' : '') + l(o)} state={st(i, ex.answer)} celebrate={idx === i} onPress={() => setResp(i)} />)}</View>
         </View>
       );
     case 'pick_word':
       return (
         <View style={{ gap: 12 }}>
-          <T v="display">{ex.prompt.ht}</T>
+          <T v="display">{l(ex.prompt)}</T>
           <View style={{ gap: 10 }}>{ex.options.map((o, i) => <OptionButton key={i} label={o.target} state={st(i, ex.answer)} celebrate={idx === i} onPress={() => { speak(o.audio); setResp(i); }} />)}</View>
         </View>
       );
@@ -109,7 +112,7 @@ function ExerciseView({ ex, resp, setResp, reveal }: { ex: Exercise; resp: Respo
       return (
         <View style={{ gap: 12 }}>
           <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}><Speaker audio={ex.prompt.audio} /><T v="h2" style={{ flex: 1 }}>{ex.prompt.target}</T></Card>
-          <View style={{ gap: 10 }}>{ex.options.map((o, i) => <OptionButton key={i} label={o.ht} state={st(i, ex.answer)} celebrate={idx === i} onPress={() => setResp(i)} />)}</View>
+          <View style={{ gap: 10 }}>{ex.options.map((o, i) => <OptionButton key={i} label={l(o)} state={st(i, ex.answer)} celebrate={idx === i} onPress={() => setResp(i)} />)}</View>
         </View>
       );
     case 'fill_blank':
@@ -117,7 +120,7 @@ function ExerciseView({ ex, resp, setResp, reveal }: { ex: Exercise; resp: Respo
         <View style={{ gap: 12 }}>
           <Card style={{ gap: 6 }}>
             <Row><Speaker audio={ex.audio} /><T v="h2" style={{ flex: 1 }}>{typeof resp === 'number' ? ex.text.replace('____', ex.options[resp]) : ex.text}</T></Row>
-            <T v="small" color={colors.muted}>{ex.translation.ht}</T>
+            <T v="small" color={colors.muted}>{l(ex.translation)}</T>
           </Card>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>{ex.options.map((o, i) => <View key={i} style={{ width: '47.5%' }}><OptionButton label={o} state={st(i, ex.answer)} celebrate={idx === i} onPress={() => setResp(i)} /></View>)}</View>
         </View>
@@ -142,6 +145,7 @@ function Tile({ label, onPress, state = 'idle', audio }: { label: string; onPres
 }
 
 function MatchPairs({ ex, resp, setResp, reveal }: { ex: Extract<Exercise, { kind: 'match_pairs' }>; resp: Response | null; setResp: (r: Response) => void; reveal: boolean }) {
+  const l = useL();
   const pairs = (Array.isArray(resp) ? resp : []) as number[]; // pairs[i] = right index for left i (-1 = none)
   const filled = ex.left.map((_, i) => pairs[i] ?? -1);
   const [sel, setSel] = useState<number | null>(null);
@@ -152,18 +156,19 @@ function MatchPairs({ ex, resp, setResp, reveal }: { ex: Extract<Exercise, { kin
   const stateR = (r: number) => { const li = filled.indexOf(r); return reveal ? (li >= 0 && ex.pairs[li] === r ? 'right' : 'wrong') : li >= 0 ? 'dim' : 'idle'; };
   return (
     <View style={{ flexDirection: 'row', gap: 12 }}>
-      <View style={{ flex: 1, gap: 10 }}>{ex.left.map((l, i) => <Tile key={i} label={l.ht} state={stateL(i)} onPress={() => pickLeft(i)} />)}</View>
+      <View style={{ flex: 1, gap: 10 }}>{ex.left.map((x, i) => <Tile key={i} label={l(x)} state={stateL(i)} onPress={() => pickLeft(i)} />)}</View>
       <View style={{ flex: 1, gap: 10 }}>{ex.right.map((r, i) => <Tile key={i} label={r.target} audio={r.audio} state={stateR(i)} onPress={() => pickRight(i)} />)}</View>
     </View>
   );
 }
 
 function BuildSentence({ ex, resp, setResp, reveal }: { ex: Extract<Exercise, { kind: 'build_sentence' }>; resp: Response | null; setResp: (r: Response) => void; reveal: boolean }) {
+  const l = useL(); const t = useT();
   const picked = (Array.isArray(resp) ? resp : []) as number[];
   const ok = reveal && picked.map((i) => ex.tiles[i]).join(' ') === ex.answer.map((i) => ex.tiles[i]).join(' ');
   return (
     <View style={{ gap: 14 }}>
-      <Card style={{ gap: 4 }}><T v="small" color={colors.muted}>Kreyòl</T><T v="h2">{ex.prompt.ht}</T></Card>
+      <Card style={{ gap: 4 }}><T v="small" color={colors.muted}>{t('in_my_lang')}</T><T v="h2">{l(ex.prompt)}</T></Card>
       <View style={{ minHeight: 64, borderBottomWidth: 2, borderBottomColor: colors.line, flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingBottom: 8 }}>
         {picked.map((ti, k) => <Tile key={k} label={ex.tiles[ti]} state={reveal ? (ok ? 'right' : 'wrong') : 'picked'} onPress={reveal ? undefined : () => setResp(picked.filter((_, j) => j !== k))} />)}
       </View>
@@ -184,7 +189,7 @@ function LessonResult({ r, onDone }: { r: ReturnType<typeof finishLesson>; onDon
         <FadeIn delay={450}><T v="display" center>{t('lesson_done')}</T></FadeIn>
         <Stars n={r.stars} size={44} pop />
         <FadeIn delay={1000}><T v="h2" center color={colors.blue}>{r.perfect ? t('perfect') : `${r.firstTryCorrect} / ${r.total} ${t('first_try')}`}</T></FadeIn>
-        <Pop delay={1200}><Pill text={`+${r.xp} XP  ·  +${r.coins} kòb`} color="#5C4600" bg={colors.yellowSoft} icon="pwen" /></Pop>
+        <Pop delay={1200}><Pill text={t('xp_coins', { xp: r.xp, c: r.coins })} color="#5C4600" bg={colors.yellowSoft} icon="pwen" /></Pop>
       </View>
       <View style={{ marginTop: 'auto' }}><Button title={t('continue')} color={colors.green} onPress={onDone} /></View>
     </Screen>

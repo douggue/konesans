@@ -8,13 +8,13 @@ import { useStore } from '@/lib/store';
 import { useT } from '@/lib/i18n';
 import { tap } from '@/lib/audio';
 
-const MODES: { id: CountryMode; icon: 'drapo' | 'kapital' | 'fom'; ht: string; fr: string }[] = [
-  { id: 'drapo', icon: 'drapo', ht: 'Drapo', fr: 'Drapeaux' }, { id: 'kapital', icon: 'kapital', ht: 'Kapital', fr: 'Capitales' }, { id: 'fom', icon: 'fom', ht: 'Fòm', fr: 'Formes' },
+const MODES: { id: CountryMode; icon: 'drapo' | 'kapital' | 'fom'; key: 'peyi_mode_drapo' | 'peyi_mode_kapital' | 'peyi_mode_fom' }[] = [
+  { id: 'drapo', icon: 'drapo', key: 'peyi_mode_drapo' }, { id: 'kapital', icon: 'kapital', key: 'peyi_mode_kapital' }, { id: 'fom', icon: 'fom', key: 'peyi_mode_fom' },
 ];
-const LEVELS: { id: CountryLevel; ht: string; fr: string; sub: string; color: string }[] = [
-  { id: 1, ht: 'Fasil', fr: 'Facile', sub: 'Peyi tout moun konnen', color: colors.green },
-  { id: 2, ht: 'Mwayen', fr: 'Moyen', sub: 'Peyi nan liv lekòl', color: colors.orange },
-  { id: 3, ht: 'Difisil', fr: 'Difficile', sub: 'Tout peyi, kesyon alanvè', color: colors.red },
+const LEVELS: { id: CountryLevel; key: 'peyi_lv1' | 'peyi_lv2' | 'peyi_lv3'; sub: 'peyi_lv1_sub' | 'peyi_lv2_sub' | 'peyi_lv3_sub'; color: string }[] = [
+  { id: 1, key: 'peyi_lv1', sub: 'peyi_lv1_sub', color: colors.green },
+  { id: 2, key: 'peyi_lv2', sub: 'peyi_lv2_sub', color: colors.orange },
+  { id: 3, key: 'peyi_lv3', sub: 'peyi_lv3_sub', color: colors.red },
 ];
 
 /** Peyi: pick a mode (flags / capitals / shapes), a level and a region, then play. */
@@ -27,36 +27,36 @@ export default function Peyi() {
 
   return (
     <Screen>
-      <TopBar title="Peyi" sub={lang === 'fr' ? 'Drapeaux · Capitales · Formes' : 'Drapo · Kapital · Fòm'} onBack={() => router.back()} />
+      <TopBar title={t('peyi_title')} sub={t('peyi_sub')} onBack={() => router.back()} />
 
-      <T v="label" color={colors.muted}>{lang === 'fr' ? 'MODE' : 'MÒD'}</T>
+      <T v="label" color={colors.muted}>{t('mode')}</T>
       <Row gap={10}>
         {MODES.map((m) => {
           const on = peyi.mode === m.id;
           return (
             <PressScale debounceMs={0} key={m.id} role="button" onPress={() => { tap(); setPeyi({ mode: m.id }); }} style={[{ flex: 1, minHeight: 92, gap: 6, paddingVertical: 10 }, seg(on)]}>
               <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: on ? 'rgba(255,255,255,0.2)' : colors.yellowSoft, alignItems: 'center', justifyContent: 'center' }}><Icon name={m.icon} size={32} /></View>
-              <T v="h3" color={on ? '#fff' : colors.ink}>{lang === 'fr' ? m.fr : m.ht}</T>
+              <T v="h3" color={on ? '#fff' : colors.ink}>{t(m.key)}</T>
             </PressScale>
           );
         })}
       </Row>
 
-      <T v="label" color={colors.muted}>{lang === 'fr' ? 'NIVEAU' : 'NIVO'}</T>
+      <T v="label" color={colors.muted}>{t('level_caps')}</T>
       <Row gap={10}>
         {LEVELS.map((l) => {
           const on = peyi.level === l.id;
           return (
             <PressScale debounceMs={0} key={l.id} role="button" onPress={() => { tap(); setPeyi({ level: l.id }); }} style={[{ flex: 1, minHeight: 72, gap: 2, paddingHorizontal: 6 }, seg(on, l.color)]}>
               <T v="h3" color={on ? '#fff' : colors.ink}>{'★'.repeat(l.id)}</T>
-              <T v="bold" color={on ? '#fff' : colors.ink}>{lang === 'fr' ? l.fr : l.ht}</T>
+              <T v="bold" color={on ? '#fff' : colors.ink}>{t(l.key)}</T>
             </PressScale>
           );
         })}
       </Row>
-      <T v="small" color={colors.muted}>{LEVELS.find((l) => l.id === peyi.level)!.sub}</T>
+      <T v="small" color={colors.muted}>{t(LEVELS.find((l) => l.id === peyi.level)!.sub)}</T>
 
-      <T v="label" color={colors.muted}>{lang === 'fr' ? 'RÉGION' : 'REJYON'}</T>
+      <T v="label" color={colors.muted}>{t('region_caps')}</T>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {(['mond', ...REGIONS] as (WorldRegion | 'mond')[]).map((r) => {
           const on = peyi.region === r; const lab = REGION_LABEL[r];
@@ -69,7 +69,7 @@ export default function Peyi() {
         })}
       </View>
 
-      <T v="small" center color={colors.muted}>{pool} {lang === 'fr' ? 'pays dans ce jeu' : 'peyi nan jwèt sa a'}</T>
+      <T v="small" center color={colors.muted}>{t('peyi_pool', { n: pool })}</T>
       <Button title={t('play_now')} color={colors.yellowDark} onPress={() => router.push(`/quiz/peyi?mode=${peyi.mode}&level=${peyi.level}&region=${encodeURIComponent(peyi.region)}`)} />
     </Screen>
   );

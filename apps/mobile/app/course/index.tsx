@@ -36,7 +36,7 @@ export default function Course() {
       <FadeIn key={lang}><View style={{ backgroundColor: accent, borderRadius: 22, padding: 18, gap: 6, borderBottomWidth: 5, borderBottomColor: 'rgba(0,0,0,0.25)', overflow: 'hidden' }}>
         <Motif kind="drapo" opacity={0.2} height={130} />
         <T v="label" color="#E6ECFB">{t('unit').toUpperCase()} {path.indexOf(current) + 1} · {current.emoji}</T>
-        <T v="h1" color="#fff">{current.title}</T>
+        <T v="h1" color="#fff">{l({ ht: current.title, fr: current.titleFr })}</T>
         <Row>
           <Progress style={{ flex: 1 }} value={sum.lessonsTotal ? sum.lessonsDone / sum.lessonsTotal : 0} color="#fff" track="rgba(255,255,255,0.3)" />
           <T v="small" color="#E6ECFB">{sum.lessonsDone} / {sum.lessonsTotal} {t('lesson')} · {sum.wordsLearned} {t('words')}</T>
@@ -46,7 +46,7 @@ export default function Course() {
       {path.map((u, ui) => (
         <FadeIn key={lang + u.id} delay={Math.min(ui, 4) * 70 + 80} style={{ gap: 10 }}>
           <Row>
-            <T v="h2" style={{ flex: 1 }}>{u.emoji} {u.title}</T>
+            <T v="h2" style={{ flex: 1 }}>{u.emoji} {l({ ht: u.title, fr: u.titleFr })}</T>
             <T v="small" color={colors.muted}>{u.done}/{u.total}</T>
           </Row>
           {u.lessons.map((ls, i) => {
@@ -59,7 +59,7 @@ export default function Course() {
                   {done ? <T v="h2" color="#fff">✓</T> : locked ? <Icon name="femen_kle" size={26} /> : <Pulse amount={0.15}><Icon name="zetwal_gri" size={28} /></Pulse>}
                 </View>
                 <View style={{ flex: 1 }}>
-                  <T v="h3">{ls.title}</T>
+                  <T v="h3">{l({ ht: ls.title, fr: ls.titleFr })}</T>
                   {done ? <Stars n={ls.stars} size={14} /> : <T v="small" color={ls.state === 'open' ? accent : colors.muted}>{locked ? t('locked') : t('start_lesson')}</T>}
                 </View>
               </Card>

@@ -29,7 +29,7 @@ export default function Categories() {
       </Row>
       {features.math && <FadeIn delay={60}><Card onPress={() => router.push('/math')} soft={colors.orangeSoft} edge={colors.orange} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <IconTile name="kalkil" bg="#FFFFFF" size={48} />
-        <View style={{ flex: 1 }}><T v="h3">Kalkil Mantal</T><T v="small" color={colors.muted}>60 segonn · {stats.mathBest ? `rekò: ${stats.mathBest} pwen` : 'Konbyen w ka fè?'}</T></View>
+        <View style={{ flex: 1 }}><T v="h3">{t('math_title')}</T><T v="small" color={colors.muted}>{t('math_60s')} · {stats.mathBest ? t('math_record', { n: stats.mathBest }) : t('math_how_many')}</T></View>
         <T v="h2" color={colors.orange}>›</T>
       </Card></FadeIn>}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>

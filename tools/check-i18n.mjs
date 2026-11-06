@@ -25,7 +25,9 @@ function isWords(s) {
   const v = s.replace(/\$\{[^}]*\}/g, ' ').trim();
   if (!v) return false;
   if (ALLOW.some((r) => r.test(v))) return false;
-  if (/^[a-z]+(_[a-z]+)+$/.test(v) || /^(fr|ht|en|es)$/.test(v)) return false; // translation keys / language codes
+  // brand words / units that are the same in both languages, with only symbols around them ("+${n} XP")
+  if (!/[A-Za-zÀ-ÿ]{2,}/.test(v.replace(/\b(Konesans|Ti Zwazo|XP|VS|OK)\b/g, ''))) return false;
+  if (/^[a-z]+(_[a-z0-9]+)+$/.test(v) || /^(fr|ht|en|es)$/.test(v)) return false; // translation keys / language codes
   return /[A-Za-zÀ-ÿ]{2,}/.test(v);
 }
 function files(dir) {

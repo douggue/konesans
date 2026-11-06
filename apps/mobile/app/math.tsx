@@ -56,15 +56,15 @@ export default function MathRapid() {
   if (!run) {
     return (
       <Screen scroll={false}>
-        <TopBar title="Kalkil Mantal" sub={`${profile.age} an`} onBack={() => router.back()} />
+        <TopBar title={t('math_title')} sub={`${profile.age} ${t('years')}`} onBack={() => router.back()} />
         <View style={{ alignItems: 'center', gap: 12, marginTop: 'auto', marginBottom: 'auto' }}>
           <Drop><Mascot size={140} mood="cheer" /></Drop>
-          <Pop delay={350}><T v="display" center>60 segonn.</T></Pop>
-          <T v="h1" center>Konbyen w ka fè?</T>
-          <T v="body" center color={colors.muted}>{profile.age === '12-14' ? 'Ekwasyon, pousantaj, pisans, nimewo negatif… Kesyon difisil yo vo 2 pwen.' : profile.age === '9-11' ? 'Tab miltiplikasyon, nimewo ki manke, pousantaj… Kesyon difisil yo vo 2 pwen.' : 'Adisyon, soustraksyon, doub, sekans. Chak bon repons = 1 pwen.'}</T>
-          <T v="small" center color={colors.muted}>Yon seri 5 bon repons = pwen yo doub.</T>
+          <Pop delay={350}><T v="display" center>{t('math_60s_dot')}</T></Pop>
+          <T v="h1" center>{t('math_how_many')}</T>
+          <T v="body" center color={colors.muted}>{t(profile.age === '12-14' ? 'math_intro_12' : profile.age === '9-11' ? 'math_intro_9' : 'math_intro_6')}</T>
+          <T v="small" center color={colors.muted}>{t('math_combo')}</T>
         </View>
-        <Button title="ALE!" color={colors.orange} onPress={start} />
+        <Button title={t('math_go')} color={colors.orange} onPress={start} />
       </Screen>
     );
   }
@@ -76,9 +76,9 @@ export default function MathRapid() {
         <View style={{ alignItems: 'center', gap: 10, marginTop: 'auto' }}>
           <Drop><Mascot size={140} mood={run.score >= 15 ? 'cheer' : 'happy'} /></Drop>
           <Pop delay={450}><BigScore n={run.score} /></Pop>
-          <T v="body" center color={colors.muted}>{good} bon repons · {run.misses} erè · pi gwo seri {run.best}</T>
+          <T v="body" center color={colors.muted}>{t('math_summary', { good, miss: run.misses, best: run.best })}</T>
           <Pop delay={900}><Pill text={`+${mathXp(run)} XP`} color="#5C4600" bg={colors.yellowSoft} icon="pwen" /></Pop>
-          {weakKinds(run).length > 0 && <Card soft={colors.yellowSoft} edge={colors.yellowDark} style={{ paddingVertical: 10 }}><T v="small" color="#5C4600">Pratike: {weakKinds(run).map((k) => l(KIND_LABEL[k])).join(' · ')}</T></Card>}
+          {weakKinds(run).length > 0 && <Card soft={colors.yellowSoft} edge={colors.yellowDark} style={{ paddingVertical: 10 }}><T v="small" color="#5C4600">{t('math_practice', { x: weakKinds(run).map((k) => l(KIND_LABEL[k])).join(' · ') })}</T></Card>}
         </View>
         <View style={{ marginTop: 'auto', gap: 10 }}>
           <Button title={t('again')} color={colors.orange} onPress={start} />
@@ -89,15 +89,17 @@ export default function MathRapid() {
   }
 
   const p = run.current;
+  const fr = profile.lang === 'fr';
+  const ptext = fr ? p.textFr : p.text;
   return (
     <Screen scroll={false}>
-      <TopBar close title="Kalkil Mantal" sub={`${good} bon · ${run.combo >= 5 ? 'x2 ' : ''}seri ${run.combo}`} onBack={() => setQuitting(true)}
+      <TopBar close title={t('math_title')} sub={t('math_live', { good, x2: run.combo >= 5 ? 'x2 ' : '', combo: run.combo })} onBack={() => setQuitting(true)}
         right={<Bounce trigger={left < 10_000 ? Math.ceil(left / 1000) : null} amount={0.15}><View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: left < 10_000 ? colors.redSoft : colors.yellowSoft, alignItems: 'center', justifyContent: 'center' }}><T v="h2" color={left < 10_000 ? colors.red : '#5C4600'}>{Math.ceil(left / 1000)}</T></View></Bounce>} />
       <Progress linear value={left / run.durationMs} color={left < 10_000 ? colors.red : colors.orange} />
       <Shake trigger={misses || null}><Bounce trigger={hits || null} amount={0.04}><Card edge={flash === 'ok' ? colors.green : flash === 'no' ? colors.red : colors.line} soft={flash === 'ok' ? colors.greenSoft : flash === 'no' ? colors.redSoft : colors.card} style={{ alignItems: 'center', paddingVertical: 22, gap: 6 }}>
-        <SlideSwap id={run.i + '-' + run.history.length}><T style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: p.text.length > 14 ? 32 : 44, lineHeight: p.text.length > 14 ? 40 : 52 }} center>{p.ask ? p.text : `${p.text} = ?`}</T></SlideSwap>
-        {p.ask && <T v="h3" color={colors.muted}>{p.ask}</T>}
-        {p.points === 2 && <Pill text="2 pwen" color="#5C4600" bg={colors.yellowSoft} />}
+        <SlideSwap id={run.i + '-' + run.history.length}><T style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: ptext.length > 14 ? 32 : 44, lineHeight: ptext.length > 14 ? 40 : 52 }} center>{p.ask ? ptext : `${ptext} = ?`}</T></SlideSwap>
+        {p.ask && <T v="h3" color={colors.muted}>{fr ? p.askFr ?? p.ask : p.ask}</T>}
+        {p.points === 2 && <Pill text={t('two_points')} color="#5C4600" bg={colors.yellowSoft} />}
         <View style={{ minWidth: 120, minHeight: 56, borderBottomWidth: 4, borderBottomColor: colors.blue, alignItems: 'center', justifyContent: 'center' }}>
           <T style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: 40, lineHeight: 48 }} color={colors.blue}>{typed || ' '}</T>
         </View>
@@ -111,7 +113,7 @@ export default function MathRapid() {
             </PressScale>
           );
         })}
-        <Button small variant="secondary" color={colors.muted} title="Sote →" onPress={skip} style={{ width: '31%' }} />
+        <Button small variant="secondary" color={colors.muted} title={t('skip')} onPress={skip} style={{ width: '31%' }} />
         <Button small title="OK" color={colors.green} onPress={submit} style={{ flex: 1 }} />
       </View>
       <Sheet open={quitting} title={t('quit_q')}>
@@ -124,5 +126,6 @@ export default function MathRapid() {
 
 function BigScore({ n }: { n: number }) {
   const v = useCountUp(n, undefined, 900);
-  return <T v="display" center>{v} pwen!</T>;
+  const t = useT();
+  return <T v="display" center>{t('score_points', { n: v })}</T>;
 }

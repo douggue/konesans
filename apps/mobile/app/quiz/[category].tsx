@@ -35,7 +35,7 @@ export default function Quiz() {
   const [quitting, setQuitting] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const q = s.questions[s.index];
-  const title = cat === 'mix' ? t('daily_title') : peyiOpts ? `${{ drapo: 'Drapo', kapital: 'Kapital', fom: 'Fòm' }[peyiOpts.mode]} · ${REGION_LABEL[peyiOpts.region][profile.lang]}` : categoryInfo(cat)[profile.lang];
+  const title = cat === 'mix' ? t('daily_title') : peyiOpts ? `${t(`peyi_mode_${peyiOpts.mode}`)} · ${REGION_LABEL[peyiOpts.region][profile.lang]}` : categoryInfo(cat)[profile.lang];
 
   // countdown
   useEffect(() => {
@@ -49,7 +49,7 @@ export default function Quiz() {
     return () => { if (timer.current) clearInterval(timer.current); };
   }, [s.index, reveal, s.finished]);
 
-  useEffect(() => { if (q && settings.voice && profile.age === '6-8') speak(l(q.prompt), 'ht'); }, [s.index]);
+  useEffect(() => { if (q && settings.voice && profile.age === '6-8') speak(l(q.prompt), profile.lang); }, [s.index]);
 
   function pick(i: number | null) {
     if (reveal) return;

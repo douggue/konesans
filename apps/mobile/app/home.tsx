@@ -74,7 +74,7 @@ export default function Home() {
             <T v="small" color={colors.muted}>{Math.min(q.progress, q.goal)}/{q.goal} · +{q.xp} XP</T>
           </Row>
         ))}
-        {chestReady(progress) && <Pop delay={400}><Pill text="Kòf la louvri! +100 XP" color="#5C4600" bg={colors.yellowSoft} icon="kado" /></Pop>}
+        {chestReady(progress) && <Pop delay={400}><Pill text={t('chest_open')} color="#5C4600" bg={colors.yellowSoft} icon="kado" /></Pop>}
       </Card></FadeIn>
 
       {/* Continue course */}
@@ -85,7 +85,7 @@ export default function Home() {
             <Row>
               <IconTile name="lang" bg={colors.blueSoft} size={48} />
               <View style={{ flex: 1 }}>
-                <T v="h3">{l(courseById(course.lang).name)} · {course.lesson.title}</T>
+                <T v="h3">{l(courseById(course.lang).name)} · {l({ ht: course.lesson.title, fr: course.lesson.titleFr })}</T>
                 <T v="small" color={colors.muted}>{t('level')} {lvl.level} · {progress.xp} XP</T>
               </View>
               <T v="small" color={colors.blue}>›</T>
@@ -102,7 +102,7 @@ export default function Home() {
           { icon: 'defi', bg: colors.redSoft, label: t('duel_bot'), href: '/duel', on: features.duels },
           { icon: 'lang', bg: colors.blueSoft, label: t('course'), href: '/course', on: features.courses },
           { icon: 'robo', bg: colors.purpleSoft, label: t('coding'), href: '/coding', on: features.coding },
-          { icon: 'kalkil', bg: colors.greenSoft, label: 'Kalkil Mantal', href: '/math', on: features.math },
+          { icon: 'kalkil', bg: colors.greenSoft, label: t('math_title'), href: '/math', on: features.math },
           { icon: 'drapo', bg: colors.orangeSoft, label: categoryInfo('peyi')[profile.lang], href: '/peyi', on: features.peyi },
         ].filter((x) => x.on).map((x, i) => (
           <FadeIn key={x.href} delay={340 + i * 50} style={{ width: '31%' }}>

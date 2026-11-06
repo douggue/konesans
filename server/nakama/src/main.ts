@@ -19,7 +19,7 @@ const TICK_RATE = 5; // 5 ticks/s is plenty for a quiz
 const OP = { STATE: 1, ANSWER: 2, REACT: 3 } as const;
 const COLL = { PROGRESS: 'progress', LOG: 'eventlog', CONSENT: 'consent', MOD: 'moderation', RATING: 'rating' } as const;
 
-interface MatchLabel { age: AgeBand; category: CategoryId | 'mix'; open: boolean }
+interface MatchLabel { age: AgeBand; category: CategoryId | 'mix'; open: boolean; creator?: string }
 interface MatchState { duel: DuelState; botPlan?: { atMs: number; chosen: number }; botId?: string; seed: number; presences: Record<string, nkruntime.Presence> }
 
 // ---------- Match handler ----------
@@ -30,7 +30,7 @@ const matchInit: nkruntime.MatchInitFunction<MatchState> = (ctx, logger, nk, par
   const seed = Math.floor(Math.random() * 2 ** 31);
   const questions = selectQuestions(loadBank(nk), { age, category, count: 10, seed });
   const duel = createDuel(ctx.matchId, questions, Date.now());
-  const label: MatchLabel = { age, category, open: true };
+  const label: MatchLabel = { age, category, open: true, creator: params.creator ? String(params.creator) : undefined };
   return { state: { duel, seed, presences: {} }, tickRate: TICK_RATE, label: JSON.stringify(label) };
 };
 
@@ -42,8 +42,10 @@ const matchJoinAttempt: nkruntime.MatchJoinAttemptFunction<MatchState> = (ctx, l
 const matchJoin: nkruntime.MatchJoinFunction<MatchState> = (ctx, logger, nk, dispatcher, tick, state, presences) => {
   for (const p of presences) {
     state.presences[p.userId] = p;
-    const username = nk.usersGetId([p.userId])[0]?.username ?? 'Jwè';
-    state.duel = reduce(state.duel, { type: 'join', player: { id: p.userId, username, isBot: false } }, Date.now());
+    const u = nk.usersGetId([p.userId])[0];
+    const username = u?.displayName || u?.username || 'Jwè';
+    const avatar = (u?.metadata as { avatar?: unknown } | undefined)?.avatar;
+    state.duel = reduce(state.duel, { type: 'join', player: { id: p.userId, username, avatar, isBot: false } }, Date.now());
   }
   if (state.duel.players.length === 2) dispatcher.matchLabelUpdate(JSON.stringify({ ...JSON.parse(ctx.matchLabel ?? '{}'), open: false }));
   broadcast(dispatcher, state);
@@ -99,6 +101,7 @@ const matchLoop: nkruntime.MatchLoopFunction<MatchState> = (ctx, logger, nk, dis
     settle(nk, logger, d);
   }
   if (d.phase === 'ended' && now - d.phaseStartedAt > 10_000) return null; // close match
+  if (d.phase === 'lobby' && Object.keys(state.presences).length === 0 && !state.botId && tick > TICK_RATE) return null; // everyone left the waiting room
   return { state };
 };
 
@@ -134,17 +137,23 @@ function settle(nk: nkruntime.Nakama, logger: nkruntime.Logger, d: DuelState) {
 
 /** Find or create an open duel for this kid. Body: { age, category }. Returns { matchId }. */
 const rpcFindDuel: nkruntime.RpcFunction = (ctx, logger, nk, payload) => {
-  const { age = '9-11', category = 'mix' } = safeJson(payload) ?? {};
+  // waitingIn: the kid is already waiting alone in that game and only wants to know about another waiting game
+  const { age = '9-11', category = 'mix', waitingIn } = safeJson(payload) ?? {};
   requireOnlineAllowed(nk, ctx.userId);
-  const query = `+label.age:${age} +label.category:${category} +label.open:true`;
+  // Tested on Nakama 3.22: quoted values and boolean fields never match in label queries, so we search on
+  // age + category and check `open` ourselves below.
+  const query = `+label.age:${age} +label.category:${category}`;
   const open = nk.matchList(10, true, undefined, 1, 1, query);
   const mod = readModeration(nk);
   for (const m of open) {
     const label = JSON.parse((m.label as unknown as string) || '{}');
+    if (!label.open) continue;
     // the match creator's id is stored in the label by rpc below; skip blocked pairs
+    if (label.creator === ctx.userId || m.matchId === waitingIn) continue; // your own waiting game
     if (label.creator && !canMatch(mod, candidate(nk, ctx.userId, age), candidate(nk, label.creator, age))) continue;
     return JSON.stringify({ matchId: m.matchId });
   }
+  if (waitingIn) return JSON.stringify({ matchId: null });
   const matchId = nk.matchCreate('duel', { age, category, creator: ctx.userId });
   return JSON.stringify({ matchId });
 };
@@ -164,6 +173,31 @@ const rpcConsentConfirm: nkruntime.RpcFunction = (ctx, logger, nk, payload) => {
   if (!kidId) throw Error('kidId required');
   const rec = nk.storageRead([{ collection: COLL.CONSENT, key: 'record', userId: kidId }])[0]?.value ?? {};
   nk.storageWrite([{ collection: COLL.CONSENT, key: 'record', userId: kidId, value: { ...rec, confirmedAt: new Date().toISOString() }, permissionRead: 1, permissionWrite: 0 }]);
+  return JSON.stringify({ ok: true });
+};
+
+/**
+ * Parent turned online duels on or off in Espas Paran (the app asks the parent-gate question first).
+ * Body: { on: boolean, age }. Stores the consent record and the kid's setting used by matchmaking.
+ */
+const rpcOnlineSet: nkruntime.RpcFunction = (ctx, logger, nk, payload) => {
+  if (!ctx.userId) throw Error('login required');
+  const { on = false, age } = safeJson(payload) ?? {};
+  const now = new Date().toISOString();
+  nk.storageWrite([
+    { collection: COLL.CONSENT, key: 'record', userId: ctx.userId, value: on ? { confirmedAt: now, method: 'parent_gate' } : { revokedAt: now }, permissionRead: 1, permissionWrite: 0 },
+    { collection: 'settings', key: 'kid', userId: ctx.userId, value: { randomDuelsAllowed: !!on, age: age ?? null, updatedAt: now }, permissionRead: 1, permissionWrite: 0 },
+  ]);
+  return JSON.stringify({ ok: true, on: !!on });
+};
+
+/** The kid's public duel identity: display name (their kid-safe username) and avatar config. Body: { name, avatar }. */
+const rpcProfileSet: nkruntime.RpcFunction = (ctx, logger, nk, payload) => {
+  if (!ctx.userId) throw Error('login required');
+  const { name, avatar } = safeJson(payload) ?? {};
+  const displayName = String(name ?? '').replace(/[^A-Za-z0-9 àâäçéèêëîïôöùûüÿñæœÀÂÄÇÉÈÊËÎÏÔÖÙÛÜŸÑÆŒòÒ]/g, '').trim().slice(0, 24) || null;
+  const safeAvatar = avatar && typeof avatar === 'object' && JSON.stringify(avatar).length < 400 ? avatar : undefined;
+  nk.accountUpdateId(ctx.userId, null, displayName, null, null, null, null, safeAvatar ? { avatar: safeAvatar } : null);
   return JSON.stringify({ ok: true });
 };
 
@@ -189,7 +223,7 @@ function loadBank(nk: nkruntime.Nakama) {
 
 function requireOnlineAllowed(nk: nkruntime.Nakama, userId: string) {
   const c = nk.storageRead([{ collection: COLL.CONSENT, key: 'record', userId }])[0]?.value;
-  if (!c?.confirmedAt) throw Error('parent consent not confirmed');
+  if (!c?.confirmedAt) throw { message: 'online_not_allowed', code: 7 } as nkruntime.Error;
 }
 
 function candidate(nk: nkruntime.Nakama, id: string, age: string) {
@@ -249,6 +283,8 @@ const InitModule: nkruntime.InitModule = (ctx, logger, nk, initializer) => {
   initializer.registerRpc('sync_progress', rpcSyncProgress);
   initializer.registerRpc('consent_confirm', rpcConsentConfirm);
   initializer.registerRpc('report_player', rpcReport);
+  initializer.registerRpc('online_set', rpcOnlineSet);
+  initializer.registerRpc('profile_set', rpcProfileSet);
   // public content (http_key) + admin RPCs (bearer token of an admin account). Nakama needs plain top-level function names here.
   initializer.registerRpc('admin_me', rpc_admin_me);
   initializer.registerRpc('admin_stats', rpc_admin_stats);

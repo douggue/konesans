@@ -11,7 +11,9 @@ let bytes = 0;
 for (const f of readdirSync(DIR).filter((f) => f.endsWith('.svg')).sort()) {
   let s = readFileSync(DIR + f, 'utf8')
     .replace(/<\?xml[^>]*>/g, '').replace(/<!--[\s\S]*?-->/g, '')
-    .replace(/\s+/g, ' ').replace(/>\s+</g, '><').trim();
+    .replace(/\s+/g, ' ').replace(/>\s+</g, '><').trim()
+    // In the app, fonts are registered under their expo-google-fonts names (see app/_layout.tsx).
+    .replace(/font-family="[^"]*Baloo[^"]*"/g, 'font-family="Baloo2_800ExtraBold"');
   if (!/^<svg[^>]*viewBox="0 0 96 96"/.test(s)) throw new Error(`${f}: must start with <svg … viewBox="0 0 96 96">`);
   if (/<(script|image|foreignObject|style)\b|href=/.test(s)) throw new Error(`${f}: scripts, images, styles and links are not allowed`);
   out[f.slice(0, -4)] = s;

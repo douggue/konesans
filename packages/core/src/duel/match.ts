@@ -14,6 +14,8 @@ export type PlayerId = string;
 export interface DuelPlayer {
   id: PlayerId;
   username: string;
+  /** Avatar config shown to the other player (no personal data). */
+  avatar?: unknown;
   isBot: boolean;
   score: number;
   combo: number;
@@ -129,7 +131,7 @@ export function publicView(s: DuelState, viewerId: PlayerId) {
     phaseStartedAt: s.phaseStartedAt, questionMs: s.questionMs,
     question: q ? { id: q.id, prompt: q.prompt, options: q.options, media: q.media, answer: showAnswer ? q.answer : undefined, explain: showAnswer ? q.explain : undefined } : undefined,
     players: s.players.map((p) => ({
-      id: p.id, username: p.username, isBot: p.isBot, score: p.score, connected: p.connected,
+      id: p.id, username: p.username, avatar: p.avatar, isBot: p.isBot, score: p.score, connected: p.connected,
       answered: !!p.answer,
       chosen: p.id === viewerId || showAnswer ? p.answer?.chosen : undefined,
     })),

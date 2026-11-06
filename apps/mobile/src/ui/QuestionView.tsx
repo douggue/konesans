@@ -3,7 +3,8 @@ import { View } from 'react-native';
 import { SHAPES, type Question } from '@konesans/core';
 import { T, Row, OptionButton, Icon, ShapeView, Flag, PressScale, Pop, FadeIn, Avatar } from './index';
 import { colors } from '@/lib/theme';
-import { useL } from '@/lib/i18n';
+import { useL, useT } from '@/lib/i18n';
+import { useStore } from '@/lib/store';
 import { speak } from '@/lib/audio';
 import type { AvatarConfig } from '@konesans/core';
 
@@ -18,7 +19,8 @@ export function isoFromFlagEmoji(s: string): string | null {
 
 /** Prompt + media + options. `chosen`/`reveal` drive the colours; parent owns the state. */
 export function QuestionView({ q, chosen, reveal, onPick, otherChosen, otherAvatar }: { q: Question; chosen: number | null; reveal: boolean; onPick?: (i: number) => void; otherChosen?: number; otherAvatar?: AvatarConfig }) {
-  const l = useL();
+  const l = useL(); const t = useT();
+  const lang = useStore((s) => s.profile.lang);
   const prompt = l(q.prompt);
   const state = (i: number): 'idle' | 'picked' | 'right' | 'wrong' | 'dim' => {
     if (!reveal) return chosen === i ? 'picked' : 'idle';
@@ -37,7 +39,7 @@ export function QuestionView({ q, chosen, reveal, onPick, otherChosen, otherAvat
         <Pop key={q.id} from={0.7} style={{ alignItems: 'center' }}><ShapeView d={SHAPES[q.media.ref]} /></Pop>
       )}
       <Row gap={10} center={false}>
-        <PressScale accessibilityLabel="Koute" scaleTo={0.88} onPress={() => speak(prompt, 'ht')} style={{ width: 44, height: 44, alignSelf: 'flex-start', borderRadius: 14, backgroundColor: colors.blueLight, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' }}>
+        <PressScale accessibilityLabel={t('listen')} scaleTo={0.88} onPress={() => speak(prompt, lang === 'fr' ? 'fr' : 'ht')} style={{ width: 44, height: 44, alignSelf: 'flex-start', borderRadius: 14, backgroundColor: colors.blueLight, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="koute" size={26} />
         </PressScale>
         <T v="h2" style={{ flex: 1 }}>{prompt}</T>

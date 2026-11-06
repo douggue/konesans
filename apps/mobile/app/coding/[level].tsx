@@ -5,7 +5,7 @@ import { levelById, run, scoreRun, countBlocks, validateProgram, isWall, type Bl
 import { Screen, T, Button, Card, Row, TopBar, Icon, Stars, Pill, Mascot, PressScale } from '@/ui';
 import { colors, radius } from '@/lib/theme';
 import { useStore } from '@/lib/store';
-import { useT } from '@/lib/i18n';
+import { useT, type StrKey } from '@/lib/i18n';
 import { tap } from '@/lib/audio';
 
 type Kind = Block['type'];
@@ -28,6 +28,7 @@ export default function CodingLevel() {
   const { level } = useLocalSearchParams<{ level: string }>();
   const lv = useMemo(() => levelById(Number(level)), [level]) as Level;
   const t = useT();
+  const fr = useStore((s) => s.profile.lang) === 'fr';
   const recordCoding = useStore((s) => s.recordCoding);
   const [program, setProgram] = useState<Block[]>([]);
   /** path into the block tree where new blocks go: [] = top level, [i] = inside container i, [i,'else'] = else-branch */
@@ -64,9 +65,9 @@ export default function CodingLevel() {
 
   return (
     <Screen>
-      <TopBar title={`${lv.id}. ${lv.title}`} sub={`${countBlocks(program)} ${t('blocks')} · par ${lv.par}`} onBack={() => router.back()}
+      <TopBar title={`${lv.id}. ${fr ? lv.titleFr : lv.title}`} sub={`${countBlocks(program)} ${t('blocks')} · ${t('par', { n: lv.par })}`} onBack={() => router.back()}
         right={<PressScale debounceMs={0} role="button" onPress={() => { tap(); setShowHint(!showHint); }} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.yellowSoft, alignItems: 'center', justifyContent: 'center' }}><Icon name="endis" size={26} /></PressScale>} />
-      {showHint && <Card soft={colors.yellowSoft} edge={colors.yellowDark}><T v="body">{lv.hint}</T></Card>}
+      {showHint && <Card soft={colors.yellowSoft} edge={colors.yellowDark}><T v="body">{fr ? lv.hintFr : lv.hint}</T></Card>}
 
       {/* Maze */}
       <View style={{ alignSelf: 'center', borderWidth: 3, borderColor: colors.ink, borderRadius: 12, overflow: 'hidden', backgroundColor: '#DCEBFF' }}>
@@ -91,10 +92,10 @@ export default function CodingLevel() {
 
       {/* Program */}
       <Card style={{ minHeight: 90, gap: 6 }} edge={colors.lineStrong}>
-        <Row><T v="small" color={colors.muted} style={{ flex: 1 }}>Pwogram ou</T>
+        <Row><T v="small" color={colors.muted} style={{ flex: 1 }}>{t('your_program')}</T>
           {program.length > 0 && <PressScale debounceMs={0} role="button" onPress={() => { tap(); removeLast(); }} style={{ minHeight: 36, paddingHorizontal: 10, justifyContent: 'center' }}><T v="small" color={colors.red}>⌫ {t('clear')}</T></PressScale>}
         </Row>
-        {program.length === 0 ? <T v="body" color={colors.muted}>Tape blòk yo anba a.</T> : <ProgramList blocks={program} path={[]} cursor={cursor} setCursor={(c) => { tap(); setCursor(c); }} onTimes={(path, d) => { reset(); setProgram((p) => bumpTimes(p, path, d)); }} t={t} />}
+        {program.length === 0 ? <T v="body" color={colors.muted}>{t('tap_blocks')}</T> : <ProgramList blocks={program} path={[]} cursor={cursor} setCursor={(c) => { tap(); setCursor(c); }} onTimes={(path, d) => { reset(); setProgram((p) => bumpTimes(p, path, d)); }} t={t} />}
       </Card>
 
       {/* Palette */}
@@ -102,12 +103,12 @@ export default function CodingLevel() {
         {PALETTE.filter((b) => lv.allowed.includes(b.type)).map((b) => (
           <PressScale debounceMs={0} role="button" key={b.type} onPress={() => { tap(); add(b.type); }} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: b.color, borderRadius: radius.sm, paddingHorizontal: 12, minHeight: 48, borderBottomWidth: 4, borderBottomColor: 'rgba(0,0,0,0.25)' }, pressed && { transform: [{ translateY: 2 }], borderBottomWidth: 2 }]}>
             <Icon name={b.icon} size={24} />
-            <T v="h3" color="#fff">{t(`b_${b.type}` as never)}</T>
+            <T v="h3" color="#fff">{t(`b_${b.type}` as StrKey)}</T>
           </PressScale>
         ))}
       </View>
 
-      {problems.length > 0 && program.length > 0 && <T v="small" color={colors.red}>{problems[0]}</T>}
+      {problems.length > 0 && program.length > 0 && <T v="small" color={colors.red}>{t(problems[0].includes('twò long') ? 'prog_too_long' : 'prog_invalid')}</T>}
       {result && msg && (
         <Card edge={result.ok ? colors.green : colors.red} soft={result.ok ? colors.greenSoft : colors.redSoft} style={{ gap: 6 }}>
           <Row><Mascot size={56} mood={result.ok ? 'cheer' : 'sad'} /><View style={{ flex: 1 }}><T v="h3" color={result.ok ? '#12632F' : '#8F0A22'}>{t(msg)}</T>{result.ok && <Row><Stars n={stars} /><Pill text={`+${scoreRun(result, lv)} XP`} color="#5C4600" bg={colors.yellowSoft} /></Row>}</View></Row>
@@ -145,7 +146,7 @@ const bumpTimes = (p: Block[], path: Path, d: number) => mapAt(p, path.slice(0, 
 
 const ICON: Record<Kind, 'avanse' | 'vire_goch' | 'vire_dwat' | 'repete' | 'simi' | 'zetwal_gri'> = { avanse: 'avanse', vire_goch: 'vire_goch', vire_dwat: 'vire_dwat', repete: 'repete', si_mi: 'simi', jiska_zetwal: 'zetwal_gri' };
 
-function ProgramList({ blocks, path, cursor, setCursor, onTimes, t }: { blocks: Block[]; path: Path; cursor: Path; setCursor: (p: Path) => void; onTimes: (p: Path, d: number) => void; t: (k: never) => string }) {
+function ProgramList({ blocks, path, cursor, setCursor, onTimes, t }: { blocks: Block[]; path: Path; cursor: Path; setCursor: (p: Path) => void; onTimes: (p: Path, d: number) => void; t: (k: StrKey) => string }) {
   const same = (a: Path, b: Path) => a.length === b.length && a.every((x, i) => x === b[i]);
   const color: Record<string, string> = { avanse: colors.blueLight, vire_goch: colors.orange, vire_dwat: colors.orange, repete: colors.purple, si_mi: colors.redLight, jiska_zetwal: colors.green };
   return (
@@ -157,7 +158,7 @@ function ProgramList({ blocks, path, cursor, setCursor, onTimes, t }: { blocks: 
           <View key={i} style={{ gap: 6 }}>
             <PressScale debounceMs={0} role="button" onPress={() => container && setCursor(here)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: color[b.type], borderRadius: 10, paddingHorizontal: 10, minHeight: 40, borderWidth: 2, borderColor: container && same(cursor, here) ? colors.ink : 'transparent' }}>
               <Icon name={ICON[b.type]} size={22} />
-              <T v="bold" color="#fff">{t(`b_${b.type}` as never)}</T>
+              <T v="bold" color="#fff">{t(`b_${b.type}` as StrKey)}</T>
               {b.type === 'repete' && (
                 <Row gap={4} style={{ marginLeft: 'auto' }}>
                   <PressScale debounceMs={0} role="button" onPress={() => onTimes(here, -1)} style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.3)', alignItems: 'center', justifyContent: 'center' }}><T v="h3" color="#fff">−</T></PressScale>
@@ -165,14 +166,14 @@ function ProgramList({ blocks, path, cursor, setCursor, onTimes, t }: { blocks: 
                   <PressScale debounceMs={0} role="button" onPress={() => onTimes(here, 1)} style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.3)', alignItems: 'center', justifyContent: 'center' }}><T v="h3" color="#fff">+</T></PressScale>
                 </Row>
               )}
-              {container && <T v="small" color="#fff" style={{ marginLeft: b.type === 'repete' ? 6 : 'auto' }}>{same(cursor, here) ? '◀ isit' : '▸'}</T>}
+              {container && <T v="small" color="#fff" style={{ marginLeft: b.type === 'repete' ? 6 : 'auto' }}>{same(cursor, here) ? t('here') : '▸'}</T>}
             </PressScale>
             {container && (
               <View style={{ marginLeft: 16, borderLeftWidth: 3, borderLeftColor: color[b.type], paddingLeft: 8, gap: 6 }}>
                 <ProgramList blocks={childList(b)!} path={here} cursor={cursor} setCursor={setCursor} onTimes={onTimes} t={t} />
                 {b.type === 'si_mi' && (
                   <>
-                    <PressScale debounceMs={0} role="button" onPress={() => setCursor([...here, 'else'])} style={{ minHeight: 32, justifyContent: 'center' }}><T v="small" color={colors.muted}>sinon {same(cursor, [...here, 'else']) ? '◀ isit' : '▸'}</T></PressScale>
+                    <PressScale debounceMs={0} role="button" onPress={() => setCursor([...here, 'else'])} style={{ minHeight: 32, justifyContent: 'center' }}><T v="small" color={colors.muted}>{t('else_')} {same(cursor, [...here, 'else']) ? t('here') : '▸'}</T></PressScale>
                     <ProgramList blocks={b.else ?? []} path={[...here, 'else']} cursor={cursor} setCursor={setCursor} onTimes={onTimes} t={t} />
                   </>
                 )}
@@ -182,7 +183,7 @@ function ProgramList({ blocks, path, cursor, setCursor, onTimes, t }: { blocks: 
           </View>
         );
       })}
-      {path.length === 0 && cursor.length > 0 && <PressScale debounceMs={0} role="button" onPress={() => setCursor([])} style={{ minHeight: 32, justifyContent: 'center' }}><T v="small" color={colors.blue}>↩ Retounen anba pwogram nan</T></PressScale>}
+      {path.length === 0 && cursor.length > 0 && <PressScale debounceMs={0} role="button" onPress={() => setCursor([])} style={{ minHeight: 32, justifyContent: 'center' }}><T v="small" color={colors.blue}>{t('back_to_program')}</T></PressScale>}
     </View>
   );
 }

@@ -17,7 +17,7 @@ export default function Profile() {
   const badges = Object.keys(progress.badges).length;
   const rows: { icon: 'twofe' | 'ewo' | 'kouwòn' | 'klas' | 'fanmi' | 'paran'; bg: string; label: string; sub: string; href?: string }[] = [
     { icon: 'twofe', bg: colors.yellowSoft, label: t('trophies'), sub: `${badges} / ${BADGES.length}`, href: '/trophies' },
-    { icon: 'kouwòn', bg: colors.purpleSoft, label: 'Lig', sub: t('soon') },
+    { icon: 'kouwòn', bg: colors.purpleSoft, label: t('league'), sub: t('soon') },
     { icon: 'klas', bg: colors.greenSoft, label: t('my_class'), sub: t('soon') },
     { icon: 'fanmi', bg: colors.redSoft, label: t('family'), sub: t('soon') },
     { icon: 'paran', bg: colors.yellowSoft, label: t('parent'), sub: t('parent_only'), href: '/settings' },
@@ -31,7 +31,7 @@ export default function Profile() {
         </PressScale>
         <View style={{ flex: 1, gap: 4 }}>
           <T v="h1">{profile.username}</T>
-          <T v="small" color={colors.muted}>{t('level')} {lvl.level} · {profile.age} an</T>
+          <T v="small" color={colors.muted}>{t('level')} {lvl.level} · {profile.age} {t('years')}</T>
           <Row><Progress style={{ flex: 1 }} value={lvl.next ? lvl.into / lvl.next : 0} color={colors.blueLight} /><T v="small" color={colors.muted}>{lvl.into} / {lvl.next}</T></Row>
         </View>
       </Row></FadeIn>
@@ -41,7 +41,7 @@ export default function Profile() {
         <StatTile n={stats.duelWins} k="p-wins" icon="twofe" label={t('wins')} bg={colors.greenSoft} edge="#B9E3C6" fg="#12632F" />
       </Row></FadeIn>
       <Card style={{ gap: 4 }}>
-        <T v="small" color={colors.muted}>{t('xp')}: {progress.xp} · {stats.correct} bon repons · {stats.lessons} leson · {words} mo</T>
+        <T v="small" color={colors.muted}>{t('profile_stats', { xp: progress.xp, c: stats.correct, l: stats.lessons, w: words })}</T>
       </Card>
       {rows.map((r, i) => (
         <FadeIn key={r.label} delay={160 + i * 50}><Card onPress={r.href ? () => router.push(r.href as never) : undefined} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, opacity: r.href || r.icon === 'twofe' ? 1 : 0.6 }}>

@@ -73,7 +73,7 @@ const S = {
   math_combo: ['Yon seri 5 bon repons = pwen yo doub.', 'Une série de 5 bonnes réponses = points doublés.'],
   math_go: ['ALE!', 'PARTEZ !'], math_summary: ['{good} bon repons · {miss} erè · pi gwo seri {best}', '{good} bonnes réponses · {miss} erreurs · meilleure série {best}'],
   math_practice: ['Pratike: {x}', 'À travailler : {x}'], math_live: ['{good} bon · {x2}seri {combo}', '{good} justes · {x2}série {combo}'],
-  two_points: ['2 pwen', '2 points'], skip: ['Sote →', 'Passer →'], score_points: ['{n} pwen!', '{n} points !'],
+  two_points: ['2 pwen', '2 points'], skip: ['Sote\u00a0→', 'Passer\u00a0→'], score_points: ['{n} pwen!', '{n} points !'],
   // home & profile
   chest_open: ['Kòf la louvri! +100 XP', 'Le coffre est ouvert ! +100 XP'],
   league: ['Lig', 'Ligue'], profile_stats: ['{xp} XP · {c} bon repons · {l} leson · {w} mo', '{xp} XP · {c} bonnes réponses · {l} leçons · {w} mots'],
@@ -97,6 +97,8 @@ const S = {
   listen: ['Koute', 'Écouter'], in_my_lang: ['Kreyòl', 'Français'], xp_coins: ['+{xp} XP · +{c} kòb', '+{xp} XP · +{c} pièces'],
   // trophies
   tier_bronz: ['Bwonz', 'Bronze'], tier_ajan: ['Ajan', 'Argent'], tier_lo: ['Lò', 'Or'],
+  // duel reactions
+  re_bravo: ['Bravo!', 'Bravo !'], re_wow: ['Wow!', 'Waouh !'], re_byen_jwe: ['Byen jwe!', 'Bien joué !'], re_anko: ['Ankò!', 'Encore !'], re_bon_chans: ['Bòn chans!', 'Bonne chance !'], re_mwen_pare: ['Mwen pare!', 'Je suis prêt !'],
   // matchmaking
   found: ['Nou jwenn yon jwè!', 'Joueur trouvé !'], tap_skip: ['Tape pou kòmanse', 'Touche pour commencer'], get_ready: ['Pare? Ale!', 'Prêt ? Partez !'],
 } as const;
@@ -121,4 +123,15 @@ export function useT() {
 export function useL() {
   const lang = useStore((s) => s.profile.lang);
   return (t: { ht: string; fr?: string }) => (lang === 'fr' && t.fr ? t.fr : t.ht);
+}
+
+const MONTHS: Record<'ht' | 'fr', string[]> = {
+  ht: ['janv', 'fev', 'mas', 'avr', 'me', 'jen', 'jiyè', 'out', 'sept', 'okt', 'nov', 'des'],
+  fr: ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'],
+};
+/** "6 nov. 2026" / "6 nov 2026": our own month names, so a device locale never puts French in the Kreyòl app (or the reverse). */
+export function formatDate(iso: string, lang: 'ht' | 'fr'): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${d.getDate()} ${MONTHS[lang][d.getMonth()]} ${d.getFullYear()}`;
 }

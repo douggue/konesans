@@ -25,7 +25,7 @@ services:
         --session.token_expiry_sec 7200 --session.refresh_token_expiry_sec 2592000
         --console.username admin --console.password "${CONSOLE_PASSWORD}" --console.signing_key "${CONSOLE_KEY}"
         --runtime.env "KONESANS_ADMINS=${ADMIN_EMAILS}" --runtime.env "KONESANS_ADMIN_PASSWORD=${ADMIN_PASSWORD}"
-        --socket.max_message_size_bytes 65536 --socket.max_request_size_bytes 1048576
+        --socket.max_message_size_bytes 65536 --socket.max_request_size_bytes 1048576 --match.label_update_interval_ms 250
     volumes: [ "./modules:/nakama/data/modules:ro" ]
     ports: [ "127.0.0.1:7351:7351" ]   # Nakama console only on the server itself (use an SSH tunnel)
 

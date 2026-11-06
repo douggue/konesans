@@ -9,10 +9,10 @@ import { useStore, useAvatar } from '@/lib/store';
 import { useT } from '@/lib/i18n';
 import { tap } from '@/lib/audio';
 
-const AGES: { id: AgeBand; label: string; grade: string; color: string }[] = [
-  { id: '6-8', label: '6–8 an', grade: '1ye–3yèm AF', color: colors.greenSoft },
-  { id: '9-11', label: '9–11 an', grade: '4yèm–6yèm AF', color: colors.blueSoft },
-  { id: '12-14', label: '12–14 an', grade: '7yèm–9yèm AF', color: colors.purpleSoft },
+const AGES: { id: AgeBand; label: 'age_6_8' | 'age_9_11' | 'age_12_14'; grade: 'grade_6_8' | 'grade_9_11' | 'grade_12_14'; color: string }[] = [
+  { id: '6-8', label: 'age_6_8', grade: 'grade_6_8', color: colors.greenSoft },
+  { id: '9-11', label: 'age_9_11', grade: 'grade_9_11', color: colors.blueSoft },
+  { id: '12-14', label: 'age_12_14', grade: 'grade_12_14', color: colors.purpleSoft },
 ];
 
 export default function Onboarding() {
@@ -34,9 +34,10 @@ export default function Onboarding() {
         <View style={{ gap: 12 }}>
           <T v="display" center>{t('welcome_title')}</T>
           <T v="body" center color={colors.muted}>{t('pick_lang')}</T>
-          {([['ht', 'Kreyòl ayisyen', 'Bonjou! Ann aprann ansanm.'], ['fr', 'Français', 'Bonjour ! Apprenons ensemble.']] as [Lang, string, string][]).map(([id, label, hello], i) => (
+          {/* i18n-ok: the language picker shows each language in its own words */}
+          {([['ht', 'Kreyòl ayisyen', 'Bonjou! Ann aprann ansanm.'], ['fr', 'Français', 'Bonjour ! Apprenons ensemble.']] as [Lang, string, string][]).map(([id, label, hello], i) => ( // i18n-ok
             <FadeIn key={id} delay={120 + i * 80}><Card onPress={() => setLang(id)} style={[{ flexDirection: 'row', alignItems: 'center', gap: 14 }, pick(id, profile.lang)]}>
-              <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: colors.yellowSoft, alignItems: 'center', justifyContent: 'center' }}><T v="h2">{id === 'ht' ? 'KR' : 'FR'}</T></View>
+              <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: colors.yellowSoft, alignItems: 'center', justifyContent: 'center' }}><T v="h2">{id === 'ht' ? 'KR' : 'FR' /* i18n-ok */}</T></View>
               <View style={{ flex: 1 }}><T v="h3">{label}</T><T v="small" color={colors.muted}>{hello}</T></View>
             </Card></FadeIn>
           ))}
@@ -49,8 +50,8 @@ export default function Onboarding() {
           <T v="body" center color={colors.muted}>{t('age_hint')}</T>
           {AGES.map((a, i) => (
             <FadeIn key={a.id} delay={120 + i * 80}><Card onPress={() => setAge(a.id)} style={[{ flexDirection: 'row', alignItems: 'center', gap: 14 }, pick(a.id, profile.age)]}>
-              <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: a.color, alignItems: 'center', justifyContent: 'center' }}><T v="h3">{a.label.split(' ')[0]}</T></View>
-              <View style={{ flex: 1 }}><T v="h3">{a.label}</T><T v="small" color={colors.muted}>{a.grade}</T></View>
+              <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: a.color, alignItems: 'center', justifyContent: 'center' }}><T v="h3">{a.id.replace('-', '–')}</T></View>
+              <View style={{ flex: 1 }}><T v="h3">{t(a.label)}</T><T v="small" color={colors.muted}>{t(a.grade)}</T></View>
             </Card></FadeIn>
           ))}
         </View>

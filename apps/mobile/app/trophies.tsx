@@ -4,24 +4,12 @@ import { BADGES, courseSummary } from '@konesans/core';
 import { Screen, T, Row, TopBar, Icon, Progress, FadeIn, Pop } from '@/ui';
 import { colors } from '@/lib/theme';
 import { useStore } from '@/lib/store';
-import { useT } from '@/lib/i18n';
+import { useT, formatDate, type StrKey } from '@/lib/i18n';
 
-/** French names and "how to get it" for each trophy (Kreyòl lives in core BADGES). */
-const FR: Record<string, [string, string]> = {
-  premye: ['Premier pas', 'Finis ta première leçon'],
-  seri7: ['Série de 7 jours', '7 jours sans t’arrêter'],
-  seri30: ['Série de 30 jours', '30 jours sans t’arrêter'],
-  mo100: ['100 mots', 'Apprends 100 mots'],
-  duel1: ['Première victoire', 'Gagne un duel 1 contre 1'],
-  duel10: ['10 victoires', 'Gagne 10 duels'],
-  vwayaj3: ['3 départements', 'Débloque 3 départements'],
-  vetye: ['Vertières', 'Joue l’événement du 18 novembre'],
-  drapo: ['18 mai', 'Joue l’événement de la Fête du Drapeau'],
-};
-const TIER: Record<string, { bg: string; ring: string; ink: string; ht: string; fr: string }> = {
-  bronz: { bg: '#FFE8DC', ring: '#E0915F', ink: '#8A3B12', ht: 'Bwonz', fr: 'Bronze' },
-  ajan: { bg: '#EEF1F6', ring: '#A9B4C8', ink: '#4A5570', ht: 'Ajan', fr: 'Argent' },
-  lo: { bg: colors.yellowSoft, ring: colors.yellowDark, ink: '#5C4600', ht: 'Lò', fr: 'Or' },
+const TIER: Record<string, { bg: string; ring: string; ink: string; key: StrKey }> = {
+  bronz: { bg: '#FFE8DC', ring: '#E0915F', ink: '#8A3B12', key: 'tier_bronz' },
+  ajan: { bg: '#EEF1F6', ring: '#A9B4C8', ink: '#4A5570', key: 'tier_ajan' },
+  lo: { bg: colors.yellowSoft, ring: colors.yellowDark, ink: '#5C4600', key: 'tier_lo' },
 };
 
 export default function Trophies() {
@@ -37,14 +25,14 @@ export default function Trophies() {
   };
   const earned = BADGES.filter((b) => progress.badges[b.id]);
   const locked = BADGES.filter((b) => !progress.badges[b.id]);
-  const date = (iso: string) => new Date(iso).toLocaleDateString(fr ? 'fr-FR' : 'fr-HT', { day: 'numeric', month: 'short', year: 'numeric' });
+  const date = (iso: string) => formatDate(iso, profile.lang);
 
   const Tile = ({ id, i, on }: { id: string; i: number; on: boolean }) => {
     const b = BADGES.find((x) => x.id === id)!;
     const tier = TIER[b.tier];
     const g = goal[id];
-    const name = fr ? FR[id]?.[0] ?? b.name : b.name;
-    const how = fr ? FR[id]?.[1] ?? b.how : b.how;
+    const name = fr ? b.nameFr : b.name;
+    const how = fr ? b.howFr : b.how;
     const body = (
       <View style={{ width: '100%', backgroundColor: on ? tier.bg : colors.card, borderRadius: 20, borderWidth: 2, borderBottomWidth: 5, borderColor: on ? tier.ring : colors.line, padding: 14, alignItems: 'center', gap: 6, opacity: on ? 1 : 0.85 }}>
         <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: on ? '#FFFFFF' : colors.bg, borderWidth: 3, borderColor: on ? tier.ring : colors.line, alignItems: 'center', justifyContent: 'center' }}>
@@ -54,9 +42,9 @@ export default function Trophies() {
         <T v="h3" center numberOfLines={2}>{name}</T>
         <T v="small" color={colors.muted} center numberOfLines={2}>{how}</T>
         {on
-          ? <T v="label" color={tier.ink} center>{(fr ? tier.fr : tier.ht).toUpperCase()} · {date(progress.badges[id])}</T>
+          ? <T v="label" color={tier.ink} center>{t(tier.key).toUpperCase()} · {date(progress.badges[id])}</T>
           : g ? <View style={{ width: '100%', gap: 4 }}><Progress value={Math.min(1, g[0] / g[1])} color={tier.ring} height={8} /><T v="small" color={colors.muted} center>{Math.min(g[0], g[1])} / {g[1]}</T></View>
-          : <T v="label" color={colors.muted} center>{(fr ? tier.fr : tier.ht).toUpperCase()}</T>}
+          : <T v="label" color={colors.muted} center>{t(tier.key).toUpperCase()}</T>}
       </View>
     );
     const isNew = newBadges.includes(id);

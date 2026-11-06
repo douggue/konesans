@@ -11,6 +11,7 @@ const CONCEPT_ICON = { avanse: 'avanse', vire: 'vire_dwat', repete: 'repete', si
 
 export default function Coding() {
   const t = useT();
+  const fr = useStore((s) => s.profile.lang) === 'fr';
   const coding = useStore((s) => s.coding);
   const firstOpen = LEVELS.findIndex((l) => !coding[l.id]);
   return (
@@ -31,8 +32,8 @@ export default function Coding() {
                 </View>
                 <T v="h2" color={colors.muted}>{lv.id}</T>
               </Row>
-              <T v="h3">{lv.title}</T>
-              {stars ? <Stars n={stars} size={14} /> : <T v="small" color={colors.muted}>{lv.maze.rows}×{lv.maze.cols} · par {lv.par}</T>}
+              <T v="h3">{fr ? lv.titleFr : lv.title}</T>
+              {stars ? <Stars n={stars} size={14} /> : <T v="small" color={colors.muted}>{lv.maze.rows}×{lv.maze.cols} · {t('par', { n: lv.par })}</T>}
             </Card></FadeIn>
           );
         })}

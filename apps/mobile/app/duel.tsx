@@ -7,11 +7,10 @@ import { Matchmaking } from '@/ui/Matchmaking';
 import { QuestionView } from '@/ui/QuestionView';
 import { colors } from '@/lib/theme';
 import { useStore, useAvatar } from '@/lib/store';
-import { useT } from '@/lib/i18n';
+import { useT, type StrKey } from '@/lib/i18n';
 import { buildQuestions } from '@/lib/content';
 import { tap } from '@/lib/audio';
 
-const REACTION_LABEL: Record<string, string> = { bravo: 'Bravo!', wow: 'Wow!', byen_jwe: 'Byen jwe!', anko: 'Ankò!', bon_chans: 'Bòn chans!', mwen_pare: 'Mwen pare!' };
 const ME = 'me';
 
 /** 1v1 against Robo, run entirely on-device with the same reducer the server uses. */
@@ -66,7 +65,7 @@ export default function Duel() {
     return (
       <Screen scroll={false}>
         <TopBar close title={t('duel_bot')} onBack={() => router.back()} />
-        <Matchmaking me={{ name: profile.username, avatar: myAvatar, sub: `${profile.age} an` }} opponent={{ name: bot.name, avatar: bot.avatar, sub: '🤖 Robo' }} onDone={startDuel} />
+        <Matchmaking me={{ name: profile.username, avatar: myAvatar, sub: `${profile.age} ${t('years')}` }} opponent={{ name: bot.name, avatar: bot.avatar, sub: t('robot') }} onDone={startDuel} />
       </Screen>
     );
   }
@@ -112,7 +111,7 @@ export default function Duel() {
         <Progress style={{ flex: 1 }} linear value={reveal ? 0 : left / s.questionMs} color={left < 4000 ? colors.red : colors.yellowDark} />
         <T v="small" color={colors.muted} style={{ width: 32, textAlign: 'right' }}>{reveal ? '' : Math.ceil(left / 1000) + ' s'}</T>
       </Row>
-      {op.answer && !reveal && <Pop><Pill text={`${op.username} reponn deja!`} color={colors.muted} bg={colors.line} /></Pop>}
+      {op.answer && !reveal && <Pop><Pill text={t('already_answered', { name: op.username })} color={colors.muted} bg={colors.line} /></Pop>}
       {q && <SlideSwap id={s.index}><QuestionView q={q} chosen={me?.answer?.chosen ?? null} reveal={reveal} otherChosen={reveal ? op.answer?.chosen : undefined} otherAvatar={bot.avatar} onPick={(i) => { tap(); setS((d) => reduce(d, { type: 'answer', playerId: ME, chosen: i }, Date.now())); }} /></SlideSwap>}
       {!reveal && (
         <View style={{ gap: 8 }}>
@@ -120,7 +119,7 @@ export default function Duel() {
           <Row gap={8} style={{ flexWrap: 'wrap' }}>
             {PRESET_REACTIONS.slice(0, 4).map((r) => (
               <PressScale role="button" key={r} scaleTo={0.9} onPress={() => { tap(); setS((d) => reduce(d, { type: 'react', playerId: ME, reaction: r }, Date.now())); }} style={{ minHeight: 40, paddingHorizontal: 12, borderRadius: 20, borderWidth: 2, borderColor: s.reactions[ME] === r ? colors.blue : colors.line, backgroundColor: colors.card, justifyContent: 'center' }}>
-                <T v="small">{REACTION_LABEL[r]}</T>
+                <T v="small">{t(`re_${r}` as StrKey)}</T>
               </PressScale>
             ))}
           </Row>

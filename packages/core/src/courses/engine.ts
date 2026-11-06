@@ -303,8 +303,8 @@ export function recordLesson(p: CourseProgress, lessonId: string, r: LessonResul
 }
 
 export type LessonState = 'done' | 'open' | 'locked';
-export interface PathLesson { id: string; title: string; state: LessonState; stars: 0 | 1 | 2 | 3 }
-export interface PathUnit { id: string; title: string; emoji: string; lessons: PathLesson[]; done: number; total: number }
+export interface PathLesson { id: string; title: string; titleFr: string; state: LessonState; stars: 0 | 1 | 2 | 3 }
+export interface PathUnit { id: string; title: string; titleFr: string; emoji: string; lessons: PathLesson[]; done: number; total: number }
 
 /** The lesson path: linear — a lesson opens when the previous one is done; the first is always open. */
 export function coursePath(lang: CourseId, p: CourseProgress): PathUnit[] {
@@ -314,9 +314,9 @@ export function coursePath(lang: CourseId, p: CourseProgress): PathUnit[] {
       const rec = p.lessons[l.id];
       const state: LessonState = rec ? 'done' : prevDone ? 'open' : 'locked';
       prevDone = !!rec;
-      return { id: l.id, title: l.title, state, stars: (rec?.stars ?? 0) as 0 | 1 | 2 | 3 };
+      return { id: l.id, title: l.title, titleFr: l.titleFr, state, stars: (rec?.stars ?? 0) as 0 | 1 | 2 | 3 };
     });
-    return { id: u.id, title: u.title, emoji: u.emoji, lessons, done: lessons.filter(l => l.state === 'done').length, total: lessons.length };
+    return { id: u.id, title: u.title, titleFr: u.titleFr, emoji: u.emoji, lessons, done: lessons.filter(l => l.state === 'done').length, total: lessons.length };
   });
 }
 
