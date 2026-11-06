@@ -47,8 +47,10 @@ export interface Profile {
 }
 
 export interface AvatarConfig {
-  skin: number; hair: 'afro' | 'braids' | 'short' | 'puffs'; hairColor: number;
-  shirt: number; extra: 'none' | 'glasses' | 'cap' | 'mask' | 'uniform'; bg: number;
+  skin: number; hair: 'afro' | 'braids' | 'short' | 'puffs' | 'bun' | 'mohawk' | 'locs'; hairColor: number;
+  shirt: number; extra: 'none' | 'glasses' | 'cap' | 'mask' | 'uniform' | 'headphones' | 'strawhat' | 'shades' | 'crown' | 'flower'; bg: number;
+  /** ring around the round avatar (0 = plain ink). Items past the first ones unlock by rank (see progress/ranks). */
+  frame?: number;
 }
 
 /** Controls a parent sets. Defaults are the safest ones. */
