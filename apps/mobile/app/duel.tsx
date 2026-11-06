@@ -11,7 +11,7 @@ import { useT, type StrKey } from '@/lib/i18n';
 import { buildQuestions } from '@/lib/content';
 import { tap } from '@/lib/audio';
 import { serverConfigured } from '@/lib/remote';
-import { findDuel, setProfile, type OnlineDuel as OnlineCtl, type OnlineView } from '@/lib/online';
+import { findDuel, setProfile, lastOnlineError, type OnlineDuel as OnlineCtl, type OnlineView } from '@/lib/online';
 
 const ME = 'me';
 
@@ -280,7 +280,7 @@ function LocalDuel({ note }: { note: StrKey | null }) {
     return (
       <Screen scroll={false}>
         <TopBar close title={t('duel_bot')} onBack={() => router.back()} />
-        {note ? <FadeIn><T v="small" center color={colors.muted}>{t(note)}</T></FadeIn> : null}
+        {note ? <FadeIn><T v="small" center color={colors.muted}>{t(note)}</T>{note === 'robo_offline' && lastOnlineError ? <T v="small" center color={colors.muted} style={{ opacity: 0.6, fontSize: 11 }}>{lastOnlineError}</T> : null}</FadeIn> : null}
         <Matchmaking me={{ name: profile.username, avatar: myAvatar, sub: `${profile.age} ${t('years')}` }} opponent={{ name: bot.name, avatar: bot.avatar, sub: t('robot') }} onDone={startDuel} />
       </Screen>
     );

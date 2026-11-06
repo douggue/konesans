@@ -23,8 +23,12 @@ export interface OnlineView {
   reactions: Record<string, string>; endReason?: 'completed' | 'forfeit' | 'timeout'; winnerId?: string | null;
 }
 
-const url = new URL(SERVER.apiUrl);
-const client = new Client(SERVER.serverKey, url.hostname, url.port || (url.protocol === 'https:' ? '443' : '80'), url.protocol === 'https:', 10000);
+// Parsed by hand: React Native's URL class doesn't implement hostname/port on every version.
+const m = /^(https?):\/\/([^/:]+)(?::(\d+))?/.exec(SERVER.apiUrl) ?? ['', 'https', 'localhost', ''];
+const SSL = m[1] === 'https';
+const client = new Client(SERVER.serverKey, m[2], m[3] || (SSL ? '443' : '80'), SSL, 10000);
+/** Last reason an online duel couldn't start (shown small under the Robo note, for support). */
+export let lastOnlineError = '';
 
 const DEVICE_KEY = 'konesans-device-id';
 async function deviceId(): Promise<string> {
@@ -87,7 +91,7 @@ export async function findDuel(opts: { age: AgeBand; category?: string; onView: 
   let closed = false;
   try {
     const s = await getSession();
-    sock = client.createSocket(url.protocol === 'https:', false);
+    sock = client.createSocket(SSL, false);
     sock.onmatchdata = (md) => {
       if (md.op_code !== OP.STATE || md.match_id !== current) return;
       try { last = decode(md.data) as OnlineView; opts.onView(last); } catch { /* ignore a bad frame */ }
@@ -126,6 +130,7 @@ export async function findDuel(opts: { age: AgeBand; category?: string; onView: 
     const msg = String(e?.message ?? e?.statusText ?? '');
     let body = '';
     try { body = typeof e?.json === 'function' ? JSON.stringify(await e.json()) : ''; } catch { /* no body */ }
+    lastOnlineError = `${e?.status ?? ''} ${msg} ${body}`.trim().slice(0, 140);
     if (/online_not_allowed|consent/i.test(msg + body)) opts.onError('not_allowed');
     else if (/network|fetch|timeout|failed/i.test(msg) || e?.status === undefined) opts.onError('offline');
     else opts.onError('server');
