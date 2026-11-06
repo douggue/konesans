@@ -94,6 +94,18 @@ function init() {
   safe(() => { setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'mixWithOthers', shouldPlayInBackground: false }).catch(() => {}); });
   // Preload every SFX now so the first play has no load latency.
   for (const k of Object.keys(SFX_SRC) as SfxName[]) safe(() => { if (!E.sfx[k]) E.sfx[k] = createAudioPlayer(SFX_SRC[k], { updateInterval: 1000 }); });
+  // Load the music loops too: on Android a player ignores play() until its file has loaded.
+  for (const k of Object.keys(MUSIC_SRC) as Loop[]) safe(() => { chan(k); });
+  // Watchdog: anything that should be sounding but isn't (play() came before the file loaded, audio focus
+  // was taken by another app, …) gets started again.
+  setInterval(() => safe(() => {
+    for (const c of Object.values(E.chans)) {
+      if (c && c.playing && c.vol > 0 && c.p.isLoaded && !c.p.playing) safe(() => c.p.play());
+    }
+    // music wanted but nothing running (e.g. the wish came before settings finished loading) → start it
+    const st = useStore.getState();
+    if (E.want && st.hydrated && st.settings.music && E.active && !Object.values(E.chans).some((c) => c?.playing)) apply(0.4);
+  }), 700);
   safe(() => {
     AppState.addEventListener('change', (st) => { E.active = st === 'active'; apply(0); });
     // live settings + trophy jingle (read-only use of the store)
@@ -185,7 +197,7 @@ function apply(fade: number) {
     if (want) {
       const c = chan(want);
       if (!c.playing) {
-        if (E.fresh.has(want)) { E.fresh.delete(want); safe(() => { c.p.seekTo(0).catch(() => {}); }); }
+        if (E.fresh.has(want)) { E.fresh.delete(want); if (c.p.isLoaded) safe(() => { c.p.seekTo(0).catch(() => {}); }); }
         c.vol = fade <= 0 ? 1 : 0;
         safe(() => { c.p.volume = c.vol * MUSIC_VOL * E.duck; c.p.play(); });
         c.playing = true;
