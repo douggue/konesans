@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { chestReady, nextLesson, courseById, type QuestState } from '@konesans/core';
 import { Screen, T, Card, Row, BottomNav, Pill, CountPill, Progress, Mascot, IconTile, Button, Motif, Avatar, PressScale, FadeIn, Pop } from '@/ui';
 import { colors } from '@/lib/theme';
@@ -8,7 +8,7 @@ import { categoryInfo } from '@/lib/content';
 import { useAnnouncement, useFeatures, useDailyCount } from '@/lib/remote';
 import { useStore, useLevel, useAvatar } from '@/lib/store';
 import { useT, useL } from '@/lib/i18n';
-import { tap } from '@/lib/audio';
+import { tap, music } from '@/lib/audio';
 
 const QUEST_TEXT: Record<string, [string, string]> = {
   win_duel: ['Genyen {n} defi', 'Gagner {n} duel'], finish_lessons: ['Fini {n} leson', 'Finir {n} leçons'], math_score: ['Fè {n} pwen nan Kalkil Mantal', 'Faire {n} points en calcul mental'],
@@ -24,6 +24,7 @@ export default function Home() {
   const daily = useDailyCount();
   const avatar = useAvatar();
   useEffect(() => { touch(); }, []);
+  useFocusEffect(useCallback(() => { music('menu'); }, []));
   const quests: QuestState[] = progress.quests;
   const questsDone = quests.filter((q) => q.done).length;
   const nextEn = nextLesson('en', courses.en); const nextEs = nextLesson('es', courses.es);

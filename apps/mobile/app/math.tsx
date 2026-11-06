@@ -6,7 +6,7 @@ import { Screen, T, Button, Card, Row, Progress, Mascot, TopBar, Pill, Sheet, Pr
 import { colors, radius } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT, useL } from '@/lib/i18n';
-import { tap } from '@/lib/audio';
+import { tap, sfx, music, answerSfx } from '@/lib/audio';
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '−', '0', '⌫'];
 
@@ -31,9 +31,11 @@ export default function MathRapid() {
     const id = setInterval(() => setLeft(Math.max(0, run.endsAt - Date.now())), 100);
     return () => clearInterval(id);
   }, [run]);
-  useEffect(() => { if (over && !saved.current && run) { saved.current = true; recordMath(run.score, mathXp(run)); tap('success'); } }, [over]);
+  useEffect(() => { if (over && !saved.current && run) { saved.current = true; recordMath(run.score, mathXp(run)); tap('success'); sfx('level'); setTimeout(() => sfx('coin'), 1200); } }, [over]);
+  useEffect(() => { music(null); }, []);
+  const results = useRef<boolean[]>([]);
 
-  const start = () => { setHits(0); setMisses(0); saved.current = false; setTyped(''); setLeft(60_000); setRun(startMath(profile.age, Date.now() % 1e9, Date.now())); };
+  const start = () => { results.current = []; setHits(0); setMisses(0); saved.current = false; setTyped(''); setLeft(60_000); setRun(startMath(profile.age, Date.now() % 1e9, Date.now())); };
   const press = (k: string) => {
     if (!run || over) return;
     tap();
@@ -48,10 +50,11 @@ export default function MathRapid() {
     setFlash(ok ? 'ok' : 'no'); setTimeout(() => setFlash(null), 350);
     if (ok) setHits((h) => h + 1); else setMisses((m) => m + 1);
     tap(ok ? 'success' : 'error');
+    results.current.push(ok); sfx(answerSfx(results.current));
     setRun(next); setTyped('');
   };
   useEffect(() => { if (run && typed !== '' && typed !== '-' && String(run.current.answer).length === typed.length && Number(typed) === run.current.answer) submit(); }, [typed]);
-  const skip = () => { if (!run || over) return; tap('error'); setRun(skipMath(run, Date.now())); setTyped(''); };
+  const skip = () => { if (!run || over) return; tap('error'); results.current.push(false); sfx('wrong'); setRun(skipMath(run, Date.now())); setTyped(''); };
 
   if (!run) {
     return (

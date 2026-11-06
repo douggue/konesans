@@ -6,7 +6,7 @@ import { Screen, T, Button, Card, Row, TopBar, Icon, Stars, Pill, Mascot, PressS
 import { colors, radius } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT, type StrKey } from '@/lib/i18n';
-import { tap } from '@/lib/audio';
+import { tap, sfx, music } from '@/lib/audio';
 
 type Kind = Block['type'];
 const PALETTE: { type: Kind; icon: 'avanse' | 'vire_goch' | 'vire_dwat' | 'repete' | 'simi' | 'zetwal_gri'; color: string }[] = [
@@ -41,6 +41,7 @@ export default function CodingLevel() {
 
   const reset = () => { if (anim.current) clearInterval(anim.current); setRobot({ ...lv.maze.start, dir: lv.maze.startDir }); setGems(new Set()); setResult(null); };
   useEffect(() => () => { if (anim.current) clearInterval(anim.current); }, []);
+  useEffect(() => { music(null); }, []);
 
   function add(type: Kind) {
     reset();
@@ -53,9 +54,9 @@ export default function CodingLevel() {
     let k = 0; const got = new Set<string>();
     anim.current = setInterval(() => {
       const step = r.steps[k++];
-      if (!step) { if (anim.current) clearInterval(anim.current); setResult(r); if (r.ok) { const stars = r.blocksUsed <= lv.par ? 3 : r.blocksUsed <= lv.par + 2 ? 2 : 1; recordCoding(lv.id, stars, scoreRun(r, lv)); tap('success'); } else tap('error'); return; }
+      if (!step) { if (anim.current) clearInterval(anim.current); setResult(r); if (r.ok) { const stars = r.blocksUsed <= lv.par ? 3 : r.blocksUsed <= lv.par + 2 ? 2 : 1; recordCoding(lv.id, stars, scoreRun(r, lv)); tap('success'); sfx('level'); } else { tap('error'); sfx('wrong'); } return; }
       if (step.kind === 'move' || step.kind === 'turn') setRobot(step.to);
-      if (step.kind === 'gem') { got.add(`${step.at.r},${step.at.c}`); setGems(new Set(got)); }
+      if (step.kind === 'gem') { got.add(`${step.at.r},${step.at.c}`); setGems(new Set(got)); sfx('coin'); }
     }, 320);
   }
   const problems = validateProgram(lv, program);

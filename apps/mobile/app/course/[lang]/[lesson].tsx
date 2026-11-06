@@ -7,7 +7,7 @@ import { Illustration, hasIllustration } from '@/ui/Illustration';
 import { colors, radius } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT, useL } from '@/lib/i18n';
-import { speak, tap, sfx, answerSfx } from '@/lib/audio';
+import { speak, tap, sfx, music, answerSfx } from '@/lib/audio';
 
 const TITLE: Record<Exercise['kind'], 'ex_pick_meaning' | 'ex_pick_word' | 'ex_listen' | 'ex_match' | 'ex_translate' | 'ex_build' | 'ex_fill'> = {
   pick_meaning: 'ex_pick_meaning', pick_word: 'ex_pick_word', listen_pick: 'ex_listen', match_pairs: 'ex_match', translate_pick: 'ex_translate', build_sentence: 'ex_build', fill_blank: 'ex_fill',
@@ -25,6 +25,7 @@ export default function Lesson() {
   const [done, setDone] = useState(false);
   const [quitting, setQuitting] = useState(false);
   const results = useRef<boolean[]>([]);
+  useEffect(() => { music(null); }, []);
   // while feedback is showing, the session has already advanced: keep the exercise that was just answered on screen
   const ex = grade ? s.queue[s.i - 1] : currentExercise(s);
 

@@ -9,7 +9,7 @@ import { useStore } from '@/lib/store';
 import { useT, useL } from '@/lib/i18n';
 import { buildQuestions, categoryInfo, type CatId } from '@/lib/content';
 import { useDailyCount } from '@/lib/remote';
-import { speak, tap, sfx, answerSfx } from '@/lib/audio';
+import { speak, tap, sfx, music, answerSfx } from '@/lib/audio';
 
 export default function Quiz() {
   const { category, count: countParam, trial, mode, level, region } = useLocalSearchParams<{ category: string; count?: string; trial?: string; mode?: string; level?: string; region?: string }>();
@@ -50,6 +50,7 @@ export default function Quiz() {
   }, [s.index, reveal, s.finished]);
 
   useEffect(() => { if (q && settings.voice && profile.age === '6-8') speak(l(q.prompt), profile.lang); }, [s.index]);
+  useEffect(() => { music(null); }, []);
 
   function pick(i: number | null) {
     if (reveal) return;
