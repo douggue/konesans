@@ -86,7 +86,12 @@ const E: Engine = G.__ksAudio ?? (G.__ksAudio = {
   active: AppState.currentState !== 'background', ready: false, busyUntil: 0,
 });
 
-const safe = (f: () => void) => { try { f(); } catch { /* audio is best-effort */ } };
+/** First audio error seen (shown small in Settings so a silent phone can be diagnosed). */
+export let audioError = '';
+const safe = (f: () => void) => { try { f(); } catch (e: any) { if (!audioError) audioError = String(e?.message ?? e).slice(0, 160); /* audio is best-effort */ } };
+/** Read the app state live: on Android the JS can start while the app still reports 'background', and the
+ *  'active' change may fire before our listener exists — a cached flag then stays false and everything is silent. */
+const appActive = () => AppState.currentState !== 'background';
 
 function init() {
   if (E.ready) return;
@@ -104,10 +109,10 @@ function init() {
     }
     // music wanted but nothing running (e.g. the wish came before settings finished loading) → start it
     const st = useStore.getState();
-    if (E.want && st.hydrated && st.settings.music && E.active && !Object.values(E.chans).some((c) => c?.playing)) apply(0.4);
+    if (E.want && st.hydrated && st.settings.music && appActive() && !Object.values(E.chans).some((c) => c?.playing)) apply(0.4);
   }), 700);
   safe(() => {
-    AppState.addEventListener('change', (st) => { E.active = st === 'active'; apply(0); });
+    AppState.addEventListener('change', (st) => { E.active = st !== 'background'; apply(0); });
     // live settings + trophy jingle (read-only use of the store)
     useStore.subscribe((s, prev) => {
       if (s.settings.music !== prev.settings.music || s.hydrated !== prev.hydrated) apply(s.settings.music ? 0.4 : 0);
@@ -125,7 +130,7 @@ function init() {
 /** Play a one-shot sound effect (respects Settings → sound effects). */
 export function sfx(name: SfxName) {
   safe(() => {
-    if (!useStore.getState().settings.sfx || !E.active) return;
+    if (!useStore.getState().settings.sfx || !appActive()) return;
     init();
     const p = E.sfx[name] ?? (E.sfx[name] = createAudioPlayer(SFX_SRC[name], { updateInterval: 1000 }));
     p.volume = 1;
@@ -185,7 +190,7 @@ function chan(k: Loop): Chan {
 function apply(fade: number) {
   safe(() => {
     const st = useStore.getState();
-    const on = st.hydrated && st.settings.music && E.active;
+    const on = st.hydrated && st.settings.music && appActive();
     const want: Loop | null = !on || !E.want ? null : E.want === 'duel_battle' && E.hurry ? 'duel_hurry' : E.want;
     for (const k of Object.keys(E.chans) as Loop[]) {
       const c = E.chans[k]!;
