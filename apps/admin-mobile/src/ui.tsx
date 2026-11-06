@@ -35,7 +35,8 @@ const SIZES: Record<Variant, TextStyle> = {
   mono: { fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' }), fontSize: 12, lineHeight: 16 },
 };
 export function T({ v = 'body', color = colors.ink, style, children, center, ...rest }: { v?: Variant; color?: string; center?: boolean; style?: StyleProp<TextStyle>; children: React.ReactNode } & Omit<React.ComponentProps<typeof Text>, 'style'>) {
-  return <Text {...rest} style={[SIZES[v], { color }, center && { textAlign: 'center' }, style]}>{children}</Text>;
+  // Android adds the font's own padding (large for Baloo 2), which pushes text off-centre in buttons and chips.
+  return <Text {...rest} style={[SIZES[v], { color, includeFontPadding: false, textAlignVertical: 'center' }, center && { textAlign: 'center' }, style]}>{children}</Text>;
 }
 
 export function Row({ children, gap = 10, style, center = true, wrap }: { children: React.ReactNode; gap?: number; style?: StyleProp<ViewStyle>; center?: boolean; wrap?: boolean }) {

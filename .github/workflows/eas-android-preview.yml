@@ -1,11 +1,11 @@
-# Builds the Android APK (EAS "preview" profile) on every push to main, or by hand from the Actions tab.
+# Ships the kids' app on every push to main: an over-the-air update when only JS changed, a new APK otherwise.
 # Needs one repository secret: EXPO_TOKEN (expo.dev → Account settings → Access tokens).
 name: EAS Android preview
 on:
   push:
     branches: [main]
     # Question-bank-only changes don't need a new APK: phones get questions from the server after Publish.
-    paths: ['apps/mobile/**', 'packages/core/**', '!packages/core/src/content/bank.ts', 'package.json', 'package-lock.json']
+    paths: ['apps/mobile/**', 'packages/core/**', '!packages/core/src/content/bank.ts', 'package.json', 'package-lock.json', 'tools/eas-ship.sh']
   workflow_dispatch:
 jobs:
   build:
@@ -20,6 +20,5 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
       - run: npm ci
       - run: npx vitest run --root packages/core
-      - name: Build APK on EAS
-        working-directory: apps/mobile
-        run: eas build --platform android --profile preview --non-interactive --no-wait
+      - name: Over-the-air update, or a new APK when native code changed
+        run: tools/eas-ship.sh apps/mobile

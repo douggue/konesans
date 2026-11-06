@@ -124,20 +124,31 @@ function pickDistractors(c: Country, pool: Country[], o: CountryQuizOptions, key
   return out;
 }
 
-/** Build a Peyi set for the chosen mode, level and region. Deterministic per seed. */
-export function generateCountryQuiz(o: CountryQuizOptions, age: AgeBand, count: number, seed: number): Question[] {
+/**
+ * Build a Peyi set for the chosen mode, level and region. Deterministic per (seed, avoid).
+ * - Each country appears at most once per game (no "same flag twice").
+ * - Small pools borrow harder countries from the same region before the set gets shorter.
+ * - `avoid` = countries asked recently: they come last, so a replay brings new ones first.
+ */
+export function generateCountryQuiz(o: CountryQuizOptions, age: AgeBand, count: number, seed: number, avoid: readonly string[] = []): Question[] {
   const rand = rng(seed);
-  const pool = countryPool(o);
+  let pool = countryPool(o);
+  for (let tier = o.level + 1; pool.length < count && tier <= 3; tier++) {
+    const more = countryPool({ ...o, level: tier as CountryQuizOptions['level'] }).filter((c) => !pool.some((p) => p.iso === c.iso));
+    pool = [...pool, ...more];
+  }
   const mod = o.mode === 'drapo' ? flags : o.mode === 'kapital' ? capitals : shapes;
-  const out: Question[] = []; const seen = new Set<string>();
-  const reverseOk = o.level >= 2 || pool.length < count; // small pools (e.g. Fasil · Karayib) also use the reverse forms so a set can fill up
-  let guard = 0;
-  while (out.length < count && guard++ < count * 25) {
-    const c = pick(rand, pool);
+  const recent = new Set(avoid);
+  // fresh countries first (shuffled), then the recently asked ones (also shuffled)
+  const order = [...shuffle(pool.filter((c) => !recent.has(c.iso)), rand), ...shuffle(pool.filter((c) => recent.has(c.iso)), rand)];
+  const picks = order.slice(0, Math.min(count, order.length));
+  const reverseOk = o.level >= 2;
+  const out: Question[] = [];
+  for (const c of picks) {
     let qq: Question;
     if (o.mode === 'drapo') {
       if (reverseOk && rand() < 0.4) {
-        // reverse: name → pick the flag (options are flag emoji)
+        // reverse: name → pick the flag (options are flags)
         const ds = pickDistractors(c, pool, o, 'iso', rand);
         qq = q(mod, age, rand, ht(`Ki drapo ${c.name}?`), [flagEmoji(c.iso), ...ds.map(flagEmoji)], flagEmoji(c.iso));
       } else {
@@ -149,12 +160,13 @@ export function generateCountryQuiz(o: CountryQuizOptions, age: AgeBand, count: 
     } else {
       qq = q(mod, age, rand, ht('Ki peyi sa a?'), [c.name, ...pickDistractors(c, pool, o, 'name', rand)], c.name, undefined, { kind: 'shape', ref: c.iso });
     }
-    const key = `${c.iso}|${qq.prompt.ht}`;
-    if (seen.has(key)) continue;
-    seen.add(key); out.push(qq);
+    out.push({ ...qq, id: `peyi:${o.mode}:${c.iso}:${seed.toString(36)}` });
   }
   return out;
 }
+
+/** The country a Peyi question is about (for "recently asked"). */
+export const peyiIso = (questionId: string) => questionId.startsWith('peyi:') ? questionId.split(':')[2] : null;
 
 export const REGION_LABEL: Record<Region | 'mond', { ht: string; fr: string; emoji: string }> = {
   mond: { ht: 'Tout mond lan', fr: 'Le monde entier', emoji: '🌍' },

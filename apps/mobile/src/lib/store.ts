@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { avatarFromSeed } from '@/ui/avatar';
 import {
   DEFAULT_SETTINGS, emptyProgress, emptyCourseProgress, recordLesson as coreRecordLesson, applyEvent, ensureQuests,
-  recordActivity, levelFromXp, generateUsername, localDay, noteWrong,
+  recordActivity, levelFromXp, generateUsername, localDay, noteWrong, checkBadges, courseSummary,
   type AgeBand, type AvatarConfig, type KidSettings, type Progress, type CourseProgress, type CourseId, type LessonResult, type GameEvent, type Lang, type CountryQuizOptions,
 } from '@konesans/core';
 
@@ -47,6 +47,14 @@ interface State {
   recordCoding: (levelId: number, stars: number, xp: number) => void;
   recordMath: (score: number, xp: number) => void;
   resetAll: () => void;
+  /** Award trophies whose condition is now met (called after every activity). */
+  awardBadges: () => string[];
+  /** Trophies just won, shown once on the next screen. */
+  newBadges: string[];
+  clearNewBadges: () => void;
+  /** Countries recently asked in Peyi, so a replay brings new ones. */
+  recentPeyi: string[];
+  notePeyi: (isos: string[]) => void;
 }
 
 const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Port-au-Prince';
@@ -71,6 +79,8 @@ export const useStore = create<State>()(
       kidSettings: DEFAULT_SETTINGS,
       stats: freshStats(),
       seen: [],
+      newBadges: [],
+      recentPeyi: [],
 
       setHydrated: () => set({ hydrated: true }),
       setLang: (lang) => set((s) => ({ profile: { ...s.profile, lang } })),
@@ -81,12 +91,25 @@ export const useStore = create<State>()(
       setSettings: (p) => set((s) => ({ settings: { ...s.settings, ...p } })),
 
       /** Mark activity: streak + today's quests. */
-      touch: () => set((s) => {
-        const now = Date.now();
-        let p = recordActivity(s.progress, s.kidSettings, now, tz);
-        p = ensureQuests(p, s.profile.id, localDay(now, tz));
-        return { progress: p };
-      }),
+      touch: () => {
+        set((s) => {
+          const now = Date.now();
+          let p = recordActivity(s.progress, s.kidSettings, now, tz);
+          p = ensureQuests(p, s.profile.id, localDay(now, tz));
+          return { progress: p };
+        });
+        get().awardBadges();
+      },
+
+      awardBadges: () => {
+        const s = get();
+        const words = courseSummary('en', s.courses.en).wordsLearned + courseSummary('es', s.courses.es).wordsLearned;
+        const { progress, awarded } = checkBadges({ p: s.progress, duelWins: s.stats.duelWins, lessonsDone: s.stats.lessons, wordsLearned: words, departmentsUnlocked: 0, eventsPlayed: [] }, new Date().toISOString());
+        if (awarded.length) set({ progress, newBadges: [...s.newBadges, ...awarded] });
+        return awarded;
+      },
+      clearNewBadges: () => set({ newBadges: [] }),
+      notePeyi: (isos) => set((s) => ({ recentPeyi: [...s.recentPeyi.filter((x) => !isos.includes(x)), ...isos].slice(-60) })),
 
       emit: (e) => {
         const { progress, xpAwarded } = applyEvent(get().progress, e);
@@ -115,6 +138,7 @@ export const useStore = create<State>()(
         set({ stats: { ...st.stats, duels: st.stats.duels + 1, duelWins: st.stats.duelWins + (won ? 1 : 0) } });
         get().emit({ type: 'duel_end', won, draw });
         get().award(won ? 40 : draw ? 25 : 15);
+        get().awardBadges();
       },
 
       recordLessonDone: (lang, lessonId, r) => {
@@ -122,6 +146,7 @@ export const useStore = create<State>()(
         set({ courses: { ...st.courses, [lang]: coreRecordLesson(st.courses[lang], lessonId, r) }, stats: { ...st.stats, lessons: st.stats.lessons + 1 } });
         get().emit({ type: 'lesson_done', course: lang });
         get().award(r.xp, r.coins);
+        get().awardBadges();
       },
 
       recordCoding: (levelId, stars, xp) => {
@@ -132,12 +157,12 @@ export const useStore = create<State>()(
 
       recordMath: (score, xp) => { get().touch(); get().emit({ type: 'math_run', score }); get().award(xp); set((s) => ({ stats: { ...s.stats, mathBest: Math.max(s.stats.mathBest ?? 0, score) } })); },
 
-      resetAll: () => set({ onboarded: false, profile: freshProfile(), progress: emptyProgress(), courses: { en: emptyCourseProgress(), es: emptyCourseProgress() }, coding: {}, stats: freshStats(), seen: [] }),
+      resetAll: () => set({ recentPeyi: [], newBadges: [], onboarded: false, profile: freshProfile(), progress: emptyProgress(), courses: { en: emptyCourseProgress(), es: emptyCourseProgress() }, coding: {}, stats: freshStats(), seen: [] }),
     }),
     {
       name: 'konesans-v1',
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: (s) => ({ onboarded: s.onboarded, profile: s.profile, progress: s.progress, courses: s.courses, courseLang: s.courseLang, peyi: s.peyi, coding: s.coding, settings: s.settings, kidSettings: s.kidSettings, stats: s.stats, seen: s.seen }),
+      partialize: (s) => ({ recentPeyi: s.recentPeyi, onboarded: s.onboarded, profile: s.profile, progress: s.progress, courses: s.courses, courseLang: s.courseLang, peyi: s.peyi, coding: s.coding, settings: s.settings, kidSettings: s.kidSettings, stats: s.stats, seen: s.seen }),
       onRehydrateStorage: () => (state) => { state?.setHydrated(); },
     },
   ),

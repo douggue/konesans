@@ -38,7 +38,7 @@ export function PressScale({ onPress, style, children, scaleTo = 0.95, disabled,
         onPressIn={(e) => { setPressed(true); if (!reduce) to(scaleTo); rest.onPressIn?.(e); }}
         onPressOut={(e) => { setPressed(false); to(1); rest.onPressOut?.(e); }}
         onPress={(e) => { const n = Date.now(); if (n - last.current < debounceMs) return; last.current = n; onPress?.(e); }}
-        style={[{ flexGrow: 1 }, innerStyle(resolved)]}
+        style={[growsInParent(resolved) && { flexGrow: 1 }, innerStyle(resolved)]}
       >
         {children}
       </Pressable>
@@ -57,6 +57,9 @@ function flattenOuter(st: StyleProp<ViewStyle>): ViewStyle {
   for (const k of Object.keys(f)) if (OUTER.has(k)) o[k] = f[k];
   return o as ViewStyle;
 }
+/** Only stretch the pressable to fill its animated wrapper when the wrapper itself flexes (e.g. equal-width tiles).
+ *  An unconditional flexGrow made content-sized buttons grow to huge heights on Android. */
+function growsInParent(st: StyleProp<ViewStyle>): boolean { const f = flat(st); return 'flex' in f || 'flexGrow' in f || 'flexBasis' in f; }
 function innerStyle(st: StyleProp<ViewStyle>): ViewStyle {
   const f = flat(st); const o: Record<string, unknown> = {};
   for (const k of Object.keys(f)) if (!OUTER.has(k)) o[k] = f[k];

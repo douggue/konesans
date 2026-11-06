@@ -30,7 +30,8 @@ const SIZES: Record<Variant, TextStyle> = {
 export function T({ v = 'body', color = colors.ink, style, children, center, ...rest }: { v?: Variant; color?: string; center?: boolean; style?: StyleProp<TextStyle>; children: React.ReactNode } & Omit<React.ComponentProps<typeof Text>, 'style'>) {
   const scale = useStore((s) => [0.9, 1, 1.18][s.settings.textSize]);
   const base = SIZES[v];
-  return <Text {...rest} style={[base, { fontSize: base.fontSize! * scale, lineHeight: base.lineHeight! * scale, color }, center && { textAlign: 'center' }, style]}>{children}</Text>;
+  // Android adds the font's own top/bottom padding (large for Baloo 2), which pushes text off-centre in buttons, pills and tiles.
+  return <Text {...rest} style={[base, { fontSize: base.fontSize! * scale, lineHeight: base.lineHeight! * scale, color, includeFontPadding: false, textAlignVertical: 'center' }, center && { textAlign: 'center' }, style]}>{children}</Text>;
 }
 
 // ─── Layout ──────────────────────────────────────────────────────────────────
@@ -181,7 +182,7 @@ export function BottomNav() {
   return (
     <View onLayout={(e) => setW(e.nativeEvent.layout.width - 12)} style={{ flexDirection: 'row', backgroundColor: colors.card, borderTopWidth: 2, borderTopColor: colors.line, paddingTop: 8, paddingBottom: 8 + Math.max(insets.bottom, 10), paddingHorizontal: 6 }}>
       {w > 0 && (
-        <Animated.View pointerEvents="none" style={{ position: 'absolute', top: 8, left: 6, width: tabW, height: 34, alignItems: 'center', transform: [{ translateX: x.interpolate({ inputRange: [0, TABS.length - 1], outputRange: [0, tabW * (TABS.length - 1)] }) }] }}>
+        <Animated.View pointerEvents="none" style={{ position: 'absolute', top: 8, left: 6, width: tabW, height: 34, alignItems: 'center', transform: [{ translateX: x.interpolate({ inputRange: [0, TABS.length - 1], outputRange: [0, tabW * (TABS.length - 1)] }) }], opacity: TABS.length > 1 ? 1 : 0 }}>
           <View style={{ width: 52, height: 34, borderRadius: 12, backgroundColor: colors.blueSoft }} />
         </Animated.View>
       )}
@@ -190,9 +191,10 @@ export function BottomNav() {
         return (
           <PressScale role="button" key={tab.key} accessibilityLabel={t(tab.key)} accessibilityState={{ selected: on }} scaleTo={0.88}
             onPress={() => { const n = Date.now(); if (on || n - navLock < 500) return; navLock = n; tap(); router.replace(tab.href as never); }}
-            style={{ flex: 1, alignItems: 'center', gap: 2, minHeight: 52, justifyContent: 'center' }}>
-            <View style={{ paddingHorizontal: 10, paddingVertical: 2, opacity: on ? 1 : 0.55 }}><Icon name={tab.icon} size={28} /></View>
-            <T v="small" color={on ? colors.blue : colors.muted}>{t(tab.key)}</T>
+            style={{ flex: 1, alignItems: 'center', height: 54, justifyContent: 'flex-start' }}>
+            {/* a fixed 34px icon row = exactly the sliding highlight's box, so icon and highlight always line up */}
+            <View style={{ height: 34, width: 52, alignItems: 'center', justifyContent: 'center', opacity: on ? 1 : 0.55 }}><Icon name={tab.icon} size={28} /></View>
+            <T v="small" color={on ? colors.blue : colors.muted} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} center style={{ width: '100%', paddingHorizontal: 2, marginTop: 2 }}>{t(tab.key)}</T>
           </PressScale>
         );
       })}

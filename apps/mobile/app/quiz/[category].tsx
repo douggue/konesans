@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { startSolo, answerSolo, soloSummary, QUESTION_TIME_MS, generateCountryQuiz, REGION_LABEL, type SoloSession, type CountryQuizOptions } from '@konesans/core';
+import { startSolo, answerSolo, soloSummary, QUESTION_TIME_MS, generateCountryQuiz, peyiIso, REGION_LABEL, type SoloSession, type CountryQuizOptions } from '@konesans/core';
 import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Pill, CountPill, Stars, FadeIn, Pop, Drop, SlideSwap, Confetti, Bounce, useCountUp } from '@/ui';
 import { QuestionView } from '@/ui/QuestionView';
 import { colors } from '@/lib/theme';
@@ -19,7 +19,14 @@ export default function Quiz() {
   const count = Number(countParam ?? (category === 'mix' ? daily : 10));
   const t = useT(); const l = useL();
   const { profile, seen, recordQuiz, settings } = useStore();
-  const build = (seed: number) => (peyiOpts ? generateCountryQuiz(peyiOpts, profile.age, count, seed) : buildQuestions(cat, profile.age, count, seed, seen));
+  // Peyi: never the same country twice in a game; countries from the last games come last
+  const build = (seed: number) => {
+    if (!peyiOpts) return buildQuestions(cat, profile.age, count, seed, useStore.getState().seen);
+    const qs = generateCountryQuiz(peyiOpts, profile.age, count, seed, useStore.getState().recentPeyi);
+    const isos = qs.map((x) => peyiIso(x.id)).filter((x): x is string => !!x);
+    setTimeout(() => useStore.getState().notePeyi(isos), 0); // after render, not during it
+    return qs;
+  };
   const questions = useMemo(() => build(Date.now() % 1e9), [cat, profile.age, count, mode, level, region]);
   const [s, setS] = useState<SoloSession>(() => startSolo(questions, Date.now()));
   const [chosen, setChosen] = useState<number | null>(null);

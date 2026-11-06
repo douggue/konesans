@@ -56,4 +56,19 @@ describe('Peyi quiz options', () => {
     expect(hard).toBeGreaterThan(easy * 3);
     expect(Object.keys(REGION_LABEL).length).toBe(8);
   });
+
+  it('never asks the same country twice in a game, and a replay brings new countries first', () => {
+    for (const mode of MODES) for (const level of LEVELS) for (const region of ['Karayib', 'mond', 'Oseyani'] as const) {
+      const qs = generateCountryQuiz({ mode, level, region }, '9-11', 10, 3);
+      const isos = qs.map((q) => q.id.split(':')[2]);
+      expect(new Set(isos).size, `${mode}/${level}/${region}`).toBe(isos.length);
+    }
+    const first = generateCountryQuiz({ mode: 'drapo', level: 1, region: 'mond' }, '9-11', 10, 1).map((q) => q.id.split(':')[2]);
+    const again = generateCountryQuiz({ mode: 'drapo', level: 1, region: 'mond' }, '9-11', 10, 2, first).map((q) => q.id.split(':')[2]);
+    const pool = countryPool({ mode: 'drapo', level: 1, region: 'mond' }).length;
+    if (pool >= 20) expect(again.filter((x) => first.includes(x))).toEqual([]);
+    // a small region fills a 10-question game by borrowing harder countries from the same region
+    const karayib = generateCountryQuiz({ mode: 'drapo', level: 1, region: 'Karayib' }, '9-11', 10, 5);
+    expect(karayib.length).toBe(10);
+  });
 });

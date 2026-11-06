@@ -37,7 +37,7 @@ export function QuestionView({ q, chosen, reveal, onPick, otherChosen, otherAvat
         <Pop key={q.id} from={0.7} style={{ alignItems: 'center' }}><ShapeView d={SHAPES[q.media.ref]} /></Pop>
       )}
       <Row gap={10} center={false}>
-        <PressScale accessibilityLabel="Koute" scaleTo={0.88} onPress={() => speak(prompt, 'ht')} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.blueLight, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' }}>
+        <PressScale accessibilityLabel="Koute" scaleTo={0.88} onPress={() => speak(prompt, 'ht')} style={{ width: 44, height: 44, alignSelf: 'flex-start', borderRadius: 14, backgroundColor: colors.blueLight, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="koute" size={26} />
         </PressScale>
         <T v="h2" style={{ flex: 1 }}>{prompt}</T>

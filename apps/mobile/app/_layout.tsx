@@ -59,8 +59,8 @@ function Maintenance({ text, lang }: { text: string; lang: 'ht' | 'fr' }) {
   return (
     <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.blue, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 16 }]}>
       <MascotArt size={140} mood="think" />
-      <Animated.Text style={{ fontFamily: 'Baloo2_800ExtraBold', fontSize: 30, lineHeight: 36, color: '#FFFFFF', textAlign: 'center' }}>{tr('maint_title', lang)}</Animated.Text>
-      <Animated.Text style={{ fontFamily: 'Nunito_700Bold', fontSize: 17, lineHeight: 24, color: '#E6ECFB', textAlign: 'center' }}>{text}</Animated.Text>
+      <Animated.Text style={{ includeFontPadding: false, fontFamily: 'Baloo2_800ExtraBold', fontSize: 30, lineHeight: 36, color: '#FFFFFF', textAlign: 'center' }}>{tr('maint_title', lang)}</Animated.Text>
+      <Animated.Text style={{ includeFontPadding: false, fontFamily: 'Nunito_700Bold', fontSize: 17, lineHeight: 24, color: '#E6ECFB', textAlign: 'center' }}>{text}</Animated.Text>
       <Button title={tr('maint_retry', lang)} variant="secondary" color={colors.blue} onPress={() => { syncContent(true).catch(() => {}); }} />
     </View>
   );
@@ -92,7 +92,7 @@ function Intro({ onDone }: { onDone: () => void }) {
       <Animated.View style={{ transform: [{ scale: pop.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] }) }, { translateY: hop.interpolate({ inputRange: [0, 1], outputRange: [0, -22] }) }] }}>
         <MascotArt size={150} mood="cheer" />
       </Animated.View>
-      <Animated.Text style={{ marginTop: 10, fontFamily: 'Baloo2_800ExtraBold', fontSize: 40, lineHeight: 46, color: '#FFFFFF', opacity: word, transform: [{ translateY: word.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) }] }}>Konesans</Animated.Text>
+      <Animated.Text style={{ includeFontPadding: false, marginTop: 10, fontFamily: 'Baloo2_800ExtraBold', fontSize: 40, lineHeight: 46, color: '#FFFFFF', opacity: word, transform: [{ translateY: word.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) }] }}>Konesans</Animated.Text>
       <Animated.View style={{ flexDirection: 'row', gap: 6, marginTop: 8, opacity: word }}>
         <View style={{ width: 22, height: 6, borderRadius: 3, backgroundColor: '#FFFFFF' }} />
         <View style={{ width: 22, height: 6, borderRadius: 3, backgroundColor: colors.red }} />
