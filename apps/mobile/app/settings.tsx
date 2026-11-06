@@ -7,7 +7,7 @@ import { colors } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT } from '@/lib/i18n';
 import { tap } from '@/lib/audio';
-import { setOnlineAllowed } from '@/lib/online';
+import { setOnlineAllowed, lastOnlineError } from '@/lib/online';
 import { serverConfigured } from '@/lib/remote';
 
 export default function Settings() {
@@ -63,7 +63,7 @@ export default function Settings() {
             </View>
             {busy ? <ActivityIndicator color={colors.blue} /> : <Switch value={!!kidSettings.randomDuelsAllowed} onValueChange={(v) => { tap(); if (v) setGate('online'); else applyOnline(false); }} trackColor={{ true: colors.green, false: '#B9C2D6' }} thumbColor="#fff" />}
           </Row>
-          {err && <T v="small" color={colors.red}>{t('online_err')}</T>}
+          {err && <><T v="small" color={colors.red}>{t('online_err')}</T>{lastOnlineError ? <T v="small" color={colors.muted} style={{ fontSize: 11, opacity: 0.7 }}>{lastOnlineError}</T> : null}</>}
         </>}
         <Button variant="secondary" color={colors.red} title={t('reset')} onPress={() => setGate('reset')} />
       </Card>
