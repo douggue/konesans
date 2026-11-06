@@ -236,6 +236,7 @@ function rpc_admin_strings_save(ctx: nkruntime.Context, logger: nkruntime.Logger
 function rpc_admin_publish(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminPublish(ctx, logger, nk, payload); }
 function rpc_admin_reports(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminReports(ctx, logger, nk, payload); }
 function rpc_admin_report_resolve(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminReportResolve(ctx, logger, nk, payload); }
+function rpc_admin_change_password(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminChangePassword(ctx, logger, nk, payload); }
 function rpc_admin_audit(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminAudit(ctx, logger, nk, payload); }
 function rpc_content_manifest(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.contentManifest(ctx, logger, nk, payload); }
 function rpc_content_pack(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.contentPack(ctx, logger, nk, payload); }
@@ -267,6 +268,7 @@ const InitModule: nkruntime.InitModule = (ctx, logger, nk, initializer) => {
   initializer.registerRpc('admin_reports', rpc_admin_reports);
   initializer.registerRpc('admin_report_resolve', rpc_admin_report_resolve);
   initializer.registerRpc('admin_audit', rpc_admin_audit);
+  initializer.registerRpc('admin_change_password', rpc_admin_change_password);
   initializer.registerRpc('content_manifest', rpc_content_manifest);
   initializer.registerRpc('content_pack', rpc_content_pack);
   A.bootstrapAdmins(ctx, logger, nk);

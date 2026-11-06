@@ -308,6 +308,7 @@ const TABS: { href: string; icon: string; label: string }[] = [
   { href: '/questions', icon: 'kesyon', label: 'Kesyon' },
   { href: '/categories', icon: 'kat_bank', label: 'Kategori' },
   { href: '/settings', icon: 'paramet', label: 'Paramèt' },
+  { href: '/more', icon: 'plis', label: 'Plis' },
 ];
 export function BottomTabs() {
   const path = usePathname();

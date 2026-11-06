@@ -11,7 +11,7 @@ import { colors } from '@/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
-const TAB_ROUTES = ['index', 'questions', 'categories', 'settings'];
+const TAB_ROUTES = ['index', 'questions', 'categories', 'settings', 'more'];
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({ Baloo2_700Bold, Baloo2_800ExtraBold, Nunito_600SemiBold, Nunito_700Bold, Nunito_800ExtraBold });

@@ -60,6 +60,13 @@ const man = await P('content_manifest'); check(man.body.version === pub.body.ver
 const pk = await P('content_pack', { category: 'istwa' }); check(pk.body.questions?.length > 50 && pk.body.questions[0].prompt?.ht, `content_pack istwa (${pk.body.questions?.length})`);
 check((await P('content_manifest', {})).status === 200 && (await call('/v2/rpc/content_manifest?http_key=wrong&unwrap', {}, '')).status === 401, 'wrong http_key refused');
 
+// change password, log in with the new one, change it back
+const wrong = await A('admin_change_password', { current: 'nope-nope', next: 'brandnew123' }); check(wrong.status === 403, `change password refuses a wrong current password (${wrong.status})`);
+check((await A('admin_change_password', { current: ADMIN_PASSWORD, next: 'brandnew123' })).status === 200, 'admin_change_password');
+const s2 = await login(ADMIN_EMAIL, 'brandnew123'); check(!!s2.token, 'login with the new password');
+const old = await call('/v2/account/authenticate/email?create=false', { email: ADMIN_EMAIL, password: ADMIN_PASSWORD }, basic); check(old.status === 401, `old password refused (${old.status})`);
+const back = await call('/v2/rpc/admin_change_password?unwrap', { current: 'brandnew123', next: ADMIN_PASSWORD }, 'Bearer ' + s2.token); check(back.status === 200, 'change it back');
+
 // non-admin is refused
 const kid = await login('kid' + Date.now() + '@test.local', 'kidpass1234', true);
 const denied = await call('/v2/rpc/admin_stats?unwrap', {}, 'Bearer ' + kid.token); check(denied.status === 403 || denied.status === 401 || denied.status === 400, `non-admin refused (${denied.status})`);

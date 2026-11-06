@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { View, Animated, Platform } from 'react-native';
 import { router } from 'expo-router';
-import { api, errText, type Stats, type Category } from '@/api';
+import { api, errText, type Stats, type Category, type AdminQuestion } from '@/api';
 import { useLoad, DEFAULT_CATS, timeAgo } from '@/lib';
 import { useSession } from '@/session';
 import { useCache } from '@/cache';
@@ -31,6 +31,24 @@ export default function Dashboard() {
   const [confirm, setConfirm] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
+  const apiUrl = useSession((s) => s.apiUrl);
+  const [importing, setImporting] = useState<string | null>(null);
+
+  /** Same as the web admin: load the bank that ships with the app (served next to the web admin as bank.json). */
+  const importBank = async () => {
+    setImporting('N ap telechaje…');
+    try {
+      const url = apiUrl.replace(/\/$/, '').replace('://api.', '://admin.') + '/bank.json';
+      const r = await fetch(url); if (!r.ok) throw new Error('bank.json pa disponib sou sèvè a');
+      const all: AdminQuestion[] = ((await r.json()).questions as any[]).map((q) => ({
+        id: q.id, category: q.category, d: q.difficulty, ages: q.ages, ht: q.prompt.ht, fr: q.prompt.fr ?? '', opts: q.options.map((o: any) => o.ht), optsFr: q.options.map((o: any) => o.fr ?? ''),
+        a: q.answer, ex: q.explain?.ht ?? '', exFr: q.explain?.fr ?? '', topic: q.topic, status: q.status ?? 'review',
+      }));
+      let added = 0;
+      for (let i = 0; i < all.length; i += 150) { const res = await api.importQuestions(all.slice(i, i + 150)); added += res.added; setImporting(`Enpòte ${Math.min(i + 150, all.length)}/${all.length}…`); }
+      haptic('ok'); toast(`${added} kesyon enpòte`); bump();
+    } catch (e) { toast(errText(e), 'err'); } finally { setImporting(null); }
+  };
 
   const catList = useMemo(() => {
     const list = cats.data?.length ? [...cats.data].sort((a, b) => a.order - b.order) : DEFAULT_CATS;
@@ -84,6 +102,14 @@ export default function Dashboard() {
             </T>
             <Button title="Pibliye" big kind={s.draftChanges > 0 ? 'primary' : 'plain'} onPress={() => setConfirm(true)} />
           </Card>
+
+          {q.total === 0 ? (
+            <Card edge={colors.yellow} style={{ gap: 8 }}>
+              <T v="h2">Bank kesyon an vid</T>
+              <T v="small" color={colors.muted}>Enpòte kesyon ki vini ak app la pou kòmanse relekti.</T>
+              <Button title={importing ?? 'Enpòte bank kesyon an'} busy={!!importing} onPress={importBank} />
+            </Card>
+          ) : null}
 
           {/* Question status tiles */}
           <T v="label" color={colors.muted}>Kesyon · {q.total}</T>

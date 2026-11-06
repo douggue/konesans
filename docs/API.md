@@ -88,6 +88,7 @@ interface Manifest {
 | `admin_publish` | – | `{ version, publishedAt, packs }` |
 | `admin_reports` | – | `{ reports: {reporterId, targetId, reason, matchId, at, resolved?}[] }` |
 | `admin_report_resolve` | `{index}` | `{ ok: true }` |
+| `admin_change_password` | `{current, next}` | `{ ok: true }` (next ≥ 8 chars; 403 if current is wrong) |
 | `admin_audit` | – | `{ entries: {at, by, action, target}[] }` (last 200) |
 
 Edits are live in the admin immediately but reach kids' phones only after **Publish** (`admin_publish`). The app checks the manifest on start and when coming back online.

@@ -86,6 +86,7 @@ export default function Questions() {
   const [category, setCategory] = useState<string>(params.category ?? 'istwa');
   const [filter, setFilter] = useState<Filter>((params.status as Filter) ?? 'all');
   const [query, setQuery] = useState('');
+  const [age, setAge] = useState<'' | '6-8' | '9-11' | '12-14'>('');
 
   useEffect(() => { if (params.category) setCategory(params.category); }, [params.category]);
   useEffect(() => { if (params.status) setFilter(params.status as Filter); }, [params.status]);
@@ -95,14 +96,15 @@ export default function Questions() {
 
   const catList = (cats?.length ? [...cats].sort((a, b) => a.order - b.order) : DEFAULT_CATS).map((c) => ({ id: c.id, name: c.name.ht, icon: c.icon }));
   const counts = useMemo(() => {
-    const c = { all: list.length, review: 0, approved: 0, draft: 0 };
-    for (const q of list) c[q.status] += 1;
+    const inAge = list.filter((q) => !age || q.ages.includes(age));
+    const c = { all: inAge.length, review: 0, approved: 0, draft: 0 };
+    for (const q of inAge) c[q.status] += 1;
     return c;
-  }, [list]);
+  }, [list, age]);
   const shown = useMemo(() => {
     const term = query.trim().toLowerCase();
-    return list.filter((q) => (filter === 'all' || q.status === filter) && (!term || [q.id, q.ht, q.fr, q.ex, q.topic, ...q.opts].join(' ').toLowerCase().includes(term)));
-  }, [list, filter, query]);
+    return list.filter((q) => (filter === 'all' || q.status === filter) && (!age || q.ages.includes(age)) && (!term || [q.id, q.ht, q.fr, q.ex, q.topic, ...q.opts].join(' ').toLowerCase().includes(term)));
+  }, [list, filter, query, age]);
 
   const setStatus = async (q: AdminQuestion, status: QStatus) => {
     if (status === 'approved' && blocking(q).length) { toast('Korije pwoblèm yo anvan ou apwouve', 'err'); router.push(`/question/${q.id}` as never); return; }
@@ -147,6 +149,9 @@ export default function Questions() {
             { key: 'approved', label: 'Apwouve', count: counts.approved },
             { key: 'draft', label: 'Pwoblèm', count: counts.draft },
           ]} />
+          <Row gap={6} wrap>
+            {(['', '6-8', '9-11', '12-14'] as const).map((a) => <Toggle key={a || 'all'} text={a ? `${a} an` : 'Tout laj'} on={age === a} onPress={() => setAge(a)} />)}
+          </Row>
           <Row gap={8} style={{ borderWidth: 2, borderColor: colors.line, borderRadius: 14, backgroundColor: colors.card, paddingHorizontal: 12 }}>
             <Icon name="chache" size={20} />
             <TextInput value={query} onChangeText={setQuery} placeholder="Chèche yon mo, yon id, yon sijè…" placeholderTextColor={colors.muted} style={{ flex: 1, minHeight: 42, fontFamily: fonts.bodyRegular, fontSize: 15, color: colors.ink }} autoCorrect={false} />

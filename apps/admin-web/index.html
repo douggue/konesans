@@ -181,6 +181,8 @@ textarea.inp { resize: vertical; font-weight: 600; }
 .toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(10px); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 14px; font-weight: 700; z-index: 30; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; max-width: calc(100% - 32px); }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 .toast.err { background: var(--red); color: #fff; }
+.toast.act { pointer-events: auto; display: flex; gap: 12px; align-items: center; }
+.toast button { border: 0; background: transparent; color: var(--yellow); font-weight: 800; padding: 4px 6px; }
 .modal { position: fixed; inset: 0; background: rgba(10,15,30,.45); display: grid; place-items: center; z-index: 25; padding: 16px; }
 .modal .box { background: var(--card); border-radius: 22px; border: 2px solid var(--line); border-bottom-width: 5px; padding: 22px; width: min(460px, 100%); display: grid; gap: 12px; }
 .spin { width: 18px; height: 18px; border-radius: 50%; border: 3px solid currentColor; border-right-color: transparent; animation: sp .7s linear infinite; display: inline-block; }
@@ -232,6 +234,7 @@ textarea.inp { resize: vertical; font-weight: 600; }
     <a class="nav" href="#teks" data-nav="teks"><span class="ic" data-icon="lang"></span>Tèks app la</a>
     <a class="nav" href="#rapo" data-nav="rapo"><span class="ic" data-icon="siyale"></span>Rapò<span class="n" id="nav-r"></span></a>
     <a class="nav" href="#istorik" data-nav="istorik"><span class="ic" data-icon="kalandriye"></span>Istorik</a>
+    <a class="nav" href="#kont" data-nav="kont"><span class="ic" data-icon="femen_kle"></span>Kont mwen</a>
     <div class="spacer"></div>
     <div class="pubbox">
       <div><div class="lbl">Sou telefòn timoun yo</div><div>Vèsyon <b id="pub-v">–</b> · <span id="pub-changes" class="muted">…</span></div></div>
@@ -297,7 +300,11 @@ function logout() { session = null; store.del('session'); showLogin(); }
 const S = { stats: null, cats: null, me: null, bank: {}, view: 'tablo', cat: null, st: 'all', age: '', q: '', open: null, limit: 30, config: null, strings: null, stringsDirty: {}, catsDraft: null };
 
 // ---------- ui helpers ----------
-function toast(t, err) { const el = $('#toast'); el.textContent = t; el.classList.toggle('err', !!err); el.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), err ? 4000 : 2000); }
+function toast(t, err, action) {
+  const el = $('#toast'); el.textContent = t; el.classList.toggle('err', !!err); el.classList.toggle('act', !!action);
+  if (action) { const b = document.createElement('button'); b.type = 'button'; b.textContent = action.label; b.onclick = () => { el.classList.remove('show'); action.run(); }; el.appendChild(b); }
+  el.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), action ? 5000 : err ? 4000 : 2000);
+}
 function confirmBox(title, body, okLabel, kind = 'primary') {
   return new Promise((res) => {
     $('#modalbox').innerHTML = `<h2>${esc(title)}</h2><div class="muted">${body}</div><div class="actions"><div class="right"><button class="btn ghost" data-r="0" type="button">Anile</button><button class="btn ${kind}" data-r="1" type="button">${esc(okLabel)}</button></div></div>`;
@@ -334,15 +341,22 @@ async function loadCats() {
   $('#catnav').innerHTML = S.cats.map((c) => `<a class="nav sub" href="#kesyon/${c.id}" data-nav="kesyon/${c.id}"><span class="ic" data-icon="${esc(c.icon)}"></span>${esc(c.name.ht)}<span class="n">${S.stats?.questions.byCategory[c.id]?.total ?? 0}</span></a>`).join('');
   paintIcons($('#catnav'));
 }
-function route() {
+let lastHash = location.hash;
+async function route() {
+  if (editing && isDirty() && location.hash !== lastHash) {
+    const go = await confirmBox('Kite san sove?', 'Ou gen chanjman ki poko sove sou kesyon sa a.', 'Kite', 'bad');
+    if (!go) { history.replaceState(null, '', lastHash || '#tablo'); return; }
+  }
+  editing = null; editOrig = null; lastHash = location.hash;
   const [view, arg] = (location.hash.slice(1) || 'tablo').split('/');
   S.view = view; if (view === 'kesyon') { S.cat = arg || S.cat || S.cats?.find((c) => c.id !== 'peyi')?.id || 'istwa'; S.open = null; S.limit = 30; }
   for (const a of document.querySelectorAll('[data-nav]')) a.setAttribute('aria-current', a.dataset.nav === (view === 'kesyon' ? 'kesyon/' + S.cat : view) || (view === 'kesyon' && a.dataset.nav === 'kesyon' && false) ? 'page' : 'false');
-  const V = { tablo: viewDash, kesyon: viewQuestions, kategori: viewCategories, paramet: viewSettings, teks: viewStrings, rapo: viewReports, istorik: viewAudit }[view] || viewDash;
+  const V = { tablo: viewDash, kesyon: viewQuestions, kategori: viewCategories, paramet: viewSettings, teks: viewStrings, rapo: viewReports, istorik: viewAudit, kont: viewAccount }[view] || viewDash;
   window.scrollTo(0, 0);
   V();
 }
 window.addEventListener('hashchange', route);
+window.addEventListener('beforeunload', (e) => { if (isDirty()) { e.preventDefault(); e.returnValue = ''; } });
 
 // ---------- dashboard ----------
 function viewDash() {
@@ -354,11 +368,11 @@ function viewDash() {
   $('#content').innerHTML = `
     <div class="tiles">
       <div class="tile"><span class="v">${q.total}</span><span class="l">kesyon an tout</span></div>
-      <div class="tile"><span class="v">${q.approved}</span><span class="l">apwouve (${pct}%)</span></div>
-      <div class="tile ${q.review ? 'warn' : ''}"><span class="v">${q.review}</span><span class="l">ap tann relekti</span></div>
-      <div class="tile"><span class="v">${q.draft}</span><span class="l">make kòm pwoblèm</span></div>
+      <a class="tile" href="#kesyon" data-goto="approved" style="color:inherit;text-decoration:none"><span class="v">${q.approved}</span><span class="l">apwouve (${pct}%)</span></a>
+      <a class="tile ${q.review ? 'warn' : ''}" href="#kesyon" data-goto="review" style="color:inherit;text-decoration:none"><span class="v">${q.review}</span><span class="l">ap tann relekti</span></a>
+      <a class="tile" href="#kesyon" data-goto="draft" style="color:inherit;text-decoration:none"><span class="v">${q.draft}</span><span class="l">make kòm pwoblèm</span></a>
       <div class="tile"><span class="v">${st.players.total}</span><span class="l">jwè · ${st.players.last7d} sou 7 jou</span></div>
-      <div class="tile ${st.reports.open ? 'warn' : ''}"><span class="v">${st.reports.open}</span><span class="l">rapò pou gade</span></div>
+      <a class="tile ${st.reports.open ? 'warn' : ''}" href="#rapo" style="color:inherit;text-decoration:none"><span class="v">${st.reports.open}</span><span class="l">rapò pou gade</span></a>
     </div>
     <section class="panel"><div class="qhead"><h2>Relekti pa kategori</h2><span class="grow"></span><div class="legend"><span style="--c:var(--green)">Apwouve</span><span style="--c:var(--yellow)">Pou relekti</span><span style="--c:var(--red)">Pwoblèm</span></div></div>
       <div class="catrows">${S.cats.map((c) => { const b = q.byCategory[c.id] || { total: 0, approved: 0, review: 0, draft: 0 }; const w = (n) => b.total ? (100 * n / b.total).toFixed(1) + '%' : '0'; return `<a class="catrow" href="#kesyon/${c.id}" style="color:inherit;text-decoration:none"><span class="ic" data-icon="${esc(c.icon)}" style="width:26px;height:26px"></span><b>${esc(c.name.ht)}</b><div class="stack" aria-label="${b.approved} apwouve, ${b.review} pou relekti, ${b.draft} pwoblèm"><i class="ap" style="width:${w(b.approved)}"></i><i class="rv" style="width:${w(b.review)}"></i><i class="dr" style="width:${w(b.draft)}"></i></div><span class="muted" style="font-variant-numeric:tabular-nums">${b.approved}/${b.total}</span></a>`; }).join('')}</div>
@@ -369,6 +383,7 @@ function viewDash() {
     </section>
     ${q.total === 0 ? `<section class="panel"><h2>Bank kesyon an vid</h2><p class="muted" style="margin:0">Enpòte ${''}kesyon ki vini ak app la pou kòmanse relekti.</p><div><button class="btn primary" id="d-import" type="button">Enpòte bank kesyon an</button></div></section>` : ''}`;
   paintIcons($('#content'));
+  for (const a of document.querySelectorAll('[data-goto]')) a.onclick = () => { S.st = a.dataset.goto; };
   $('#d-pub').onclick = publish;
   $('#d-import') && ($('#d-import').onclick = (e) => busy(e.currentTarget, importBank));
 }
@@ -435,7 +450,7 @@ function counts() {
 function cardView(m) {
   return `<article class="q" data-id="${esc(m.id)}" data-status="${m.status}">
     <div class="qhead"><span class="mono muted">${esc(m.id)}</span><span class="chip st-${m.status}">${STNAME[m.status]}</span><span class="chip">Nivo ${m.d} · ${m.ages.join(', ')}</span>${m.topic ? `<span class="chip">#${esc(m.topic)}</span>` : ''}<span class="grow"></span>
-      ${m.status !== 'approved' ? `<button class="link" type="button" data-act="quick-approve" title="Apwouve san louvri">✓ Apwouve</button>` : ''}<button class="link" type="button" data-act="open">Korije ✎</button></div>
+      ${m.status !== 'approved' ? `<button class="link" type="button" data-act="quick" data-st="approved" title="Apwouve san louvri">✓ Apwouve</button>` : ''}${m.status !== 'draft' ? `<button class="link" type="button" data-act="quick" data-st="draft" title="Make kòm pwoblèm" style="color:var(--red)">⚑</button>` : ''}<button class="link" type="button" data-act="open">Korije ✎</button></div>
     <div class="prompt">${esc(m.ht)}</div><div class="prompt-fr">${esc(m.fr)}</div>
     <div class="opts">${m.opts.map((o, i) => `<div class="opt ${i === m.a ? 'ok' : ''}"><span class="l">${'ABCD'[i]}</span><span>${esc(o)}<small>${esc(m.optsFr[i])}</small></span></div>`).join('')}</div>
     ${m.ex ? `<div class="ex">${esc(m.ex)}<br><span style="opacity:.8">${esc(m.exFr)}</span></div>` : ''}
@@ -464,11 +479,14 @@ function cardEdit(m) {
         <button type="button" class="btn good" data-act="save" data-st="approved">✓ Sove epi apwouve</button>
         <button type="button" class="btn" data-act="save" data-st="${m.status}">Sove</button>
         <button type="button" class="btn bad" data-act="save" data-st="draft">⚑ Pwoblèm</button>
+        ${m.status !== 'review' ? '<button type="button" class="btn" data-act="save" data-st="review">↺ Pou relekti</button>' : ''}
         <div class="right"><button type="button" class="btn ghost" data-act="cancel">Anile</button>${m._new ? '' : '<button type="button" class="btn ghost" data-act="delete">Efase</button>'}</div>
       </div>
     </div></article>`;
 }
 let editing = null; // working copy of the open question
+let editOrig = null; // what it looked like when opened
+const isDirty = () => !!editing && JSON.stringify(editing) !== editOrig;
 function renderQs() {
   counts();
   const vis = visibleQs(); const slice = vis.slice(0, S.limit);
@@ -478,13 +496,23 @@ function renderQs() {
     : `<div class="empty"><b>Pa gen kesyon isit la</b>Chanje filtè yo, oswa kreye yon nouvo kesyon.</div>`;
   $('#q-more') && ($('#q-more').onclick = () => { S.limit += 30; renderQs(); });
 }
+async function quickStatus(id, st) {
+  const m = S.bank[S.cat].find((x) => x.id === id); const before = m.status;
+  try {
+    const r = await rpc('admin_question_status', { ids: [id], status: st });
+    if (r.refused?.length) { toast('Kesyon sa a pa konplè: louvri l pou korije l', true); return; }
+    m.status = st; loadStats(); renderQs();
+    toast(st === 'approved' ? '✓ Apwouve' : '⚑ Make kòm pwoblèm', false, { label: 'Anile', run: async () => { try { await rpc('admin_question_status', { ids: [id], status: before }); m.status = before; loadStats(); renderQs(); toast('Anile'); } catch (er) { toast(er.message, true); } } });
+  } catch (er) { toast(er.message, true); }
+}
 async function addQuestion() {
   const { id } = await rpc('admin_next_id', { category: S.cat });
   editing = { id, category: S.cat, d: 1, ages: AGES.slice(), ht: '', fr: '', opts: ['', '', '', ''], optsFr: ['', '', '', ''], a: 0, ex: '', exFr: '', topic: '', note: '', status: 'review', _new: true };
+  editOrig = JSON.stringify(editing);
   S.open = id; S.st = 'all'; S.q = ''; renderQs(); $('#ht-' + CSS.escape(id))?.focus();
 }
-function openQ(id) { const m = (S.bank[S.cat] || []).find((x) => x.id === id); if (!m) return; editing = JSON.parse(JSON.stringify(m)); S.open = id; renderQs(); $(`[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'nearest' }); }
-function closeQ() { editing = null; S.open = null; renderQs(); }
+async function openQ(id) { if (isDirty() && !(await confirmBox('Kite san sove?', 'Ou gen chanjman ki poko sove sou lòt kesyon an.', 'Kite', 'bad'))) return; const m = (S.bank[S.cat] || []).find((x) => x.id === id); if (!m) return; editing = JSON.parse(JSON.stringify(m)); editOrig = JSON.stringify(editing); S.open = id; renderQs(); $(`[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'nearest' }); }
+async function closeQ() { if (isDirty() && !(await confirmBox('Kite san sove?', 'Chanjman ou fè yo ap pèdi.', 'Kite', 'bad'))) return; editing = null; editOrig = null; S.open = null; renderQs(); }
 function upsertLocal(q) { const list = S.bank[q.category] || (S.bank[q.category] = []); const i = list.findIndex((x) => x.id === q.id); if (i >= 0) list[i] = q; else { list.push(q); list.sort((a, b) => a.id.localeCompare(b.id)); } }
 $('#content').addEventListener('click', async (e) => {
   if (S.view !== 'kesyon') return;
@@ -496,20 +524,18 @@ $('#content').addEventListener('click', async (e) => {
     case 'pick': editing.a = Number(b.dataset.i); renderQs(); break;
     case 'addopt': editing.opts.push(''); editing.optsFr.push(''); renderQs(); break;
     case 'delopt': { const i = Number(b.dataset.i); editing.opts.splice(i, 1); editing.optsFr.splice(i, 1); if (editing.a === i) editing.a = 0; else if (editing.a > i) editing.a--; renderQs(); break; }
-    case 'quick-approve': await busy(b, async () => {
-      try { const r = await rpc('admin_question_status', { ids: [id], status: 'approved' }); if (r.refused?.length) { toast('Kesyon sa a pa konplè: louvri l pou korije l', true); return; } const m = S.bank[S.cat].find((x) => x.id === id); m.status = 'approved'; toast('✓ Apwouve'); loadStats(); renderQs(); } catch (er) { toast(er.message, true); }
-    }); break;
+    case 'quick': await busy(b, () => quickStatus(id, b.dataset.st)); break;
     case 'save': {
       const st = b.dataset.st;
       if (st === 'approved' && lint(editing).length) { toast('Korije pwoblèm yo anvan ou apwouve', true); return; }
       await busy(b, async () => {
-        try { const { _new, ...q } = editing; const r = await rpc('admin_question_save', { question: { ...q, status: st } }); upsertLocal(r.question); editing = null; S.open = null; toast(st === 'approved' ? '✓ Sove epi apwouve' : st === 'draft' ? '⚑ Make kòm pwoblèm' : 'Sove'); loadStats(); loadCats(); renderQs(); }
+        try { const { _new, ...q } = editing; const r = await rpc('admin_question_save', { question: { ...q, status: st } }); upsertLocal(r.question); editing = null; editOrig = null; S.open = null; toast(st === 'approved' ? '✓ Sove epi apwouve' : st === 'draft' ? '⚑ Make kòm pwoblèm' : st === 'review' && q.status !== 'review' ? '↺ Remete pou relekti' : 'Sove'); loadStats(); loadCats(); renderQs(); }
         catch (er) { toast(er.message, true); }
       }); break;
     }
     case 'delete': {
       if (!(await confirmBox('Efase kesyon sa a?', `<span class="mono">${esc(id)}</span> ap disparèt nan bank lan. Li p ap sou telefòn yo apre pwochen piblikasyon an.`, 'Efase', 'bad'))) return;
-      try { await rpc('admin_question_delete', { id }); S.bank[S.cat] = S.bank[S.cat].filter((x) => x.id !== id); editing = null; S.open = null; toast('Kesyon an efase'); loadStats(); loadCats(); renderQs(); } catch (er) { toast(er.message, true); }
+      try { await rpc('admin_question_delete', { id }); S.bank[S.cat] = S.bank[S.cat].filter((x) => x.id !== id); editing = null; editOrig = null; S.open = null; toast('Kesyon an efase'); loadStats(); loadCats(); renderQs(); } catch (er) { toast(er.message, true); }
       break;
     }
   }
@@ -649,7 +675,25 @@ async function viewAudit() {
   const L = { save: 'Sove', delete: 'Efase', import: 'Enpòte', publish: 'Pibliye', categories: 'Kategori', config: 'Paramèt', strings: 'Tèks', 'resolve-report': 'Rapò regle', 'status:approved': 'Apwouve', 'status:draft': 'Pwoblèm', 'status:review': 'Pou relekti' };
   $('#content').innerHTML = entries.length ? `<section class="panel scroll"><table class="tbl"><thead><tr><th>Lè</th><th>Ki moun</th><th>Aksyon</th><th>Sou</th></tr></thead><tbody>${entries.map((e) => `<tr><td>${new Date(e.at).toLocaleString('fr-HT')}</td><td>${esc(e.by)}</td><td>${esc(L[e.action] || e.action)}</td><td class="mono">${esc(e.target)}</td></tr>`).join('')}</tbody></table></section>` : `<div class="empty"><b>Pa gen anyen ankò</b></div>`;
 }
-$('#content').addEventListener('click', () => {}, { passive: true });
+async function viewAccount() {
+  $('#toolbar').innerHTML = `<h1>Kont mwen</h1>`;
+  $('#content').innerHTML = `
+    <section class="panel"><h2>${esc(S.me?.email || '')}</h2><p class="muted" style="margin:0">Administratè yo: ${esc((S.me?.admins || []).join(', '))}</p></section>
+    <section class="panel"><h2>Chanje modpas</h2>
+      <form id="pw-form" style="display:grid;gap:12px;max-width:420px">
+        <div class="field"><label for="pw-cur">Modpas kounye a</label><input class="inp" id="pw-cur" type="password" autocomplete="current-password" required></div>
+        <div class="field"><label for="pw-new">Nouvo modpas (omwen 8 karaktè)</label><input class="inp" id="pw-new" type="password" autocomplete="new-password" minlength="8" required></div>
+        <div class="field"><label for="pw-new2">Repete nouvo modpas la</label><input class="inp" id="pw-new2" type="password" autocomplete="new-password" minlength="8" required></div>
+        <div><button class="btn primary" id="pw-btn" type="submit">Chanje modpas la</button></div>
+      </form></section>
+    <section class="panel"><h2>Sesyon</h2><div><button class="btn" id="acc-logout" type="button">Dekonekte</button></div></section>`;
+  $('#acc-logout').onclick = logout;
+  $('#pw-form').onsubmit = (e) => { e.preventDefault(); busy($('#pw-btn'), async () => {
+    const cur = $('#pw-cur').value, nw = $('#pw-new').value;
+    if (nw !== $('#pw-new2').value) { toast('De nouvo modpas yo pa menm', true); return; }
+    try { await rpc('admin_change_password', { current: cur, next: nw }); $('#pw-form').reset(); toast('Modpas la chanje ✓'); } catch (er) { toast(er.message, true); }
+  }); };
+}
 
 // ---------- boot ----------
 $('#loginform').onsubmit = async (e) => {

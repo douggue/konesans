@@ -388,3 +388,18 @@ export function bootstrapAdmins(ctx: nkruntime.Context, logger: nkruntime.Logger
     }
   }
 }
+
+/** Change the logged-in admin's password. Body: { current, next }. */
+export const adminChangePassword = rpc((ctx, nk, b, email) => {
+  const next = String(b.next ?? '');
+  if (next.length < 8) fail('Nouvo modpas la dwe gen omwen 8 karaktè.', CODES.INVALID);
+  try { nk.authenticateEmail(email, String(b.current ?? ''), undefined, false); }
+  catch { fail('Modpas kounye a pa bon.', CODES.PERMISSION); }
+  // Nakama refuses to unlink an account's only login method, so keep a custom id linked while we swap.
+  const acc = nk.accountGetId(ctx.userId);
+  if (!acc.customId) nk.linkCustom(ctx.userId, 'admin-' + ctx.userId);
+  nk.unlinkEmail(ctx.userId, email);
+  nk.linkEmail(ctx.userId, email, next);
+  audit(nk, email, 'password', email);
+  return { ok: true };
+});
