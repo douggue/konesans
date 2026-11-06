@@ -125,7 +125,8 @@ function BgArt({ bg, size }: { bg: number; size: number }) {
   const i = bg % BGS.length;
   if (i < 6) return null;
   return (
-    <Svg width={size} height={size} viewBox="0 0 100 100" style={{ position: 'absolute', left: 0, top: 0 }}>
+    <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width: size, height: size }}>
+    <Svg width={size} height={size} viewBox="0 0 100 100">
       {i === 6 && <G>
         <Defs><LinearGradient id="kns-sunrise" x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor="#FF9F43" /><Stop offset="0.6" stopColor="#FFD8A8" /><Stop offset="1" stopColor="#FFF4D1" /></LinearGradient></Defs>
         <Rect width="100" height="100" fill="url(#kns-sunrise)" />
@@ -139,6 +140,7 @@ function BgArt({ bg, size }: { bg: number; size: number }) {
         <Path d="M70 10a9 9 0 1 0 9 13 7 7 0 1 1-9-13z" fill="#FFD43B" />
       </G>}
     </Svg>
+    </View>
   );
 }
 
@@ -153,13 +155,15 @@ function FrameArt({ frame, size }: { frame: number; size: number }) {
     return `M ${p(from)} A ${r} ${r} 0 ${to - from > Math.PI ? 1 : 0} 1 ${p(to)}`;
   };
   return (
-    <Svg width={size} height={size} style={{ position: 'absolute', left: 0, top: 0 }} pointerEvents="none">
+    <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width: size, height: size }}>
+    <Svg width={size} height={size}>
       {frame === 1 && <Circle cx={c} cy={c} r={r} fill="none" stroke="#C3CCDB" strokeWidth={sw} />}
       {frame === 2 && <G><Circle cx={c} cy={c} r={r} fill="none" stroke="#F5B700" strokeWidth={sw} /><Circle cx={c} cy={c} r={r} fill="none" stroke="#FFE58A" strokeWidth={sw / 3} strokeDasharray={`${sw * 0.8} ${sw * 1.6}`} /></G>}
       {frame === 3 && <G><Path d={arc(Math.PI, 2 * Math.PI)} fill="none" stroke="#00209F" strokeWidth={sw} /><Path d={arc(0, Math.PI)} fill="none" stroke="#D21034" strokeWidth={sw} /></G>}
       {frame === 4 && <G><Circle cx={c} cy={c} r={r} fill="none" stroke="#7048E8" strokeWidth={sw} /><Circle cx={c} cy={c} r={r - sw / 2 + 1} fill="none" stroke="#FFD43B" strokeWidth={Math.max(1.5, sw / 3)} />{[0, 1, 2, 3, 4, 5, 6, 7].map((k) => { const a = (k / 8) * Math.PI * 2 - Math.PI / 2; return <Circle key={k} cx={c + r * Math.cos(a)} cy={c + r * Math.sin(a)} r={sw / 4} fill="#FFD43B" />; })}</G>}
       {ink}
     </Svg>
+    </View>
   );
 }
 
@@ -176,7 +180,7 @@ function AvatarBadge({ a, size = 48, ring = true, style, blink }: AvatarProps & 
     <View style={[{ width: size, height: size }, style]}>
       <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: BGS[a.bg % BGS.length], borderWidth: ring && !frame ? Math.max(2, size / 40) : 0, borderColor: INK, alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' }}>
         <BgArt bg={a.bg} size={size} />
-        <AvatarArt a={a} size={size * (frame ? 0.88 : 0.94)} blink={blink} />
+        <View>{/* a View (positioned on web) so the art paints above the absolute background */}<AvatarArt a={a} size={size * (frame ? 0.88 : 0.94)} blink={blink} /></View>
       </View>
       {frame > 0 && <FrameArt frame={frame} size={size} />}
     </View>

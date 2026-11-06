@@ -1,63 +1,107 @@
-import React from 'react';
+/** Mwen — profile tab (design/project/Profile.dc.html): avatar, level + rank, counters, and the kid's own spaces. */
+import React, { useEffect } from 'react';
 import { View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { router } from 'expo-router';
-import { courseSummary, BADGES } from '@konesans/core';
-import { Screen, T, Card, Row, BottomNav, Progress, IconTile, Icon, Avatar, PressScale, FadeIn, Pulse, useCountUp } from '@/ui';
+import { BADGES } from '@konesans/core';
+import { Screen, T, Card, Row, BottomNav, Progress, IconTile, Icon, Avatar, PressScale, FadeIn, Pulse, Pop, useCountUp } from '@/ui';
+import { RankBadge, RankUpListener } from '@/ui/RankUp';
+import type { IconName } from '@/ui/icons';
 import { tap } from '@/lib/audio';
 import { colors } from '@/lib/theme';
-import { useStore, useLevel, useAvatar } from '@/lib/store';
-import { useT } from '@/lib/i18n';
+import { useStore, useLevel, useAvatar, useRank } from '@/lib/store';
+import { useT, useL } from '@/lib/i18n';
+
+const INK = '#14213D';
 
 export default function Profile() {
-  const t = useT();
-  const { profile, progress, stats, courses } = useStore();
+  const t = useT(); const l = useL();
+  const { profile, progress, stats } = useStore();
   const lvl = useLevel();
+  const rank = useRank();
   const avatar = useAvatar();
-  const words = courseSummary('en', courses.en).wordsLearned + courseSummary('es', courses.es).wordsLearned;
+  const unlocked = useStore((s) => s.unlocked ?? []);
+  const seen = useStore((s) => s.seenUnlocks ?? []);
+  useEffect(() => { useStore.getState().syncUnlocks(); }, []);
+  const fresh = unlocked.filter((id) => !seen.includes(id)).length;
   const badges = Object.keys(progress.badges).length;
-  const rows: { icon: 'twofe' | 'ewo' | 'kouwòn' | 'klas' | 'fanmi' | 'paran'; bg: string; label: string; sub: string; href?: string }[] = [
-    { icon: 'twofe', bg: colors.yellowSoft, label: t('trophies'), sub: `${badges} / ${BADGES.length}`, href: '/trophies' },
-    { icon: 'kouwòn', bg: colors.purpleSoft, label: t('league'), sub: t('soon') },
-    { icon: 'klas', bg: colors.greenSoft, label: t('my_class'), sub: t('soon') },
-    { icon: 'fanmi', bg: colors.redSoft, label: t('family'), sub: t('soon') },
-    { icon: 'paran', bg: colors.yellowSoft, label: t('parent'), sub: t('parent_only'), href: '/settings' },
+  const cards = progress.heroCards.length;
+  const ageKey = profile.age === '6-8' ? 'age_6_8' : profile.age === '9-11' ? 'age_9_11' : 'age_12_14';
+
+  const rows: { icon: IconName; bg: string; label: string; sub: string; href: string; dot?: boolean }[] = [
+    { icon: 'avata', bg: '#E7F5FF', label: t('pf_av'), sub: fresh ? t('pf_av_new', { n: fresh }) : t('pf_av_sub'), href: '/avatar', dot: fresh > 0 },
+    { icon: 'twofe', bg: colors.yellowSoft, label: t('trophies'), sub: t('pf_trophies_sub', { n: badges, m: BADGES.length }), href: '/trophies' },
+    { icon: 'ewo', bg: colors.orangeSoft, label: t('pf_cards'), sub: cards ? t('pf_cards_sub', { n: cards }) : t('pf_cards_sub0'), href: '/cards' },
+    { icon: 'paramet', bg: colors.blueSoft, label: t('settings'), sub: t('pf_settings_sub'), href: '/settings' },
   ];
+
   return (
-    <Screen bottom={<BottomNav />}>
+    <Screen pad={20} bottom={<BottomNav />}>
+      {/* Header: avatar + name + level line + XP bar */}
       <FadeIn><Row gap={14}>
         <PressScale accessibilityLabel={t('av_edit')} scaleTo={0.92} onPress={() => { tap(); router.push('/avatar'); }}>
-          <Avatar a={avatar} size={88} live />
-          <View style={{ position: 'absolute', right: -2, bottom: -2, width: 30, height: 30, borderRadius: 15, backgroundColor: colors.card, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' }}><T v="small">✎</T></View>
+          <View style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: colors.blueSoft }}>
+            <Avatar a={avatar} size={84} live />
+          </View>
+          <View style={{ position: 'absolute', right: -4, bottom: -4, width: 28, height: 28, borderRadius: 9, backgroundColor: colors.yellow, borderWidth: 2, borderColor: INK, alignItems: 'center', justifyContent: 'center' }}>
+            <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={INK} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round"><Path d="M12 20h9" /><Path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></Svg>
+          </View>
+          {fresh > 0 && <View style={{ position: 'absolute', left: -2, top: -2, width: 16, height: 16, borderRadius: 8, backgroundColor: colors.red, borderWidth: 2, borderColor: '#FFFFFF' }} />}
         </PressScale>
         <View style={{ flex: 1, gap: 4 }}>
-          <T v="h1">{profile.username}</T>
-          <T v="small" color={colors.muted}>{t('level')} {lvl.level} · {profile.age} {t('years')}</T>
-          <Row><Progress style={{ flex: 1 }} value={lvl.next ? lvl.into / lvl.next : 0} color={colors.blueLight} /><T v="small" color={colors.muted}>{lvl.into} / {lvl.next}</T></Row>
+          <T v="h1" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ fontSize: 26, lineHeight: 29 }}>{profile.username}</T>
+          <T v="bold" color={colors.muted} style={{ fontSize: 13, lineHeight: 17 }} numberOfLines={1}>{t('level')} {lvl.level} · {t(ageKey)} · <T v="bold" color={rank.rank.edge === '#000000' ? INK : rank.rank.edge} style={{ fontSize: 13, lineHeight: 17 }}>{l(rank.rank.name)}</T></T>
+          <Row gap={8} style={{ marginTop: 2 }}>
+            <Progress style={{ flex: 1 }} value={lvl.next ? lvl.into / lvl.next : 0} color={colors.blueLight} />
+            <T v="small" color={colors.muted} style={{ fontVariant: ['tabular-nums'] }}>{fmt(lvl.into)} / {fmt(lvl.next)}</T>
+          </Row>
         </View>
       </Row></FadeIn>
-      <FadeIn delay={80}><Row gap={10} style={{ alignItems: 'stretch' }}>
+
+      {/* Counters */}
+      <FadeIn delay={60}><Row gap={10} style={{ alignItems: 'stretch' }}>
         <StatTile n={progress.streak.count} k="p-streak" icon="seri" label={t('streak_short')} bg="#FFE8DC" edge="#F7C9B2" fg="#A63A0A" pulse={progress.streak.count > 0} />
         <StatTile n={progress.coins} k="p-coins" icon="kob" label={t('coins')} bg={colors.yellowSoft} edge="#F5DE96" fg="#5C4600" />
         <StatTile n={stats.duelWins} k="p-wins" icon="twofe" label={t('wins')} bg={colors.greenSoft} edge="#B9E3C6" fg="#12632F" />
       </Row></FadeIn>
-      <Card style={{ gap: 4 }}>
-        <T v="small" color={colors.muted}>{t('profile_stats', { xp: progress.xp, c: stats.correct, l: stats.lessons, w: words })}</T>
-      </Card>
-      {rows.map((r, i) => (
-        <FadeIn key={r.label} delay={160 + i * 50}><Card onPress={r.href ? () => router.push(r.href as never) : undefined} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, opacity: r.href || r.icon === 'twofe' ? 1 : 0.6 }}>
-          <IconTile name={r.icon} bg={r.bg} size={44} />
-          <View style={{ flex: 1 }}><T v="h3">{r.label}</T><T v="small" color={colors.muted}>{r.sub}</T></View>
+
+      {/* Rank card */}
+      <FadeIn delay={120}>
+        <PressScale role="button" accessibilityLabel={`${t('pf_ranks')}: ${l(rank.rank.name)}`} scaleTo={0.97} onPress={() => { tap(); router.push('/ranks' as never); }}
+          style={({ pressed }) => [{ backgroundColor: rank.rank.soft, borderRadius: 20, borderWidth: 2, borderColor: rank.rank.color, borderBottomWidth: 5, paddingVertical: 12, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }, pressed && { borderBottomWidth: 3, transform: [{ translateY: 2 }] }]}>
+          <Pop delay={200} rotate={-15}><RankBadge rank={rank.rank} size={56} /></Pop>
+          <View style={{ flex: 1, gap: 4 }}>
+            <T v="label" color={colors.muted}>{t('pf_rank')}</T>
+            <T v="h2" style={{ lineHeight: 23 }}>{l(rank.rank.name)}</T>
+            <Progress value={rank.progress} color={rank.rank.color} height={8} track="rgba(20,33,61,0.10)" />
+            <T v="small" color={colors.muted}>{rank.next ? t('pf_next_rank', { x: fmt(rank.xpToNext), r: l(rank.next.name) }) : t('pf_top_rank')}</T>
+          </View>
+          {rank.next && <RankBadge rank={rank.next} size={30} dim />}
           <Icon name="pwochen" size={20} />
-        </Card></FadeIn>
-      ))}
-      <Card onPress={() => router.push('/settings')} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 }}>
-        <IconTile name="paramet" bg={colors.blueSoft} size={44} />
-        <View style={{ flex: 1 }}><T v="h3">{t('settings')}</T><T v="small" color={colors.muted}>{t('sound')} · {t('app_lang')} · {t('text_size')}</T></View>
-        <Icon name="pwochen" size={20} />
-      </Card>
+        </PressScale>
+      </FadeIn>
+
+      {/* Rows */}
+      <View style={{ gap: 8 }}>
+        {rows.map((r, i) => (
+          <FadeIn key={r.href} delay={180 + i * 50}><Card onPress={() => router.push(r.href as never)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, minHeight: 60, borderRadius: 18 }}>
+            <IconTile name={r.icon} bg={r.bg} size={44} />
+            <View style={{ flex: 1 }}>
+              <T v="h3">{r.label}</T>
+              <T v="small" color={r.dot ? colors.red : colors.muted}>{r.sub}</T>
+            </View>
+            {r.dot && <Pulse><View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.red }} /></Pulse>}
+            <Icon name="pwochen" size={20} />
+          </Card></FadeIn>
+        ))}
+      </View>
+      <RankUpListener />
     </Screen>
   );
 }
+
+/** 1 240 — thin space thousands like the mockup. */
+const fmt = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 
 /** Counter tile: icon on top, big number, one-line label. Same chunky edge as the app's cards. */
 function StatTile({ n, k, icon, label, bg, edge, fg, pulse }: { n: number; k: string; icon: 'seri' | 'kob' | 'twofe'; label: string; bg: string; edge: string; fg: string; pulse?: boolean }) {

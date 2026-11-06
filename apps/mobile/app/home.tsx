@@ -2,18 +2,14 @@ import React, { useCallback, useEffect } from 'react';
 import { View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { chestReady, nextLesson, courseById, type QuestState } from '@konesans/core';
-import { Screen, T, Card, Row, BottomNav, Pill, CountPill, Progress, Mascot, IconTile, Button, Motif, Avatar, PressScale, FadeIn, Pop } from '@/ui';
-import { colors } from '@/lib/theme';
+import { RankUpListener } from '@/ui/RankUp';
+import { Screen, T, Card, Row, BottomNav, Pill, CountPill, Progress, Mascot, IconTile, Button, Motif, Avatar, PressScale, FadeIn, Pop, Pulse, Icon } from '@/ui';
+import { colors, fonts } from '@/lib/theme';
 import { categoryInfo } from '@/lib/content';
 import { useAnnouncement, useFeatures, useDailyCount } from '@/lib/remote';
 import { useStore, useLevel, useAvatar } from '@/lib/store';
 import { useT, useL } from '@/lib/i18n';
 import { tap, music } from '@/lib/audio';
-
-const QUEST_TEXT: Record<string, [string, string]> = {
-  win_duel: ['Genyen {n} defi', 'Gagner {n} duel'], finish_lessons: ['Fini {n} leson', 'Finir {n} leçons'], math_score: ['Fè {n} pwen nan Kalkil Mantal', 'Faire {n} points en calcul mental'],
-  answer_correct: ['Bay {n} bon repons', 'Donner {n} bonnes réponses'], play_category: ['Reponn {n} kesyon nan yon kategori', 'Répondre à {n} questions dans une catégorie'], review_mistakes: ['Revize {n} erè', 'Revoir {n} erreurs'],
-};
 
 export default function Home() {
   const t = useT(); const l = useL();
@@ -27,6 +23,8 @@ export default function Home() {
   useFocusEffect(useCallback(() => { music('menu'); }, []));
   const quests: QuestState[] = progress.quests;
   const questsDone = quests.filter((q) => q.done).length;
+  const chestOpened = useStore((s) => s.missions?.chestDay) === progress.questsDay && !!progress.questsDay;
+  const questsReady = chestReady(progress) && !chestOpened;
   const nextEn = nextLesson('en', courses.en); const nextEs = nextLesson('es', courses.es);
   const course = nextEn ? { lang: 'en' as const, lesson: nextEn } : nextEs ? { lang: 'es' as const, lesson: nextEs } : null;
 
@@ -61,21 +59,18 @@ export default function Home() {
         <View style={{ position: 'absolute', right: 2, bottom: 0 }}><Mascot size={118} mood="happy" /></View>
       </View></FadeIn>
 
-      {/* Quests */}
-      <FadeIn delay={160}><Card onPress={() => router.push('/profile')} style={{ gap: 8 }}>
-        <Row>
-          <IconTile name="kof" bg={colors.purpleSoft} size={44} />
-          <View style={{ flex: 1 }}><T v="h3">{t('quests')}</T><Progress value={quests.length ? questsDone / quests.length : 0} color={colors.purple} /></View>
-          <T v="small" color={colors.muted}>{questsDone} / {quests.length || 3}</T>
-        </Row>
-        {quests.slice(0, 3).map((q) => (
-          <Row key={q.id} gap={8}>
-            <T v="small" color={q.done ? colors.green : colors.muted}>{q.done ? '✓' : '○'}</T>
-            <T v="small" color={q.done ? colors.muted : colors.ink} style={{ flex: 1 }}>{(QUEST_TEXT[q.kind] ?? ['', ''])[profile.lang === 'fr' ? 1 : 0].replace('{n}', String(q.goal))}</T>
-            <T v="small" color={colors.muted}>{Math.min(q.progress, q.goal)}/{q.goal} · +{q.xp} XP</T>
+      {/* Quests → Misyon Jodi a */}
+      <FadeIn delay={160}><Card onPress={() => router.push('/quests' as never)} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 16 }}>
+        {questsReady ? <Pulse amount={0.1}><Icon name="kof" size={44} /></Pulse> : <Icon name="kof" size={44} />}
+        <View style={{ flex: 1, gap: 5 }}>
+          <Row style={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <T v="h3" style={{ fontFamily: fonts.display, fontSize: 17, lineHeight: 21 }}>{t('quests')}</T>
+            <T v="small" color={colors.muted}>{questsDone} / {quests.length || 3}</T>
           </Row>
-        ))}
-        {chestReady(progress) && <Pop delay={400}><Pill text={t('chest_open')} color="#5C4600" bg={colors.yellowSoft} icon="kado" /></Pop>}
+          <Progress value={quests.length ? questsDone / quests.length : 0} color="#7048E8" />
+          {questsReady && <Pop delay={300} style={{ alignSelf: 'flex-start', marginTop: 2 }}><Pill text={t('q_home_ready')} color="#5C4600" bg={colors.yellowSoft} icon="kado" pulse /></Pop>}
+          {chestOpened && <T v="small" color={colors.green}>{t('q_home_opened')}</T>}
+        </View>
       </Card></FadeIn>
 
       {/* Continue course */}
@@ -114,6 +109,7 @@ export default function Home() {
           </FadeIn>
         ))}
       </View>
+      <RankUpListener />
     </Screen>
   );
 }

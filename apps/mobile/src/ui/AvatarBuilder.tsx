@@ -140,7 +140,7 @@ export function AvatarBuilder({ value, onChange, size = 170 }: { value: AvatarCo
           <T v="h2" center>{reqText(why)}</T>
           <T v="body" center color={colors.muted}>{howText(why)}</T>
         </View>}
-        {why && 'rank' in why.req && !inOnboarding && <Button title={t('pf_see_ranks')} color={colors.purple} onPress={() => { setWhy(null); router.push('/ranks' as never); }} />}
+        {why && 'rank' in why.req && !inOnboarding && <Button title={t('pf_see_ranks')} color="#7048E8" onPress={() => { setWhy(null); router.push('/ranks' as never); }} />}
         <Button title={t('pf_ok')} variant="secondary" onPress={() => setWhy(null)} />
       </Sheet>
     </View>

@@ -5,7 +5,7 @@
  */
 import React, { useEffect, useRef } from 'react';
 import { View, Modal, Animated, Easing } from 'react-native';
-import Svg, { Path, Circle, Ellipse, G } from 'react-native-svg';
+import Svg, { Path, Circle, Ellipse, G, Rect, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { router, useIsFocused } from 'expo-router';
 import { RANKS, rankForXp, rankUnlocks, type RankDef, type UnlockDef, type AvatarConfig } from '@konesans/core';
 import { T, Button, Icon } from './index';
@@ -116,7 +116,12 @@ export function RankUp({ open, to, onClose }: { open: boolean; from: number; to:
   return (
     <Modal visible transparent animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={close}>
       <View style={{ flex: 1, backgroundColor: rank.edge, alignItems: 'center', justifyContent: 'center', padding: 22, gap: 14 }}>
-        <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: rank.color, opacity: 0.55 }} />
+        <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}>
+          <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <Defs><RadialGradient id="kns-rankup" cx="50%" cy="32%" r="75%"><Stop offset="0" stopColor={rank.color} /><Stop offset="1" stopColor={rank.edge} /></RadialGradient></Defs>
+            <Rect width="100" height="100" fill="url(#kns-rankup)" />
+          </Svg>
+        </View>
         <Confetti count={26} />
         <FadeIn><View style={{ backgroundColor: colors.yellow, borderRadius: 999, borderWidth: 2, borderColor: INK, paddingHorizontal: 14, paddingVertical: 3 }}><T v="label" color={INK}>{t('pf_ru_label')}</T></View></FadeIn>
         <View style={{ width: 220, height: 200, alignItems: 'center', justifyContent: 'center' }}>
