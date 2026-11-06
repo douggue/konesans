@@ -6,7 +6,7 @@ import { Screen, T, Card, Row, TopBar, Button, Sheet, PressScale } from '@/ui';
 import { colors } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT } from '@/lib/i18n';
-import { tap, sfx, audioError } from '@/lib/audio';
+import { tap, sfx, audioError, audioTest } from '@/lib/audio';
 import { setOnlineAllowed, lastOnlineError } from '@/lib/online';
 import { serverConfigured } from '@/lib/remote';
 
@@ -14,6 +14,7 @@ export default function Settings() {
   const t = useT();
   const { settings, setSettings, profile, setLang, resetAll, kidSettings, setKidSettings } = useStore();
   const [gate, setGate] = useState<null | 'reset' | 'online'>(null);
+  const [audioInfo, setAudioInfo] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(false);
   /** Tell the server (it refuses duels against strangers without this), then remember it on the phone. */
@@ -39,7 +40,8 @@ export default function Settings() {
           </Row>
         ))}
       </Card>
-      {audioError ? <T v="small" color={colors.muted} style={{ fontSize: 11, opacity: 0.7 }}>{audioError}</T> : null}
+      <Button small variant="secondary" title={t('sound_test')} onPress={async () => setAudioInfo(await audioTest())} />
+      {audioInfo || audioError ? <T v="small" color={colors.muted} style={{ fontSize: 11 }}>{audioInfo || audioError}</T> : null}
       <T v="label" color={colors.muted}>{t('app_lang').toUpperCase()}</T>
       <Row>
         {/* i18n-ok: each language named in its own words */ ([['ht', 'KR', 'Kreyòl ayisyen'], ['fr', 'FR', 'Français']] as [Lang, string, string][]).map(([id, code, label]) => ( // i18n-ok

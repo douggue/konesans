@@ -116,7 +116,7 @@ const S = {
   robo_parent: ['W ap jwe kont Robo. Yon paran ka limen defi sou entènèt nan Paramèt.', 'Tu joues contre Robo. Un parent peut activer les duels en ligne dans Réglages.'],
   duel_sub_online: ['Jwe kont yon lòt timoun', 'Jouer contre un autre enfant'], online_player: ['Sou entènèt', 'En ligne'],
   report_player: ['Siyale jwè sa a', 'Signaler ce joueur'], reported: ['Mèsi, nou resevwa l.', "Merci, c'est noté."], player_left: ['Lòt jwè a kite pati a.', "L'autre joueur a quitté la partie."],
-  get_set: ['Pare…', 'Prêt…'], they_win: ['{name} genyen fwa sa a.', '{name} a gagné cette fois.'],
+  sound_test: ['Teste son an', 'Tester le son'], get_set: ['Pare…', 'Prêt…'], they_win: ['{name} genyen fwa sa a.', '{name} a gagné cette fois.'],
 } as const;
 
 export type StrKey = keyof typeof S;

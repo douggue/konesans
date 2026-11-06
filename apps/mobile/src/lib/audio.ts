@@ -172,6 +172,23 @@ export function musicIntensity(level: 'hurry' | 'normal') {
   });
 }
 
+/** One line describing the audio engine's state, for the sound test button in Settings. */
+export async function audioTest(): Promise<string> {
+  sfx('correct');
+  await new Promise((r) => setTimeout(r, 700));
+  const st = useStore.getState();
+  const p = E.sfx.correct as any;
+  const m = E.chans.menu as any;
+  const parts = [
+    `app=${AppState.currentState}`, `sfx=${st.settings.sfx ? 1 : 0}`, `music=${st.settings.music ? 1 : 0}`, `hyd=${st.hydrated ? 1 : 0}`,
+    `ready=${E.ready ? 1 : 0}`, `want=${E.want ?? '-'}`,
+    p ? `ding: loaded=${p.isLoaded ? 1 : 0} play=${p.playing ? 1 : 0} dur=${Math.round((p.duration ?? 0) * 100) / 100} t=${Math.round((p.currentTime ?? 0) * 100) / 100} vol=${p.volume} mute=${p.muted ? 1 : 0}` : 'ding: none',
+    m ? `menu: loaded=${m.p.isLoaded ? 1 : 0} play=${m.p.playing ? 1 : 0} vol=${Math.round((m.p.volume ?? 0) * 100) / 100} on=${m.playing ? 1 : 0}` : 'menu: none',
+    audioError ? `err=${audioError}` : '',
+  ];
+  return parts.filter(Boolean).join(' · ');
+}
+
 /** Warm up the players (optional; the first sfx()/music() call does it too). */
 export function preloadAudio() { safe(init); }
 
