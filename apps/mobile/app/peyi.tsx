@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Pressable } from 'react-native';
+import { View } from 'react-native';
 import { router } from 'expo-router';
 import { REGIONS, REGION_LABEL, countryPool, type CountryMode, type CountryLevel, type WorldRegion } from '@konesans/core';
-import { Screen, T, Button, TopBar, Icon, Row } from '@/ui';
+import { Screen, T, Button, TopBar, Icon, Row, PressScale } from '@/ui';
 import { colors, radius } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT } from '@/lib/i18n';
@@ -34,10 +34,10 @@ export default function Peyi() {
         {MODES.map((m) => {
           const on = peyi.mode === m.id;
           return (
-            <Pressable key={m.id} role="button" onPress={() => { tap(); setPeyi({ mode: m.id }); }} style={[{ flex: 1, minHeight: 92, gap: 6, paddingVertical: 10 }, seg(on)]}>
+            <PressScale debounceMs={0} key={m.id} role="button" onPress={() => { tap(); setPeyi({ mode: m.id }); }} style={[{ flex: 1, minHeight: 92, gap: 6, paddingVertical: 10 }, seg(on)]}>
               <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: on ? 'rgba(255,255,255,0.2)' : colors.yellowSoft, alignItems: 'center', justifyContent: 'center' }}><Icon name={m.icon} size={32} /></View>
               <T v="h3" color={on ? '#fff' : colors.ink}>{lang === 'fr' ? m.fr : m.ht}</T>
-            </Pressable>
+            </PressScale>
           );
         })}
       </Row>
@@ -47,10 +47,10 @@ export default function Peyi() {
         {LEVELS.map((l) => {
           const on = peyi.level === l.id;
           return (
-            <Pressable key={l.id} role="button" onPress={() => { tap(); setPeyi({ level: l.id }); }} style={[{ flex: 1, minHeight: 72, gap: 2, paddingHorizontal: 6 }, seg(on, l.color)]}>
+            <PressScale debounceMs={0} key={l.id} role="button" onPress={() => { tap(); setPeyi({ level: l.id }); }} style={[{ flex: 1, minHeight: 72, gap: 2, paddingHorizontal: 6 }, seg(on, l.color)]}>
               <T v="h3" color={on ? '#fff' : colors.ink}>{'★'.repeat(l.id)}</T>
               <T v="bold" color={on ? '#fff' : colors.ink}>{lang === 'fr' ? l.fr : l.ht}</T>
-            </Pressable>
+            </PressScale>
           );
         })}
       </Row>
@@ -61,10 +61,10 @@ export default function Peyi() {
         {(['mond', ...REGIONS] as (WorldRegion | 'mond')[]).map((r) => {
           const on = peyi.region === r; const lab = REGION_LABEL[r];
           return (
-            <Pressable key={r} role="button" onPress={() => { tap(); setPeyi({ region: r }); }} style={[{ minHeight: 46, paddingHorizontal: 12, flexDirection: 'row', gap: 6, width: r === 'mond' ? '100%' : '48%' }, seg(on, colors.teal)]}>
+            <PressScale debounceMs={0} key={r} role="button" onPress={() => { tap(); setPeyi({ region: r }); }} style={[{ minHeight: 46, paddingHorizontal: 12, flexDirection: 'row', gap: 6, width: r === 'mond' ? '100%' : '48%' }, seg(on, colors.teal)]}>
               <T style={{ fontSize: 18, lineHeight: 24 }}>{lab.emoji}</T>
               <T v="bold" color={on ? '#fff' : colors.ink}>{lang === 'fr' ? lab.fr : lab.ht}</T>
-            </Pressable>
+            </PressScale>
           );
         })}
       </View>

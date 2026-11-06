@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Pressable } from 'react-native';
+import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { levelById, run, scoreRun, countBlocks, validateProgram, isWall, type Block, type Robot, type RunResult, type Level } from '@konesans/core';
-import { Screen, T, Button, Card, Row, TopBar, Icon, Stars, Pill, Mascot } from '@/ui';
+import { Screen, T, Button, Card, Row, TopBar, Icon, Stars, Pill, Mascot, PressScale } from '@/ui';
 import { colors, radius } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT } from '@/lib/i18n';
@@ -65,7 +65,7 @@ export default function CodingLevel() {
   return (
     <Screen>
       <TopBar title={`${lv.id}. ${lv.title}`} sub={`${countBlocks(program)} ${t('blocks')} · par ${lv.par}`} onBack={() => router.back()}
-        right={<Pressable role="button" onPress={() => { tap(); setShowHint(!showHint); }} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.yellowSoft, alignItems: 'center', justifyContent: 'center' }}><Icon name="endis" size={26} /></Pressable>} />
+        right={<PressScale debounceMs={0} role="button" onPress={() => { tap(); setShowHint(!showHint); }} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.yellowSoft, alignItems: 'center', justifyContent: 'center' }}><Icon name="endis" size={26} /></PressScale>} />
       {showHint && <Card soft={colors.yellowSoft} edge={colors.yellowDark}><T v="body">{lv.hint}</T></Card>}
 
       {/* Maze */}
@@ -92,7 +92,7 @@ export default function CodingLevel() {
       {/* Program */}
       <Card style={{ minHeight: 90, gap: 6 }} edge={colors.lineStrong}>
         <Row><T v="small" color={colors.muted} style={{ flex: 1 }}>Pwogram ou</T>
-          {program.length > 0 && <Pressable role="button" onPress={() => { tap(); removeLast(); }} style={{ minHeight: 36, paddingHorizontal: 10, justifyContent: 'center' }}><T v="small" color={colors.red}>⌫ {t('clear')}</T></Pressable>}
+          {program.length > 0 && <PressScale debounceMs={0} role="button" onPress={() => { tap(); removeLast(); }} style={{ minHeight: 36, paddingHorizontal: 10, justifyContent: 'center' }}><T v="small" color={colors.red}>⌫ {t('clear')}</T></PressScale>}
         </Row>
         {program.length === 0 ? <T v="body" color={colors.muted}>Tape blòk yo anba a.</T> : <ProgramList blocks={program} path={[]} cursor={cursor} setCursor={(c) => { tap(); setCursor(c); }} onTimes={(path, d) => { reset(); setProgram((p) => bumpTimes(p, path, d)); }} t={t} />}
       </Card>
@@ -100,10 +100,10 @@ export default function CodingLevel() {
       {/* Palette */}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {PALETTE.filter((b) => lv.allowed.includes(b.type)).map((b) => (
-          <Pressable role="button" key={b.type} onPress={() => { tap(); add(b.type); }} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: b.color, borderRadius: radius.sm, paddingHorizontal: 12, minHeight: 48, borderBottomWidth: 4, borderBottomColor: 'rgba(0,0,0,0.25)' }, pressed && { transform: [{ translateY: 2 }], borderBottomWidth: 2 }]}>
+          <PressScale debounceMs={0} role="button" key={b.type} onPress={() => { tap(); add(b.type); }} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: b.color, borderRadius: radius.sm, paddingHorizontal: 12, minHeight: 48, borderBottomWidth: 4, borderBottomColor: 'rgba(0,0,0,0.25)' }, pressed && { transform: [{ translateY: 2 }], borderBottomWidth: 2 }]}>
             <Icon name={b.icon} size={24} />
             <T v="h3" color="#fff">{t(`b_${b.type}` as never)}</T>
-          </Pressable>
+          </PressScale>
         ))}
       </View>
 
@@ -155,24 +155,24 @@ function ProgramList({ blocks, path, cursor, setCursor, onTimes, t }: { blocks: 
         const container = b.type === 'repete' || b.type === 'si_mi' || b.type === 'jiska_zetwal';
         return (
           <View key={i} style={{ gap: 6 }}>
-            <Pressable role="button" onPress={() => container && setCursor(here)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: color[b.type], borderRadius: 10, paddingHorizontal: 10, minHeight: 40, borderWidth: 2, borderColor: container && same(cursor, here) ? colors.ink : 'transparent' }}>
+            <PressScale debounceMs={0} role="button" onPress={() => container && setCursor(here)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: color[b.type], borderRadius: 10, paddingHorizontal: 10, minHeight: 40, borderWidth: 2, borderColor: container && same(cursor, here) ? colors.ink : 'transparent' }}>
               <Icon name={ICON[b.type]} size={22} />
               <T v="bold" color="#fff">{t(`b_${b.type}` as never)}</T>
               {b.type === 'repete' && (
                 <Row gap={4} style={{ marginLeft: 'auto' }}>
-                  <Pressable role="button" onPress={() => onTimes(here, -1)} style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.3)', alignItems: 'center', justifyContent: 'center' }}><T v="h3" color="#fff">−</T></Pressable>
+                  <PressScale debounceMs={0} role="button" onPress={() => onTimes(here, -1)} style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.3)', alignItems: 'center', justifyContent: 'center' }}><T v="h3" color="#fff">−</T></PressScale>
                   <T v="h3" color="#fff">{b.times}×</T>
-                  <Pressable role="button" onPress={() => onTimes(here, 1)} style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.3)', alignItems: 'center', justifyContent: 'center' }}><T v="h3" color="#fff">+</T></Pressable>
+                  <PressScale debounceMs={0} role="button" onPress={() => onTimes(here, 1)} style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.3)', alignItems: 'center', justifyContent: 'center' }}><T v="h3" color="#fff">+</T></PressScale>
                 </Row>
               )}
               {container && <T v="small" color="#fff" style={{ marginLeft: b.type === 'repete' ? 6 : 'auto' }}>{same(cursor, here) ? '◀ isit' : '▸'}</T>}
-            </Pressable>
+            </PressScale>
             {container && (
               <View style={{ marginLeft: 16, borderLeftWidth: 3, borderLeftColor: color[b.type], paddingLeft: 8, gap: 6 }}>
                 <ProgramList blocks={childList(b)!} path={here} cursor={cursor} setCursor={setCursor} onTimes={onTimes} t={t} />
                 {b.type === 'si_mi' && (
                   <>
-                    <Pressable role="button" onPress={() => setCursor([...here, 'else'])} style={{ minHeight: 32, justifyContent: 'center' }}><T v="small" color={colors.muted}>sinon {same(cursor, [...here, 'else']) ? '◀ isit' : '▸'}</T></Pressable>
+                    <PressScale debounceMs={0} role="button" onPress={() => setCursor([...here, 'else'])} style={{ minHeight: 32, justifyContent: 'center' }}><T v="small" color={colors.muted}>sinon {same(cursor, [...here, 'else']) ? '◀ isit' : '▸'}</T></PressScale>
                     <ProgramList blocks={b.else ?? []} path={[...here, 'else']} cursor={cursor} setCursor={setCursor} onTimes={onTimes} t={t} />
                   </>
                 )}
@@ -182,7 +182,7 @@ function ProgramList({ blocks, path, cursor, setCursor, onTimes, t }: { blocks: 
           </View>
         );
       })}
-      {path.length === 0 && cursor.length > 0 && <Pressable role="button" onPress={() => setCursor([])} style={{ minHeight: 32, justifyContent: 'center' }}><T v="small" color={colors.blue}>↩ Retounen anba pwogram nan</T></Pressable>}
+      {path.length === 0 && cursor.length > 0 && <PressScale debounceMs={0} role="button" onPress={() => setCursor([])} style={{ minHeight: 32, justifyContent: 'center' }}><T v="small" color={colors.blue}>↩ Retounen anba pwogram nan</T></PressScale>}
     </View>
   );
 }

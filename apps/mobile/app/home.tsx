@@ -1,10 +1,12 @@
 import React, { useEffect } from 'react';
-import { View, Pressable } from 'react-native';
+import { View } from 'react-native';
 import { router } from 'expo-router';
 import { chestReady, nextLesson, courseById, type QuestState } from '@konesans/core';
-import { Screen, T, Card, Row, BottomNav, Pill, Progress, Mascot, IconTile, Button, Motif } from '@/ui';
-import { colors, CATEGORY_META } from '@/lib/theme';
-import { useStore, useLevel } from '@/lib/store';
+import { Screen, T, Card, Row, BottomNav, Pill, CountPill, Progress, Mascot, IconTile, Button, Motif, Avatar, PressScale, FadeIn, Pop } from '@/ui';
+import { colors } from '@/lib/theme';
+import { categoryInfo } from '@/lib/content';
+import { useAnnouncement, useFeatures, useDailyCount } from '@/lib/remote';
+import { useStore, useLevel, useAvatar } from '@/lib/store';
 import { useT, useL } from '@/lib/i18n';
 import { tap } from '@/lib/audio';
 
@@ -17,6 +19,10 @@ export default function Home() {
   const t = useT(); const l = useL();
   const { profile, progress, courses, touch } = useStore();
   const lvl = useLevel();
+  const ann = useAnnouncement();
+  const features = useFeatures();
+  const daily = useDailyCount();
+  const avatar = useAvatar();
   useEffect(() => { touch(); }, []);
   const quests: QuestState[] = progress.quests;
   const questsDone = quests.filter((q) => q.done).length;
@@ -25,30 +31,37 @@ export default function Home() {
 
   return (
     <Screen pad={20} bottom={<BottomNav />}>
-      <Row gap={12}>
-        <Pressable onPress={() => { tap(); router.push('/profile'); }} style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: colors.blue, alignItems: 'center', justifyContent: 'center' }}><T v="h2" color="#fff">{profile.username[0]}</T></Pressable>
+      <FadeIn><Row gap={12}>
+        <PressScale accessibilityLabel={t('profile')} scaleTo={0.9} onPress={() => { tap(); router.push('/profile'); }}><Avatar a={avatar} size={52} live /></PressScale>
         <View style={{ flex: 1 }}>
           <T v="h1">{t('hello')}, {profile.username}!</T>
           <T v="small" color={colors.muted}>{t('what_learn')}</T>
         </View>
         <View style={{ alignItems: 'flex-end', gap: 4 }}>
-          <Pill text={`${progress.streak.count} ${t('days')}`} icon="seri" color="#A63A0A" bg="#FFE8DC" />
-          <Pill text={`${progress.coins}`} icon="kob" color="#5C4600" bg={colors.yellowSoft} />
+          <CountPill value={progress.streak.count} k="streak" suffix={` ${t('days')}`} icon="seri" color="#A63A0A" bg="#FFE8DC" pulse={progress.streak.count > 0} />
+          <CountPill value={progress.coins} k="coins" icon="kob" color="#5C4600" bg={colors.yellowSoft} />
         </View>
-      </Row>
+      </Row></FadeIn>
+
+      {ann && (ann.ht || ann.fr) ? (
+        <FadeIn delay={40}><View style={{ backgroundColor: ({ blue: colors.blueSoft, yellow: colors.yellowSoft, red: colors.redSoft, green: colors.greenSoft } as const)[ann.color], borderRadius: 18, paddingVertical: 12, paddingHorizontal: 16, flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+          <IconTile name="siyale" bg="#FFFFFF" size={36} />
+          <T v="bold" style={{ flex: 1 }} color={({ blue: colors.blue, yellow: '#5C4600', red: '#8F0A22', green: '#12632F' } as const)[ann.color]}>{profile.lang === 'fr' && ann.fr ? ann.fr : ann.ht || ann.fr}</T>
+        </View></FadeIn>
+      ) : null}
 
       {/* Daily challenge */}
-      <View style={{ backgroundColor: colors.blue, borderRadius: 24, padding: 20, paddingRight: 118, gap: 6, borderBottomWidth: 5, borderBottomColor: '#14307D', overflow: 'hidden' }}>
+      <FadeIn delay={80}><View style={{ backgroundColor: colors.blue, borderRadius: 24, padding: 20, paddingRight: 118, gap: 6, borderBottomWidth: 5, borderBottomColor: '#14307D', overflow: 'hidden' }}>
         <Motif kind="drapo" opacity={0.2} height={170} />
         <T v="label" color="#E6ECFB">{t('daily')}</T>
         <T v="h1" color="#fff">{t('daily_title')}</T>
         <T v="small" color="#E6ECFB">{t('daily_sub')}</T>
-        <Button small title={t('play_now')} variant="secondary" color={colors.blue} onPress={() => router.push('/quiz/mix?count=10')} style={{ alignSelf: 'flex-start', marginTop: 6 }} />
-        <View style={{ position: 'absolute', right: 2, bottom: 0 }}><Mascot size={118} mood="cheer" /></View>
-      </View>
+        <Button small title={t('play_now')} variant="secondary" color={colors.blue} onPress={() => router.push(`/quiz/mix?count=${daily}`)} style={{ alignSelf: 'flex-start', marginTop: 6 }} />
+        <View style={{ position: 'absolute', right: 2, bottom: 0 }}><Mascot size={118} mood="happy" /></View>
+      </View></FadeIn>
 
       {/* Quests */}
-      <Card onPress={() => router.push('/profile')} style={{ gap: 8 }}>
+      <FadeIn delay={160}><Card onPress={() => router.push('/profile')} style={{ gap: 8 }}>
         <Row>
           <IconTile name="kof" bg={colors.purpleSoft} size={44} />
           <View style={{ flex: 1 }}><T v="h3">{t('quests')}</T><Progress value={quests.length ? questsDone / quests.length : 0} color={colors.purple} /></View>
@@ -61,12 +74,12 @@ export default function Home() {
             <T v="small" color={colors.muted}>{Math.min(q.progress, q.goal)}/{q.goal} · +{q.xp} XP</T>
           </Row>
         ))}
-        {chestReady(progress) && <Pill text="Kòf la louvri! +100 XP" color="#5C4600" bg={colors.yellowSoft} icon="kado" />}
-      </Card>
+        {chestReady(progress) && <Pop delay={400}><Pill text="Kòf la louvri! +100 XP" color="#5C4600" bg={colors.yellowSoft} icon="kado" /></Pop>}
+      </Card></FadeIn>
 
       {/* Continue course */}
       {course && (
-        <>
+        <FadeIn delay={240} style={{ gap: 14 }}>
           <T v="h2">{t('continue_learning')}</T>
           <Card onPress={() => router.push(`/course/${course.lang}/${course.lesson.id}`)}>
             <Row>
@@ -78,24 +91,26 @@ export default function Home() {
               <T v="small" color={colors.blue}>›</T>
             </Row>
           </Card>
-        </>
+        </FadeIn>
       )}
 
       {/* Explore */}
-      <T v="h2">{t('explore')}</T>
+      <FadeIn delay={300}><T v="h2">{t('explore')}</T></FadeIn>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
         {[
-          { icon: 'kesyon', bg: colors.yellowSoft, label: t('challenge'), href: '/categories' },
-          { icon: 'defi', bg: colors.redSoft, label: t('duel_bot'), href: '/duel' },
-          { icon: 'lang', bg: colors.blueSoft, label: t('course'), href: '/course' },
-          { icon: 'robo', bg: colors.purpleSoft, label: t('coding'), href: '/coding' },
-          { icon: 'kalkil', bg: colors.greenSoft, label: 'Kalkil Mantal', href: '/math' },
-          { icon: 'drapo', bg: colors.orangeSoft, label: CATEGORY_META.peyi[profile.lang], href: '/peyi' },
-        ].map((x) => (
-          <Card key={x.href} onPress={() => router.push(x.href as never)} soft={x.bg} edge={x.bg} style={{ width: '31%', alignItems: 'center', gap: 6, paddingVertical: 14, paddingHorizontal: 6 }}>
-            <IconTile name={x.icon as never} bg="#FFFFFF" size={48} />
-            <T v="small" center>{x.label}</T>
-          </Card>
+          { icon: 'kesyon', bg: colors.yellowSoft, label: t('challenge'), href: '/categories', on: true },
+          { icon: 'defi', bg: colors.redSoft, label: t('duel_bot'), href: '/duel', on: features.duels },
+          { icon: 'lang', bg: colors.blueSoft, label: t('course'), href: '/course', on: features.courses },
+          { icon: 'robo', bg: colors.purpleSoft, label: t('coding'), href: '/coding', on: features.coding },
+          { icon: 'kalkil', bg: colors.greenSoft, label: 'Kalkil Mantal', href: '/math', on: features.math },
+          { icon: 'drapo', bg: colors.orangeSoft, label: categoryInfo('peyi')[profile.lang], href: '/peyi', on: features.peyi },
+        ].filter((x) => x.on).map((x, i) => (
+          <FadeIn key={x.href} delay={340 + i * 50} style={{ width: '31%' }}>
+            <Card onPress={() => router.push(x.href as never)} soft={x.bg} edge={x.bg} style={{ alignItems: 'center', gap: 6, paddingVertical: 14, paddingHorizontal: 6 }}>
+              <IconTile name={x.icon as never} bg="#FFFFFF" size={48} />
+              <T v="small" center>{x.label}</T>
+            </Card>
+          </FadeIn>
         ))}
       </View>
     </Screen>

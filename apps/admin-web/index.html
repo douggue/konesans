@@ -376,7 +376,7 @@ async function importBank() {
   const r = await fetch('bank.json'); if (!r.ok) { toast('bank.json pa disponib sou sèvè a', true); return; }
   const qs = (await r.json()).questions.map((q) => ({ id: q.id, category: q.category, d: q.difficulty, ages: q.ages, ht: q.prompt.ht, fr: q.prompt.fr || '', opts: q.options.map((o) => o.ht), optsFr: q.options.map((o) => o.fr || ''), a: q.answer, ex: q.explain?.ht || '', exFr: q.explain?.fr || '', topic: q.topic, status: q.status || 'review' }));
   let added = 0;
-  for (let i = 0; i < qs.length; i += 400) { const res = await rpc('admin_import', { questions: qs.slice(i, i + 400) }); added += res.added; toast(`Enpòte ${Math.min(i + 400, qs.length)}/${qs.length}…`); }
+  for (let i = 0; i < qs.length; i += 150) { const res = await rpc('admin_import', { questions: qs.slice(i, i + 150) }); added += res.added; toast(`Enpòte ${Math.min(i + 150, qs.length)}/${qs.length}…`); }
   toast(`${added} kesyon enpòte`); await loadStats(); await loadCats(); viewDash();
 }
 async function publish() {

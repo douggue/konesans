@@ -1,5 +1,6 @@
 /** UI strings — Kreyòl first, French second. Course content (EN/ES) lives in @konesans/core. */
 import { useStore } from './store';
+import { useRemote } from './remote';
 
 const S = {
   // nav
@@ -49,14 +50,24 @@ const S = {
   settings: ['Paramèt', 'Paramètres'], sound: ['Son', 'Son'], sfx: ['Son efè', 'Effets sonores'], music: ['Mizik', 'Musique'], voice: ['Li kesyon yo awotvwa', 'Lire les questions à voix haute'],
   haptic: ['Vibrasyon', 'Vibration'], app_lang: ['Lang app la', "Langue de l'app"], text_size: ['Gwosè tèks', 'Taille du texte'], small: ['Piti', 'Petit'], normal: ['Nòmal', 'Normal'], big: ['Gwo', 'Grand'],
   parent: ['Espas Paran', 'Espace Parents'], parent_only: ['Pou granmoun sèlman', 'Réservé aux adultes'], reset: ['Rekòmanse a zewo', 'Tout recommencer'],
-  trophies: ['Twofe m', 'Mes trophées'], my_class: ['Klas mwen', 'Ma classe'], family: ['Fanmi mwen', 'Ma famille'], soon: ['Byento', 'Bientôt'],
+  trophies: ['Twofe m', 'Mes trophées'], my_class: ['Klas mwen', 'Ma classe'], family: ['Fanmi mwen', 'Ma famille'], soon: ['Byento', 'Bientôt'], new_badge: ['Nouvo', 'Nouveau'],
+  maint_title: ['Ti poz!', 'Petite pause !'], maint_retry: ['Eseye ankò', 'Réessayer'],
   xp: ['XP', 'XP'],
+  // avatar
+  av_title: ['Fè avata ou', 'Crée ton avatar'], av_hint: ['Chwazi po, cheve ak rad ou. Ou ka chanje l nenpòt lè.', "Choisis ta peau, tes cheveux et tes habits. Tu peux le changer quand tu veux."],
+  av_skin: ['Po', 'Peau'], av_hair: ['Cheve', 'Cheveux'], av_hair_color: ['Koulè cheve', 'Couleur'], av_clothes: ['Rad', 'Habits'], av_extra: ['Akseswa', 'Accessoires'], av_bg: ['Fon', 'Fond'],
+  av_random: ['Owaza', 'Au hasard'], av_save: ['Sove avata m', 'Enregistrer mon avatar'], av_edit: ['Chanje avata m', 'Modifier mon avatar'],
+  hair_afro: ['Afwo', 'Afro'], hair_braids: ['Très', 'Tresses'], hair_short: ['Kout', 'Courts'], hair_puffs: ['Pouf', 'Couettes'],
+  ex_none: ['Anyen', 'Rien'], ex_glasses: ['Linèt', 'Lunettes'], ex_cap: ['Kaskèt', 'Casquette'], ex_mask: ['Mask Kanaval', 'Masque de carnaval'], ex_uniform: ['Inifòm lekòl', "Uniforme d'école"],
+  // matchmaking
+  found: ['Nou jwenn yon jwè!', 'Joueur trouvé !'], tap_skip: ['Tape pou kòmanse', 'Touche pour commencer'], get_ready: ['Pare? Ale!', 'Prêt ? Partez !'],
 } as const;
 
 export type StrKey = keyof typeof S;
 
 export function tr(key: StrKey, lang: 'ht' | 'fr', vars?: Record<string, string | number>): string {
-  let s: string = S[key][lang === 'fr' ? 1 : 0];
+  const o = useRemote.getState().strings[key]; // changed in the admin (Tèks app la)
+  let s: string = (o && o[lang === 'fr' ? 1 : 0]) || S[key][lang === 'fr' ? 1 : 0];
   if (vars) for (const [k, v] of Object.entries(vars)) s = s.replace(`{${k}}`, String(v));
   return s;
 }
@@ -64,6 +75,7 @@ export function tr(key: StrKey, lang: 'ht' | 'fr', vars?: Record<string, string 
 /** Hook: `const t = useT(); t('home')` */
 export function useT() {
   const lang = useStore((s) => s.profile.lang);
+  useRemote((s) => s.version); // re-render when new texts are published
   return (key: StrKey, vars?: Record<string, string | number>) => tr(key, lang, vars);
 }
 

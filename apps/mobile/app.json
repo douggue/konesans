@@ -8,11 +8,6 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "backgroundColor": "#F6F7FB",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#1F47B5"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "ht.konesans.app"
@@ -42,7 +37,21 @@
           }
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#1F47B5",
+          "image": "./assets/splash-logo.png",
+          "imageWidth": 180,
+          "resizeMode": "contain",
+          "dark": {
+            "backgroundColor": "#14307D",
+            "image": "./assets/splash-logo.png"
+          }
+        }
+      ],
+      "expo-system-ui"
     ],
     "experiments": {
       "typedRoutes": false,

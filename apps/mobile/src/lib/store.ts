@@ -2,13 +2,14 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { avatarFromSeed } from '@/ui/avatar';
 import {
   DEFAULT_SETTINGS, emptyProgress, emptyCourseProgress, recordLesson as coreRecordLesson, applyEvent, ensureQuests,
   recordActivity, levelFromXp, generateUsername, localDay, noteWrong,
-  type AgeBand, type KidSettings, type Progress, type CourseProgress, type CourseId, type LessonResult, type GameEvent, type Lang, type CountryQuizOptions,
+  type AgeBand, type AvatarConfig, type KidSettings, type Progress, type CourseProgress, type CourseId, type LessonResult, type GameEvent, type Lang, type CountryQuizOptions,
 } from '@konesans/core';
 
-export interface Profile { id: string; username: string; age: AgeBand; lang: Lang; avatarColor: number; createdAt: string }
+export interface Profile { id: string; username: string; age: AgeBand; lang: Lang; avatarColor: number; avatar?: AvatarConfig; createdAt: string }
 export interface AppSettings { sfx: boolean; music: boolean; voice: boolean; haptic: boolean; textSize: 0 | 1 | 2 }
 export interface Stats { duels: number; duelWins: number; lessons: number; questionsAnswered: number; correct: number; perCategoryCorrect: Record<string, number>; mathBest?: number }
 
@@ -34,6 +35,7 @@ interface State {
   setLang: (lang: Lang) => void;
   setAge: (age: AgeBand) => void;
   rerollName: () => void;
+  setAvatar: (a: AvatarConfig) => void;
   finishOnboarding: () => void;
   setSettings: (s: Partial<AppSettings>) => void;
   touch: () => void;
@@ -74,6 +76,7 @@ export const useStore = create<State>()(
       setLang: (lang) => set((s) => ({ profile: { ...s.profile, lang } })),
       setAge: (age) => set((s) => ({ profile: { ...s.profile, age }, settings: { ...s.settings, voice: age === '6-8' ? true : s.settings.voice } })),
       rerollName: () => set((s) => ({ profile: { ...s.profile, username: generateUsername(Date.now() + Math.floor(Math.random() * 1e6)) } })),
+      setAvatar: (avatar) => set((s) => ({ profile: { ...s.profile, avatar } })),
       finishOnboarding: () => { set({ onboarded: true }); get().touch(); },
       setSettings: (p) => set((s) => ({ settings: { ...s.settings, ...p } })),
 
@@ -139,5 +142,8 @@ export const useStore = create<State>()(
     },
   ),
 );
+
+/** The kid's avatar (a stable default derived from the profile id until they make one). */
+export const useAvatar = (): AvatarConfig => { const p = useStore((s) => s.profile); return p.avatar ?? avatarFromSeed(p.id); };
 
 export const useLevel = () => { const xp = useStore((s) => s.progress.xp); return levelFromXp(xp); };

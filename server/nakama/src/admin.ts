@@ -250,7 +250,7 @@ export const adminNextId = rpc((ctx, nk, b) => {
 });
 
 export const adminImport = rpc((ctx, nk, b, email) => {
-  const qs: AdminQuestion[] = Array.isArray(b.questions) ? b.questions.slice(0, 500) : [];
+  const qs: AdminQuestion[] = Array.isArray(b.questions) ? b.questions.slice(0, 300) : [];
   if (!qs.length) fail('no questions', CODES.INVALID);
   const existing = new Set(nk.storageRead(qs.map((q) => ({ collection: C.BANK, key: String(q.id), userId: SYSTEM_USER }))).map((o) => o.key));
   let added = 0, updated = 0, skipped = 0;

@@ -1,0 +1,57 @@
+{
+  "expo": {
+    "name": "Konesans Admin",
+    "slug": "konesans-admin",
+    "version": "0.1.0",
+    "scheme": "konesansadmin",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F6F7FB",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#14213D"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "ht.konesans.admin"
+    },
+    "android": {
+      "package": "ht.konesans.admin",
+      "adaptiveIcon": {
+        "backgroundColor": "#14213D",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "asyncRoutes": {
+            "web": false,
+            "default": "development"
+          }
+        }
+      ],
+      "expo-font",
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": false,
+      "baseUrl": "."
+    },
+    "owner": "tjeangardys-team",
+    "extra": {
+      "apiUrl": "https://api.CHANGE-ME",
+      "serverKey": "konesans-sk-nY9_5rth9pUY"
+    }
+  }
+}

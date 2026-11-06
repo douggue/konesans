@@ -27,7 +27,7 @@ const bank = JSON.parse(readFileSync(new URL('../../apps/admin/bank.json', impor
   a: q.answer, ex: q.explain?.ht ?? '', exFr: q.explain?.fr ?? '', topic: q.topic, status: q.status,
 }));
 let added = 0;
-for (let i = 0; i < bank.length; i += 500) { const r = await A('admin_import', { questions: bank.slice(i, i + 500) }); added += (r.body.added ?? 0) + (r.body.skipped ?? 0); }
+for (let i = 0; i < bank.length; i += 150) { const r = await A("admin_import", { questions: bank.slice(i, i + 150) }); added += (r.body.added ?? 0) + (r.body.skipped ?? 0); }
 check(added === bank.length, `admin_import ${bank.length} questions`);
 
 const st = await A('admin_stats'); check(st.body.questions.total === bank.length, `admin_stats total=${st.body.questions?.total}`);

@@ -1,0 +1,28 @@
+# Builds the Konesans Admin APK (apps/admin-mobile) on EAS. Uses the same EXPO_TOKEN secret as the kids' app.
+# The first run creates the "konesans-admin" project on expo.dev (eas init) if it doesn't exist yet.
+name: EAS Admin Android
+on:
+  push:
+    branches: [main]
+    paths: ['apps/admin-mobile/**', '.github/workflows/eas-admin-android.yml']
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: npm ci
+      - name: Link the Expo project (creates it on the first run)
+        working-directory: apps/admin-mobile
+        run: |
+          if ! grep -q '"projectId"' app.json; then eas init --non-interactive --force; fi
+          grep -o '"projectId": *"[^"]*"' app.json || true
+      - name: Build APK on EAS
+        working-directory: apps/admin-mobile
+        run: eas build --platform android --profile preview --non-interactive --no-wait

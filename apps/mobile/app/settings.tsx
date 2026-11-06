@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, Pressable, Switch } from 'react-native';
+import { View, Switch } from 'react-native';
 import { router } from 'expo-router';
 import type { Lang } from '@konesans/core';
-import { Screen, T, Card, Row, TopBar, Button, Sheet } from '@/ui';
+import { Screen, T, Card, Row, TopBar, Button, Sheet, PressScale } from '@/ui';
 import { colors } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT } from '@/lib/i18n';
@@ -31,13 +31,13 @@ export default function Settings() {
       <T v="label" color={colors.muted}>{t('app_lang').toUpperCase()}</T>
       <Row>
         {([['ht', 'KR', 'Kreyòl ayisyen'], ['fr', 'FR', 'Français']] as [Lang, string, string][]).map(([id, code, label]) => (
-          <Pressable role="button" key={id} onPress={() => { tap(); setLang(id); }} style={seg(profile.lang === id)}><T v="h2">{code}</T><T v="small">{label}</T></Pressable>
+          <PressScale debounceMs={0} role="button" key={id} onPress={() => { tap(); setLang(id); }} style={seg(profile.lang === id)}><T v="h2">{code}</T><T v="small">{label}</T></PressScale>
         ))}
       </Row>
       <T v="label" color={colors.muted}>{t('text_size').toUpperCase()}</T>
       <Row>
         {([t('small'), t('normal'), t('big')]).map((label, i) => (
-          <Pressable role="button" key={label} onPress={() => { tap(); setSettings({ textSize: i as 0 | 1 | 2 }); }} style={seg(settings.textSize === i)}><T style={{ fontSize: [14, 18, 24][i], lineHeight: [16, 20, 28][i], fontFamily: 'Baloo2_800ExtraBold' }}>Aa</T><T v="small">{label}</T></Pressable>
+          <PressScale debounceMs={0} role="button" key={label} onPress={() => { tap(); setSettings({ textSize: i as 0 | 1 | 2 }); }} style={seg(settings.textSize === i)}><T style={{ fontSize: [14, 18, 24][i], lineHeight: [16, 20, 28][i], fontFamily: 'Baloo2_800ExtraBold' }}>Aa</T><T v="small">{label}</T></PressScale>
         ))}
       </Row>
       <Card><T v="bold">Ki ane Ayiti te vin yon peyi endepandan?</T></Card>

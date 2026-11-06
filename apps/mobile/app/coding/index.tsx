@@ -2,7 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
 import { LEVELS } from '@konesans/core';
-import { Screen, T, Card, Row, BottomNav, Stars, Icon, Mascot } from '@/ui';
+import { Screen, T, Card, Row, BottomNav, Stars, Icon, Mascot, FadeIn } from '@/ui';
 import { colors } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT } from '@/lib/i18n';
@@ -24,7 +24,7 @@ export default function Coding() {
           const stars = coding[lv.id] ?? 0;
           const locked = i > (firstOpen === -1 ? LEVELS.length : firstOpen);
           return (
-            <Card key={lv.id} onPress={locked ? undefined : () => router.push(`/coding/${lv.id}`)} style={{ width: '47.5%', gap: 6, opacity: locked ? 0.5 : 1 }} edge={!locked && !stars ? colors.blue : colors.line}>
+            <FadeIn key={lv.id} delay={80 + Math.min(i, 10) * 40} style={{ width: '47.5%' }}><Card onPress={locked ? undefined : () => router.push(`/coding/${lv.id}`)} style={{ gap: 6, opacity: locked ? 0.5 : 1 }} edge={!locked && !stars ? colors.blue : colors.line}>
               <Row>
                 <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: stars ? colors.greenSoft : colors.blueSoft, alignItems: 'center', justifyContent: 'center' }}>
                   {locked ? <Icon name="femen_kle" size={22} /> : <Icon name={CONCEPT_ICON[lv.concept]} size={26} />}
@@ -33,7 +33,7 @@ export default function Coding() {
               </Row>
               <T v="h3">{lv.title}</T>
               {stars ? <Stars n={stars} size={14} /> : <T v="small" color={colors.muted}>{lv.maze.rows}×{lv.maze.cols} · par {lv.par}</T>}
-            </Card>
+            </Card></FadeIn>
           );
         })}
       </View>

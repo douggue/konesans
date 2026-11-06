@@ -1,14 +1,19 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView, Modal, type ViewStyle, type TextStyle, type StyleProp } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, ScrollView, Modal, Animated, Easing, type ViewStyle, type TextStyle, type StyleProp } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path, Circle, Ellipse, Rect, G } from 'react-native-svg';
 import { SvgXml } from 'react-native-svg';
 import { router, usePathname } from 'expo-router';
 import { colors, fonts, radius, raised } from '@/lib/theme';
 import { ICONS, type IconName } from './icons';
+import { useFeatures } from '@/lib/remote';
 import { useT } from '@/lib/i18n';
 import { useStore } from '@/lib/store';
 import { tap } from '@/lib/audio';
+import { PressScale, Shake, Bounce, Burst, Pulse, Pop, Bob, Hop, AnimatedBar, useBlink, useCountUp, reduceMotion } from './motion';
+import { FLAG_SVG } from './flags';
+export * from './motion';
+export { Avatar, AvatarArt, avatarFromSeed } from './avatar';
 
 // ─── Text ────────────────────────────────────────────────────────────────────
 type Variant = 'display' | 'h1' | 'h2' | 'h3' | 'body' | 'bold' | 'small' | 'label';
@@ -29,13 +34,16 @@ export function T({ v = 'body', color = colors.ink, style, children, center, ...
 }
 
 // ─── Layout ──────────────────────────────────────────────────────────────────
+/** Every screen. Clears the status bar and, at the bottom, the Android gesture / 3-button bar (edge-to-edge). */
 export function Screen({ children, scroll = true, pad = 20, bottom, style }: { children: React.ReactNode; scroll?: boolean; pad?: number; bottom?: React.ReactNode; style?: ViewStyle }) {
+  const insets = useSafeAreaInsets();
+  const padBottom = bottom ? 24 : 24 + insets.bottom; // with a BottomNav, the nav itself clears the system bar
   return (
     <SafeAreaView style={[{ flex: 1, backgroundColor: colors.bg }, style]} edges={['top', 'left', 'right']}>
       {scroll ? (
-        <ScrollView contentContainerStyle={{ padding: pad, paddingBottom: 32, gap: 14 }} keyboardShouldPersistTaps="handled">{children}</ScrollView>
+        <ScrollView contentContainerStyle={{ padding: pad, paddingBottom: padBottom, gap: 14 }} keyboardShouldPersistTaps="handled">{children}</ScrollView>
       ) : (
-        <View style={{ flex: 1, padding: pad, gap: 14 }}>{children}</View>
+        <View style={{ flex: 1, padding: pad, paddingBottom: Math.max(pad, padBottom - 4), gap: 14 }}>{children}</View>
       )}
       {bottom}
     </SafeAreaView>
@@ -44,7 +52,7 @@ export function Screen({ children, scroll = true, pad = 20, bottom, style }: { c
 
 export function Card({ children, style, edge, soft, onPress }: { children: React.ReactNode; style?: StyleProp<ViewStyle>; edge?: string; soft?: string; onPress?: () => void }) {
   const base = [raised(edge), soft ? { backgroundColor: soft } : null, { padding: 14 }, style];
-  if (onPress) return <Pressable role="button" onPress={() => { tap(); onPress(); }} style={({ pressed }) => [base, pressed && { transform: [{ translateY: 2 }], borderBottomWidth: 3 }]}>{children}</Pressable>;
+  if (onPress) return <PressScale role="button" scaleTo={0.97} onPress={() => { tap(); onPress(); }} style={({ pressed }) => [base, pressed && { transform: [{ translateY: 2 }], borderBottomWidth: 3 }]}>{children}</PressScale>;
   return <View style={base}>{children}</View>;
 }
 
@@ -66,21 +74,23 @@ export function Button({ title, onPress, variant = 'primary', color = colors.blu
   const bg = primary ? color : variant === 'secondary' ? colors.card : 'transparent';
   const fg = primary ? '#FFFFFF' : color;
   return (
-    <Pressable role="button" disabled={disabled} onPress={() => { tap(); onPress(); }} style={({ pressed }) => [
+    <PressScale role="button" disabled={disabled} scaleTo={0.96} onPress={() => { tap(); onPress(); }} style={({ pressed }) => [
       { minHeight: small ? 44 : 54, borderRadius: radius.md, paddingHorizontal: 20, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, backgroundColor: bg },
       primary && { borderBottomWidth: 4, borderBottomColor: 'rgba(0,0,0,0.25)' },
       variant === 'secondary' && { borderWidth: 2, borderColor: colors.line, borderBottomWidth: 5 },
-      pressed && { transform: [{ translateY: 2 }], borderBottomWidth: 2 },
+      pressed && { transform: [{ translateY: 2 }], borderBottomWidth: primary ? 2 : variant === 'secondary' ? 3 : 0 },
       disabled && { opacity: 0.45 },
       style,
     ]}>
       {icon && <Icon name={icon} size={22} />}
       <T v="h3" color={fg}>{title}</T>
-    </Pressable>
+    </PressScale>
   );
 }
 
-export function OptionButton({ label, state, onPress, letter, big }: { label: string; state: 'idle' | 'picked' | 'right' | 'wrong' | 'dim'; onPress?: () => void; letter?: string; big?: boolean }) {
+type OptState = 'idle' | 'picked' | 'right' | 'wrong' | 'dim';
+/** Answer option. Bounces + bursts stars when it turns right, shakes when it turns wrong. */
+export function OptionButton({ label, state, onPress, letter, big, media, celebrate }: { label: string; state: OptState; onPress?: () => void; letter?: string; big?: boolean; media?: React.ReactNode; /** burst stars when this turns right (the kid picked it) */ celebrate?: boolean }) {
   const map = {
     idle: { bg: colors.card, edge: colors.line, fg: colors.ink },
     picked: { bg: colors.blueSoft, edge: colors.blue, fg: colors.blue },
@@ -89,27 +99,46 @@ export function OptionButton({ label, state, onPress, letter, big }: { label: st
     dim: { bg: colors.card, edge: colors.line, fg: colors.muted },
   }[state];
   return (
-    <Pressable role="button" disabled={!onPress} onPress={() => { tap(); onPress?.(); }} style={({ pressed }) => [
-      { minHeight: big ? 72 : 60, borderRadius: radius.md, borderWidth: 2, borderColor: map.edge, borderBottomWidth: 5, backgroundColor: map.bg, paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 12 },
-      pressed && { transform: [{ translateY: 2 }], borderBottomWidth: 3 },
-      state === 'dim' && { opacity: 0.5 },
-    ]}>
-      {letter && <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: state === 'idle' || state === 'dim' ? colors.blueSoft : map.edge, alignItems: 'center', justifyContent: 'center' }}><T v="small" color={state === 'idle' || state === 'dim' ? colors.blue : '#FFFFFF'}>{letter}</T></View>}
-      <T v={big ? 'h2' : 'h3'} color={map.fg} style={{ flex: 1 }}>{label}</T>
-    </Pressable>
+    <Shake trigger={state === 'wrong' ? 'wrong' : null}>
+      <Bounce trigger={state === 'right' ? 'right' : null} amount={0.05}>
+        <PressScale role="button" disabled={!onPress} scaleTo={0.97} onPress={() => { tap(); onPress?.(); }} style={({ pressed }) => [
+          { minHeight: big ? 72 : 60, borderRadius: radius.md, borderWidth: 2, borderColor: map.edge, borderBottomWidth: 5, backgroundColor: map.bg, paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 12 },
+          pressed && { transform: [{ translateY: 2 }], borderBottomWidth: 3 },
+          state === 'dim' && { opacity: 0.5 },
+        ]}>
+          {letter && <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: state === 'idle' || state === 'dim' ? colors.blueSoft : map.edge, alignItems: 'center', justifyContent: 'center' }}><T v="small" color={state === 'idle' || state === 'dim' ? colors.blue : '#FFFFFF'}>{state === 'right' ? '✓' : state === 'wrong' ? '✕' : letter}</T></View>}
+          {media}
+          {label ? <T v={big ? 'h2' : 'h3'} color={map.fg} style={{ flex: 1 }}>{label}</T> : <View style={{ flex: 1 }} />}
+        </PressScale>
+        <Burst trigger={state === 'right' && celebrate ? 'right' : null} count={10} radius={70} shapes="stars" />
+      </Bounce>
+    </Shake>
   );
 }
 
-export function Pill({ text, color = colors.blue, bg = colors.blueSoft, icon }: { text: string; color?: string; bg?: string; icon?: IconName }) {
-  return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: bg, borderRadius: 999, paddingVertical: 3, paddingHorizontal: 10 }}>{icon && <Icon name={icon} size={16} />}<T v="small" color={color}>{text}</T></View>;
+export function Pill({ text, color = colors.blue, bg = colors.blueSoft, icon, pulse }: { text: string; color?: string; bg?: string; icon?: IconName; pulse?: boolean }) {
+  return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: bg, borderRadius: 999, paddingVertical: 3, paddingHorizontal: 10 }}>{icon && (pulse ? <Pulse amount={0.18}><Icon name={icon} size={16} /></Pulse> : <Icon name={icon} size={16} />)}<T v="small" color={color}>{text}</T></View>;
 }
 
-export function Progress({ value, color = colors.blueLight, height = 10, track = colors.line, style }: { value: number; color?: string; height?: number; track?: string; style?: StyleProp<ViewStyle> }) {
-  return <View style={[{ height, borderRadius: height / 2, backgroundColor: track, overflow: 'hidden' }, style]}><View style={{ width: `${Math.max(0, Math.min(100, value * 100))}%`, height, borderRadius: height / 2, backgroundColor: color }} /></View>;
+/** Number that counts up from the last value shown under the same key (coins, XP, streak). */
+export function CountPill({ value, k, suffix = '', ...p }: { value: number; k: string; suffix?: string; color?: string; bg?: string; icon?: IconName; pulse?: boolean }) {
+  const n = useCountUp(value, k);
+  return <Bounce trigger={n === value && value > 0 ? value : null} amount={0.12}><Pill {...p} text={`${n}${suffix}`} /></Bounce>;
 }
 
-export function Stars({ n, size = 18 }: { n: number; size?: number }) {
-  return <Row gap={2}>{[1, 2, 3].map((i) => <T key={i} style={{ fontSize: size, lineHeight: size + 4 }} color={i <= n ? colors.yellowDark : colors.line}>★</T>)}</Row>;
+export function Progress({ value, color = colors.blueLight, height = 10, track = colors.line, style, linear }: { value: number; color?: string; height?: number; track?: string; style?: StyleProp<ViewStyle>; linear?: boolean }) {
+  return <AnimatedBar value={value} color={color} height={height} track={track} style={style} linear={linear} />;
+}
+
+export function Stars({ n, size = 18, pop }: { n: number; size?: number; pop?: boolean }) {
+  return (
+    <Row gap={2}>
+      {[1, 2, 3].map((i) => {
+        const star = <T style={{ fontSize: size, lineHeight: size + 4 }} color={i <= n ? colors.yellowDark : colors.line}>★</T>;
+        return pop ? <Pop key={i} delay={250 + i * 220} rotate={-25}>{star}</Pop> : <View key={i}>{star}</View>;
+      })}
+    </Row>
+  );
 }
 
 // ─── Top bar / Bottom nav ────────────────────────────────────────────────────
@@ -117,9 +146,9 @@ export function TopBar({ title, sub, right, onBack, close }: { title: string; su
   const t = useT();
   return (
     <Row gap={12}>
-      <Pressable role="button" accessibilityLabel={t('back')} onPress={() => { tap(); onBack ? onBack() : router.back(); }} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.card, borderWidth: 2, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' }}>
+      <PressScale role="button" accessibilityLabel={t('back')} scaleTo={0.9} onPress={() => { tap(); onBack ? onBack() : router.canGoBack() ? router.back() : router.replace('/home'); }} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.card, borderWidth: 2, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' }}>
         <Icon name={close ? 'femen' : 'retounen'} size={24} />
-      </Pressable>
+      </PressScale>
       <View style={{ flex: 1 }}>
         <T v="h1">{title}</T>
         {sub ? <T v="small" color={colors.muted}>{sub}</T> : null}
@@ -129,21 +158,42 @@ export function TopBar({ title, sub, right, onBack, close }: { title: string; su
   );
 }
 
-const TABS: { href: string; icon: IconName; key: 'home' | 'challenge' | 'course' | 'coding' | 'me' }[] = [
+const ALL_TABS: { href: string; icon: IconName; key: 'home' | 'challenge' | 'course' | 'coding' | 'me' }[] = [
   { href: '/home', icon: 'lakay', key: 'home' }, { href: '/categories', icon: 'defi', key: 'challenge' }, { href: '/course', icon: 'kou', key: 'course' }, { href: '/coding', icon: 'robo', key: 'coding' }, { href: '/profile', icon: 'avata', key: 'me' },
 ];
+let lastTab = 0; // where the indicator was on the previous tab screen, so it can slide from there
+let navLock = 0;
 export function BottomNav() {
   const t = useT();
+  const features = useFeatures();
+  const TABS = ALL_TABS.filter((tab) => (tab.key !== 'course' || features.courses) && (tab.key !== 'coding' || features.coding));
   const path = usePathname();
+  const insets = useSafeAreaInsets();
+  const idx = Math.max(0, TABS.findIndex((tab) => path === tab.href || path.startsWith(tab.href + '/')));
+  const [w, setW] = React.useState(0);
+  const x = React.useRef(new Animated.Value(lastTab)).current;
+  React.useEffect(() => {
+    if (reduceMotion()) x.setValue(idx);
+    else Animated.spring(x, { toValue: idx, useNativeDriver: true, speed: 14, bounciness: 7 }).start();
+    lastTab = idx;
+  }, [idx]);
+  const tabW = w / TABS.length;
   return (
-    <View style={{ flexDirection: 'row', backgroundColor: colors.card, borderTopWidth: 2, borderTopColor: colors.line, paddingTop: 8, paddingBottom: 18, paddingHorizontal: 6 }}>
-      {TABS.map((tab) => {
-        const on = path === tab.href || path.startsWith(tab.href + '/');
+    <View onLayout={(e) => setW(e.nativeEvent.layout.width - 12)} style={{ flexDirection: 'row', backgroundColor: colors.card, borderTopWidth: 2, borderTopColor: colors.line, paddingTop: 8, paddingBottom: 8 + Math.max(insets.bottom, 10), paddingHorizontal: 6 }}>
+      {w > 0 && (
+        <Animated.View pointerEvents="none" style={{ position: 'absolute', top: 8, left: 6, width: tabW, height: 34, alignItems: 'center', transform: [{ translateX: x.interpolate({ inputRange: [0, TABS.length - 1], outputRange: [0, tabW * (TABS.length - 1)] }) }] }}>
+          <View style={{ width: 52, height: 34, borderRadius: 12, backgroundColor: colors.blueSoft }} />
+        </Animated.View>
+      )}
+      {TABS.map((tab, i) => {
+        const on = i === idx;
         return (
-          <Pressable role="button" key={tab.key} onPress={() => { if (!on) { tap(); router.replace(tab.href as never); } }} style={{ flex: 1, alignItems: 'center', gap: 2, minHeight: 52, justifyContent: 'center' }}>
-            <View style={{ backgroundColor: on ? colors.blueSoft : 'transparent', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 2, opacity: on ? 1 : 0.55 }}><Icon name={tab.icon} size={28} /></View>
+          <PressScale role="button" key={tab.key} accessibilityLabel={t(tab.key)} accessibilityState={{ selected: on }} scaleTo={0.88}
+            onPress={() => { const n = Date.now(); if (on || n - navLock < 500) return; navLock = n; tap(); router.replace(tab.href as never); }}
+            style={{ flex: 1, alignItems: 'center', gap: 2, minHeight: 52, justifyContent: 'center' }}>
+            <View style={{ paddingHorizontal: 10, paddingVertical: 2, opacity: on ? 1 : 0.55 }}><Icon name={tab.icon} size={28} /></View>
             <T v="small" color={on ? colors.blue : colors.muted}>{t(tab.key)}</T>
-          </Pressable>
+          </PressScale>
         );
       })}
     </View>
@@ -151,22 +201,48 @@ export function BottomNav() {
 }
 
 // ─── Sheet (confirm) ─────────────────────────────────────────────────────────
+/** Bottom sheet: backdrop fades, sheet springs up (mockup sUp/sScrim); both play in reverse on close. */
 export function Sheet({ open, title, children }: { open: boolean; title: string; children: React.ReactNode }) {
+  const insets = useSafeAreaInsets();
+  const [mounted, setMounted] = React.useState(open);
+  const v = React.useRef(new Animated.Value(0)).current;
+  React.useEffect(() => {
+    if (open) {
+      setMounted(true);
+      if (reduceMotion()) v.setValue(1);
+      else Animated.timing(v, { toValue: 1, duration: 420, easing: Easing.bezier(0.32, 0.72, 0, 1), useNativeDriver: true }).start();
+    } else if (mounted) {
+      Animated.timing(v, { toValue: 0, duration: reduceMotion() ? 0 : 220, easing: Easing.in(Easing.quad), useNativeDriver: true }).start(() => setMounted(false));
+    }
+  }, [open]);
+  if (!mounted) return null;
   return (
-    <Modal visible={open} transparent animationType="fade">
-      <View style={{ flex: 1, backgroundColor: 'rgba(20,33,61,0.45)', justifyContent: 'flex-end' }}>
-        <View style={{ backgroundColor: colors.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, paddingBottom: 36, gap: 12 }}>
+    <Modal visible transparent animationType="none" statusBarTranslucent navigationBarTranslucent onRequestClose={() => {}}>
+      <Animated.View style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: 'rgba(20,33,61,0.45)', opacity: v }} />
+      <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+        <Animated.View style={{ backgroundColor: colors.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, paddingBottom: 28 + insets.bottom, gap: 12, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [420, 0] }) }] }}>
           <View style={{ alignSelf: 'center', width: 44, height: 5, borderRadius: 3, backgroundColor: colors.line, marginBottom: 6 }} />
           <T v="h1" center>{title}</T>
           {children}
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
 }
 
 // ─── Mascot: Ti Zwazo ──────────────────────────────────────────────────────
-export function Mascot({ size = 120, mood = 'happy' }: { size?: number; mood?: 'happy' | 'think' | 'sad' | 'cheer' }) {
+/** Ti Zwazo. `live` = idle bob + blink (+ hop when cheering, droop when sad), as in the mockup. */
+export function Mascot({ size = 120, mood = 'happy', live = true }: { size?: number; mood?: 'happy' | 'think' | 'sad' | 'cheer'; live?: boolean }) {
+  if (!live) return <MascotArt size={size} mood={mood} />;
+  return <LiveMascot size={size} mood={mood} />;
+}
+function LiveMascot({ size, mood }: { size: number; mood: 'happy' | 'think' | 'sad' | 'cheer' }) {
+  const blink = useBlink();
+  const art = <MascotArt size={size} mood={mood} blink={blink} />;
+  if (mood === 'cheer') return <Hop height={size / 10}>{art}</Hop>;
+  return <Bob amount={mood === 'sad' ? 2 : size / 20} duration={mood === 'sad' ? 4000 : 3000}>{art}</Bob>;
+}
+export function MascotArt({ size = 120, mood = 'happy', blink }: { size?: number; mood?: 'happy' | 'think' | 'sad' | 'cheer'; blink?: boolean }) {
   const smile = mood === 'sad' ? 'M68 128q12-8 24 0' : mood === 'cheer' ? 'M64 122q16 18 32 0' : 'M68 124q12 10 24 0';
   return (
     <Svg width={size} height={size} viewBox="0 0 160 170">
@@ -176,10 +252,16 @@ export function Mascot({ size = 120, mood = 'happy' }: { size?: number; mood?: '
       <Ellipse cx="80" cy="100" rx="46" ry="54" fill="#2F5FD8" stroke={colors.ink} strokeWidth={3} />
       <Ellipse cx="80" cy="112" rx="28" ry="34" fill="#DCEBFF" />
       <Path d="M58 88a22 22 0 0 1 44 0" fill="none" stroke="#1F47B5" strokeWidth={3} />
-      <Circle cx="64" cy="84" r="9" fill="#FFFFFF" stroke={colors.ink} strokeWidth={3} />
-      <Circle cx="96" cy="84" r="9" fill="#FFFFFF" stroke={colors.ink} strokeWidth={3} />
-      <Circle cx={mood === 'think' ? 67 : 66} cy="85" r="4" fill={colors.ink} />
-      <Circle cx={mood === 'think' ? 99 : 98} cy="85" r="4" fill={colors.ink} />
+      {blink ? (
+        <G><Path d="M55 85h18M87 85h18" stroke={colors.ink} strokeWidth={3} strokeLinecap="round" /></G>
+      ) : (
+        <G>
+          <Circle cx="64" cy="84" r="9" fill="#FFFFFF" stroke={colors.ink} strokeWidth={3} />
+          <Circle cx="96" cy="84" r="9" fill="#FFFFFF" stroke={colors.ink} strokeWidth={3} />
+          <Circle cx={mood === 'think' ? 67 : 66} cy="85" r="4" fill={colors.ink} />
+          <Circle cx={mood === 'think' ? 99 : 98} cy="85" r="4" fill={colors.ink} />
+        </G>
+      )}
       <Path d="M70 98l10 12 10-12z" fill="#FFB800" stroke={colors.ink} strokeWidth={3} strokeLinejoin="round" />
       <Path d={smile} fill="none" stroke={colors.ink} strokeWidth={3} strokeLinecap="round" />
       <G>
@@ -192,7 +274,6 @@ export function Mascot({ size = 120, mood = 'happy' }: { size?: number; mood?: '
     </Svg>
   );
 }
-
 // ─── Haitian motifs for blue hero cards: Sitadèl Laferyè, Monument Vètyè, the flag's white panel ──
 // The arms are the real emblem (from the MIT-licensed flag-icons flag) flattened to white; the two monuments are hand-drawn silhouettes pending traced photos.
 const MOTIF_SVG = {
@@ -215,6 +296,19 @@ export const Citadelle = (p: Omit<React.ComponentProps<typeof Motif>, 'kind'>) =
 
 // ─── Country media ───────────────────────────────────────────────────────────
 export const flagEmoji = (iso: string) => iso.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0)));
+
+/** Real flag artwork (bundled, offline). Falls back to the emoji if a flag is missing. 4:3 like the source art. */
+export function Flag({ iso, width = 240, card = true, style }: { iso: string; width?: number; card?: boolean; style?: StyleProp<ViewStyle> }) {
+  const xml = FLAG_SVG[iso.toUpperCase()];
+  const h = Math.round(width * 0.75);
+  const art = xml ? <SvgXml xml={xml} width={width} height={h} /> : <T style={{ fontSize: h * 0.8, lineHeight: h }}>{flagEmoji(iso)}</T>;
+  if (!card) return <View style={[{ width, height: h, borderRadius: 4, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }, style]}>{art}</View>;
+  return (
+    <View style={[{ borderRadius: 14, borderWidth: 2, borderColor: colors.lineStrong, borderBottomWidth: 5, backgroundColor: colors.card, padding: 6, shadowColor: colors.ink, shadowOpacity: 0.12, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 3 }, style]}>
+      <View style={{ width, height: h, borderRadius: 8, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg }}>{art}</View>
+    </View>
+  );
+}
 
 export function ShapeView({ d, size = 240 }: { d: string; size?: number }) {
   return (

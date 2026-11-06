@@ -45,7 +45,7 @@ export const raised = (edge = colors.line) => ({
 });
 
 export const CATEGORY_META: Record<string, { ht: string; fr: string; color: string; soft: string; icon: string }> = {
-  istwa:     { ht: 'Istwa Ayiti',       fr: "Histoire d'Haïti",    color: colors.orange,     soft: colors.orangeSoft, icon: 'istwa' },
+  istwa:     { ht: 'Istwa',             fr: 'Histoire',            color: colors.orange,     soft: colors.orangeSoft, icon: 'istwa' },
   jewografi: { ht: 'Jewografi',         fr: 'Géographie',          color: colors.blueLight,  soft: '#E7F5FF',         icon: 'jewo' },
   peyi:      { ht: 'Peyi',              fr: 'Pays',                color: colors.yellowDark, soft: colors.yellowSoft, icon: 'drapo' },
   kilti:     { ht: 'Kilti & Tradisyon', fr: 'Culture & traditions', color: colors.redLight,  soft: colors.redSoft,    icon: 'kilti' },

@@ -78,7 +78,7 @@ interface Manifest {
 | `admin_question_delete` | `{id}` | `{ ok: true }` |
 | `admin_question_status` | `{ids: string[], status}` | `{ updated: number }` |
 | `admin_next_id` | `{category}` | `{ id }` (e.g. `ist-321`) |
-| `admin_import` | `{questions: AdminQuestion[], overwrite?: boolean}` | `{ added, updated, skipped }` (max 500 per call) |
+| `admin_import` | `{questions: AdminQuestion[], overwrite?: boolean}` | `{ added, updated, skipped }` (max 150 per call: Nakama caps request bodies) |
 | `admin_categories` | – | `{ categories: Category[] }` |
 | `admin_categories_save` | `{categories: Category[]}` | `{ categories }` |
 | `admin_config` | – | `{ config: AppConfig }` |
