@@ -51,6 +51,8 @@ export default function RootLayout() {
         <Stack.Screen name="quests" options={PUSH} />
         <Stack.Screen name="ranks" options={PUSH} />
         <Stack.Screen name="cards" options={PUSH} />
+        <Stack.Screen name="vwayaj" options={PUSH} />
+        <Stack.Screen name="vwayaj/[dep]" options={MODAL} />
       </Stack>
       {maint && !intro && <Maintenance text={(lang === 'fr' && maint.fr) || maint.ht || maint.fr} lang={lang} />}
       {intro && <Intro onDone={() => setIntro(false)} />}
