@@ -19,13 +19,13 @@ const S = {
   daily: ['DEFI JODI A', 'DÉFI DU JOUR'], daily_title: ['10 kesyon melanje', '10 questions mélangées'],
   daily_sub: ['Tout timoun jwe menm kesyon yo. Ki plas ou pral pran?', 'Tous les enfants jouent les mêmes questions. Quelle place prendras-tu ?'],
   play_now: ['Jwe kounye a', 'Jouer maintenant'], quests: ['Misyon jodi a', 'Missions du jour'], continue_learning: ['Kontinye aprann', 'Continuer à apprendre'],
-  explore: ['Eksplore', 'Explorer'], days: ['jou', 'jours'], duel_bot: ['Defi 1 kont 1', 'Duel 1 contre 1'], duel_sub: ['Jwe kont Robo', 'Jouer contre Robo'],
+  explore: ['Eksplore', 'Explorer'], days: ['jou', 'jours'], day_one: ['jou', 'jour'], duel_bot: ['Defi 1 kont 1', 'Duel 1 contre 1'], duel_sub: ['Jwe kont Robo', 'Jouer contre Robo'],
   // categories
   categories: ['Kategori', 'Catégories'], cat_sub: ['Chwazi yon sijè epi teste konesans ou', 'Choisis un sujet et teste tes connaissances'],
   level: ['Nivo', 'Niveau'], age: ['Laj', 'Âge'],
   // quiz
   question: ['Kesyon', 'Question'], explain: ['Esplike m', 'Explique-moi'], correct: ['Bravo! Se sa!', 'Bravo ! Exact !'], wrong: ['Se pa sa.', 'Ce n’est pas ça.'],
-  answer_was: ['Repons lan se', 'La réponse est'], timeout: ['Tan an fini!', 'Temps écoulé !'], points: ['pwen', 'points'],
+  answer_was: ['Repons lan se:', 'La réponse est :'], timeout: ['Tan an fini!', 'Temps écoulé !'], points: ['pwen', 'points'],
   result: ['Rezilta', 'Résultat'], correct_of: ['bon repons sou', 'bonnes réponses sur'], again: ['Jwe ankò', 'Rejouer'], done: ['Fini', 'Terminer'],
   quit_q: ['Ou vle kite?', 'Tu veux quitter ?'], stay: ['Mwen rete', 'Je reste'], quit: ['Kite kanmenm', 'Quitter quand même'],
   // duel

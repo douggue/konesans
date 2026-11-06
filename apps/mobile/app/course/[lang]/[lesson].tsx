@@ -58,7 +58,7 @@ export default function Lesson() {
       {grade ? (
         <FadeIn from={40} duration={320}><Card edge={grade.correct ? colors.green : colors.red} soft={grade.correct ? colors.greenSoft : colors.redSoft} style={{ gap: 4 }}>
           <T v="h3" color={grade.correct ? '#12632F' : '#8F0A22'}>{grade.correct ? t('correct') : t('wrong')}</T>
-          {!grade.correct && <T v="body">{t('answer_was')}: <T v="bold">{fr ? grade.expectedFr ?? grade.expected : grade.expected}</T></T>}
+          {!grade.correct && <T v="body">{t('answer_was')} <T v="bold">{fr ? grade.expectedFr ?? grade.expected : grade.expected}</T></T>}
           <Button small title={t('continue')} color={grade.correct ? colors.green : colors.blue} onPress={next} style={{ marginTop: 6 }} />
         </Card></FadeIn>
       ) : (

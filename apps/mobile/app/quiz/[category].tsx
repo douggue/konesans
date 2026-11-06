@@ -118,7 +118,7 @@ export default function Quiz() {
           <T v="h3" color={last.correct ? '#12632F' : '#8F0A22'}>{last.correct ? t('correct') : chosen === null ? t('timeout') : t('wrong')} {last.correct ? `+${last.points}` : ''}</T>
           {(() => { const qq = s.questions[s.index - 1] ?? q; return (
             <>
-              {!last.correct && <T v="body">{t('answer_was')}: <T v="bold">{l(qq.options[qq.answer])}</T></T>}
+              {!last.correct && <T v="body">{t('answer_was')} <T v="bold">{l(qq.options[qq.answer])}</T></T>}
               {qq.explain && <T v="small" color={colors.muted}>{l(qq.explain)}</T>}
             </>
           ); })()}

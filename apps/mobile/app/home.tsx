@@ -38,7 +38,7 @@ export default function Home() {
           <T v="small" color={colors.muted}>{t('what_learn')}</T>
         </View>
         <View style={{ alignItems: 'flex-end', gap: 4 }}>
-          <CountPill value={progress.streak.count} k="streak" suffix={` ${t('days')}`} icon="seri" color="#A63A0A" bg="#FFE8DC" pulse={progress.streak.count > 0} />
+          <CountPill value={progress.streak.count} k="streak" suffix={` ${t(progress.streak.count === 1 ? 'day_one' : 'days')}`} icon="seri" color="#A63A0A" bg="#FFE8DC" pulse={progress.streak.count > 0} />
           <CountPill value={progress.coins} k="coins" icon="kob" color="#5C4600" bg={colors.yellowSoft} />
         </View>
       </Row></FadeIn>
