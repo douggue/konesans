@@ -36,7 +36,7 @@ export default function Vwayaj() {
   const fresh = useRef(v.justUnlocked).current; // the node to pop on this visit
   const ev = nextEvent(vwayajToday());
 
-  useFocusEffect(useCallback(() => { music('menu'); awardVwayajBadges(); }, []));
+  useFocusEffect(useCallback(() => { music(null); awardVwayajBadges(); }, []));
   useEffect(() => {
     if (!fresh) return;
     const id = setTimeout(() => sfx('pop'), 650);

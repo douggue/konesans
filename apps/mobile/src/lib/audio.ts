@@ -61,8 +61,11 @@ export type MusicTrack = Exclude<Loop, 'duel_hurry'>;
 /** Long result stings (ms), so the trophy jingle doesn't land on top of them. */
 const STING_MS: Partial<Record<SfxName, number>> = { win: 2600, lose: 2200, draw: 1300, level: 1800 };
 
+/** Effects volume (0–1). Kept soft so kids can concentrate; small UI ticks even softer. */
+const SFX_VOL: Partial<Record<SfxName, number>> = { tap: 0.25, tick: 0.35, pop: 0.35, ping: 0.35 };
+
 /** Music sits under SFX and the voice; while TTS talks it ducks further. */
-const MUSIC_VOL = 0.6;
+const MUSIC_VOL = 0.28; // quiet bed under the game (owner: 'too loud')
 const DUCK_VOL = 0.3;
 
 interface Chan { p: AudioPlayer; vol: number; target: number; rate: number; playing: boolean }
@@ -146,7 +149,7 @@ export function sfx(name: SfxName) {
     if (!useStore.getState().settings.sfx || !appActive()) return;
     init();
     const p = E.sfx[name] ?? (E.sfx[name] = makePlayer(SFX_SRC[name], name));
-    p.volume = 1;
+    p.volume = SFX_VOL[name] ?? 0.45;
     if (STING_MS[name]) E.busyUntil = Date.now() + STING_MS[name]!;
     if (!p.isLoaded) { // first use right after start: play as soon as the file is ready (give up after 2 s)
       const t0 = Date.now();

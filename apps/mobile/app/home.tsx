@@ -20,7 +20,7 @@ export default function Home() {
   const daily = useDailyCount();
   const avatar = useAvatar();
   useEffect(() => { touch(); }, []);
-  useFocusEffect(useCallback(() => { music('menu'); }, []));
+  useFocusEffect(useCallback(() => { music(null); }, [])); // no music in menus (concentration); music only in duels
   const quests: QuestState[] = progress.quests;
   const questsDone = quests.filter((q) => q.done).length;
   const chestOpened = useStore((s) => s.missions?.chestDay) === progress.questsDay && !!progress.questsDay;
