@@ -10,12 +10,16 @@
  * Images: `img` is a key into the app's illustration set (same keys as the quiz media).
  */
 
+import { CONCEPT_FR, SENTENCE_FR, TITLE_FR } from './fr.js';
+
 export type TargetLang = 'en' | 'es';
 
 export interface Concept {
   /** stable id used in exercise ids and SRS */
   id: string;
   ht: string;
+  /** French gloss (courses/fr.ts) for kids using the app in French */
+  fr: string;
   en: string;
   es: string;
   /** illustration key; concepts with an image get picture exercises for 6–8 */
@@ -27,6 +31,7 @@ export interface Concept {
 export interface Sentence {
   id: string;
   ht: string;
+  fr: string;
   en: string;
   es: string;
   /** concept ids this sentence practises (used to place it in a lesson) */
@@ -36,6 +41,7 @@ export interface Sentence {
 export interface LessonDef {
   id: string;
   title: string;         // Kreyòl
+  titleFr: string;
   concepts: string[];    // concept ids
   sentences: string[];   // sentence ids
 }
@@ -43,13 +49,14 @@ export interface LessonDef {
 export interface UnitDef {
   id: string;
   title: string;         // Kreyòl
+  titleFr: string;
   emoji: string;         // used as the unit badge in the path
   lessons: LessonDef[];
 }
 
 // ─── Concepts ────────────────────────────────────────────────────────────────
 
-const C = (id: string, ht: string, en: string, es: string, img?: string, alt?: Concept['alt']): Concept => ({ id, ht, en, es, img, alt });
+const C = (id: string, ht: string, en: string, es: string, img?: string, alt?: Concept['alt']): Concept => ({ id, ht, fr: CONCEPT_FR[id] ?? ht, en, es, img, alt });
 
 export const CONCEPTS: Concept[] = [
   // Salitasyon
@@ -231,7 +238,7 @@ export const CONCEPTS: Concept[] = [
 
 // ─── Sentences ───────────────────────────────────────────────────────────────
 
-const S = (id: string, ht: string, en: string, es: string, uses: string[]): Sentence => ({ id, ht, en, es, uses });
+const S = (id: string, ht: string, en: string, es: string, uses: string[]): Sentence => ({ id, ht, fr: SENTENCE_FR[id] ?? ht, en, es, uses });
 
 export const SENTENCES: Sentence[] = [
   // Salitasyon
@@ -324,9 +331,9 @@ export const SENTENCES: Sentence[] = [
 
 // ─── Units & lessons (shared by both courses) ────────────────────────────────
 
-const L = (id: string, title: string, concepts: string[], sentences: string[]): LessonDef => ({ id, title, concepts, sentences });
+const L = (id: string, title: string, concepts: string[], sentences: string[]): LessonDef => ({ id, title, titleFr: TITLE_FR[id] ?? title, concepts, sentences });
 
-export const UNITS: UnitDef[] = [
+const UNITS_RAW: Omit<UnitDef, 'titleFr'>[] = [
   { id: 'u1', title: 'Salitasyon', emoji: '👋', lessons: [
     L('u1l1', 'Di bonjou', ['hello', 'good_evening', 'goodbye', 'thanks', 'please', 'yes'], ['s_thanks_much', 's_yes_please']),
     L('u1l2', 'Kijan ou ye?', ['how_are_you', 'im_fine', 'no', 'sorry', 'good_night', 'see_you'], ['s_how_are_you', 's_fine_thanks', 's_no_thanks', 's_good_night', 's_see_you_tomorrow']),
@@ -377,6 +384,8 @@ export const UNITS: UnitDef[] = [
     L('u11l3', 'Agoch, adwat', ['left', 'right', 'beach', 'garden', 'go'], ['s_turn_left', 's_beach_sunday']),
   ] },
 ];
+
+export const UNITS: UnitDef[] = UNITS_RAW.map((u) => ({ ...u, titleFr: TITLE_FR[u.id] ?? u.title }));
 
 export const conceptById: Record<string, Concept> = Object.fromEntries(CONCEPTS.map(c => [c.id, c]));
 export const sentenceById: Record<string, Sentence> = Object.fromEntries(SENTENCES.map(s => [s.id, s]));

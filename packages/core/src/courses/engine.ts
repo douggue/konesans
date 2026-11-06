@@ -17,8 +17,8 @@ import type { Rand } from '../modules/base.js';
 export interface Course { id: CourseId; name: LocalizedText; tagline: LocalizedText; units: UnitDef[] }
 
 export const COURSES: Course[] = [
-  { id: 'en', name: { ht: 'Angle', en: 'English', fr: 'Anglais' }, tagline: { ht: 'Aprann angle an Kreyòl' }, units: UNITS },
-  { id: 'es', name: { ht: 'Panyòl', en: 'Spanish', fr: 'Espagnol' }, tagline: { ht: 'Aprann panyòl an Kreyòl' }, units: UNITS },
+  { id: 'en', name: { ht: 'Angle', en: 'English', fr: 'Anglais' }, tagline: { ht: 'Aprann angle an Kreyòl', fr: "Apprendre l'anglais en français" }, units: UNITS },
+  { id: 'es', name: { ht: 'Panyòl', en: 'Spanish', fr: 'Espagnol' }, tagline: { ht: 'Aprann panyòl an Kreyòl', fr: "Apprendre l'espagnol en français" }, units: UNITS },
 ];
 export const courseById = (id: CourseId): Course => COURSES.find(c => c.id === id)!;
 
@@ -30,19 +30,19 @@ export const tts = (lang: CourseId, text: string) => `tts:${lang}:${text}`;
 interface Base { id: string; kind: string; /** concept or sentence this exercise drills (for SRS) */ ref: string }
 
 /** Read/hear a target word, pick its Kreyòl meaning (pictures for 6–8). */
-export interface PickMeaning extends Base { kind: 'pick_meaning'; prompt: { target: string; audio: string }; options: { ht: string; img?: string }[]; answer: number }
+export interface PickMeaning extends Base { kind: 'pick_meaning'; prompt: { target: string; audio: string }; options: { ht: string; fr: string; img?: string }[]; answer: number }
 /** See Kreyòl (and picture), pick the target word. */
-export interface PickWord extends Base { kind: 'pick_word'; prompt: { ht: string; img?: string }; options: { target: string; audio: string }[]; answer: number }
+export interface PickWord extends Base { kind: 'pick_word'; prompt: { ht: string; fr: string; img?: string }; options: { target: string; audio: string }[]; answer: number }
 /** Hear a target word, pick the written form. */
 export interface ListenPick extends Base { kind: 'listen_pick'; audio: string; options: { target: string }[]; answer: number }
 /** Match Kreyòl words to target words. `pairs[i]` = index in `right` that matches `left[i]`. */
-export interface MatchPairs extends Base { kind: 'match_pairs'; /** every concept in the grid */ refs: string[]; left: { ht: string }[]; right: { target: string; audio: string }[]; pairs: number[] }
+export interface MatchPairs extends Base { kind: 'match_pairs'; /** every concept in the grid */ refs: string[]; left: { ht: string; fr: string }[]; right: { target: string; audio: string }[]; pairs: number[] }
 /** Read/hear a target sentence, pick the Kreyòl translation. */
-export interface TranslatePick extends Base { kind: 'translate_pick'; prompt: { target: string; audio: string }; options: { ht: string }[]; answer: number }
+export interface TranslatePick extends Base { kind: 'translate_pick'; prompt: { target: string; audio: string }; options: { ht: string; fr: string }[]; answer: number }
 /** Kreyòl sentence shown; assemble the target sentence from word tiles (with distractors). */
-export interface BuildSentence extends Base { kind: 'build_sentence'; prompt: { ht: string }; tiles: string[]; /** tile indices in order */ answer: number[] }
+export interface BuildSentence extends Base { kind: 'build_sentence'; prompt: { ht: string; fr: string }; tiles: string[]; /** tile indices in order */ answer: number[] }
 /** Target sentence with one word missing; pick the word. */
-export interface FillBlank extends Base { kind: 'fill_blank'; text: string; translation: { ht: string }; options: string[]; answer: number; audio: string }
+export interface FillBlank extends Base { kind: 'fill_blank'; text: string; translation: { ht: string; fr: string }; options: string[]; answer: number; audio: string }
 
 export type Exercise = PickMeaning | PickWord | ListenPick | MatchPairs | TranslatePick | BuildSentence | FillBlank;
 export type ExerciseKind = Exercise['kind'];
@@ -91,13 +91,13 @@ function genPickMeaning(lang: CourseId, c: Concept, lesson: LessonDef, unit: Uni
   const ds = distractors(lang, c, lesson, unit, rand, age === '6-8' ? 2 : 3, 'ht');
   const opts = shuffle([c, ...ds], rand);
   const pics = age === '6-8' && opts.every(o => o.img);
-  return { id: eid(lang, 'pm', c.id, rand), kind: 'pick_meaning', ref: c.id, prompt: { target: target(c, lang), audio: tts(lang, target(c, lang)) }, options: opts.map(o => ({ ht: o.ht, img: pics ? o.img : undefined })), answer: opts.indexOf(c) };
+  return { id: eid(lang, 'pm', c.id, rand), kind: 'pick_meaning', ref: c.id, prompt: { target: target(c, lang), audio: tts(lang, target(c, lang)) }, options: opts.map(o => ({ ht: o.ht, fr: o.fr, img: pics ? o.img : undefined })), answer: opts.indexOf(c) };
 }
 
 function genPickWord(lang: CourseId, c: Concept, lesson: LessonDef, unit: UnitDef, age: AgeBand, rand: Rand): PickWord {
   const ds = distractors(lang, c, lesson, unit, rand, age === '6-8' ? 2 : 3);
   const opts = shuffle([c, ...ds], rand);
-  return { id: eid(lang, 'pw', c.id, rand), kind: 'pick_word', ref: c.id, prompt: { ht: c.ht, img: c.img }, options: opts.map(o => ({ target: target(o, lang), audio: tts(lang, target(o, lang)) })), answer: opts.indexOf(c) };
+  return { id: eid(lang, 'pw', c.id, rand), kind: 'pick_word', ref: c.id, prompt: { ht: c.ht, fr: c.fr, img: c.img }, options: opts.map(o => ({ target: target(o, lang), audio: tts(lang, target(o, lang)) })), answer: opts.indexOf(c) };
 }
 
 function genListenPick(lang: CourseId, c: Concept, lesson: LessonDef, unit: UnitDef, age: AgeBand, rand: Rand): ListenPick {
@@ -117,13 +117,13 @@ function genMatchPairs(lang: CourseId, pool: Concept[], age: AgeBand, rand: Rand
     if (chosen.length === n) break;
   }
   const right = shuffle(chosen, rand);
-  return { id: eid(lang, 'mp', chosen.map(c => c.id).join('+'), rand), kind: 'match_pairs', ref: chosen[0].id, refs: chosen.map(c => c.id), left: chosen.map(c => ({ ht: c.ht })), right: right.map(c => ({ target: target(c, lang), audio: tts(lang, target(c, lang)) })), pairs: chosen.map(c => right.indexOf(c)) };
+  return { id: eid(lang, 'mp', chosen.map(c => c.id).join('+'), rand), kind: 'match_pairs', ref: chosen[0].id, refs: chosen.map(c => c.id), left: chosen.map(c => ({ ht: c.ht, fr: c.fr })), right: right.map(c => ({ target: target(c, lang), audio: tts(lang, target(c, lang)) })), pairs: chosen.map(c => right.indexOf(c)) };
 }
 
 function genTranslatePick(lang: CourseId, s: Sentence, rand: Rand): TranslatePick {
   const others = shuffle(SENTENCES.filter(o => o.id !== s.id && normalize(o.ht) !== normalize(s.ht)), rand).slice(0, 3);
   const opts = shuffle([s, ...others], rand);
-  return { id: eid(lang, 'tp', s.id, rand), kind: 'translate_pick', ref: s.id, prompt: { target: sText(s, lang), audio: tts(lang, sText(s, lang)) }, options: opts.map(o => ({ ht: o.ht })), answer: opts.indexOf(s) };
+  return { id: eid(lang, 'tp', s.id, rand), kind: 'translate_pick', ref: s.id, prompt: { target: sText(s, lang), audio: tts(lang, sText(s, lang)) }, options: opts.map(o => ({ ht: o.ht, fr: o.fr })), answer: opts.indexOf(s) };
 }
 
 function genBuildSentence(lang: CourseId, s: Sentence, age: AgeBand, rand: Rand): BuildSentence {
@@ -137,7 +137,7 @@ function genBuildSentence(lang: CourseId, s: Sentence, age: AgeBand, rand: Rand)
   // answer = indices of tiles matching each word, in order (tiles are unique per text, duplicates resolved left-to-right)
   const used = new Set<number>();
   const answer = words.map(w => { const i = tiles.findIndex((t, k) => !used.has(k) && t === w); used.add(i); return i; });
-  return { id: eid(lang, 'bs', s.id, rand), kind: 'build_sentence', ref: s.id, prompt: { ht: s.ht }, tiles, answer };
+  return { id: eid(lang, 'bs', s.id, rand), kind: 'build_sentence', ref: s.id, prompt: { ht: s.ht, fr: s.fr }, tiles, answer };
 }
 
 function genFillBlank(lang: CourseId, s: Sentence, lesson: LessonDef, unit: UnitDef, rand: Rand): FillBlank {
@@ -160,7 +160,7 @@ function genFillBlank(lang: CourseId, s: Sentence, lesson: LessonDef, unit: Unit
   for (const w of bank) { if (ds.size >= 3) break; if (normalize(w) !== normalize(blank)) ds.add(caseLike(w)); }
   const options = shuffle([blank, ...ds], rand);
   const re = new RegExp(`(^|[^\\p{L}])${blank.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=$|[^\\p{L}])`, 'u');
-  return { id: eid(lang, 'fb', s.id, rand), kind: 'fill_blank', ref: concept?.id ?? s.id, text: text.replace(re, '$1____'), translation: { ht: s.ht }, options, answer: options.indexOf(blank), audio: tts(lang, text) };
+  return { id: eid(lang, 'fb', s.id, rand), kind: 'fill_blank', ref: concept?.id ?? s.id, text: text.replace(re, '$1____'), translation: { ht: s.ht, fr: s.fr }, options, answer: options.indexOf(blank), audio: tts(lang, text) };
 }
 
 // ─── Lesson assembly ─────────────────────────────────────────────────────────
@@ -223,24 +223,26 @@ export function buildLesson(lang: CourseId, lessonId: string, age: AgeBand, opts
 
 // ─── Grading ─────────────────────────────────────────────────────────────────
 
-export interface Grade { correct: boolean; /** what the kid should have picked, for the feedback card */ expected: string }
+export interface Grade { correct: boolean; /** what the kid should have picked, for the feedback card */ expected: string; /** same, for a kid using the app in French */ expectedFr: string }
 
 export function gradeExercise(ex: Exercise, response: Response): Grade {
+  const same = (correct: boolean, expected: string): Grade => ({ correct, expected, expectedFr: expected });
   switch (ex.kind) {
-    case 'pick_meaning': return { correct: response === ex.answer, expected: ex.options[ex.answer].ht };
-    case 'pick_word': return { correct: response === ex.answer, expected: ex.options[ex.answer].target };
-    case 'listen_pick': return { correct: response === ex.answer, expected: ex.options[ex.answer].target };
-    case 'translate_pick': return { correct: response === ex.answer, expected: ex.options[ex.answer].ht };
-    case 'fill_blank': return { correct: response === ex.answer, expected: ex.text.replace('____', ex.options[ex.answer]) };
+    case 'pick_meaning': return { correct: response === ex.answer, expected: ex.options[ex.answer].ht, expectedFr: ex.options[ex.answer].fr };
+    case 'pick_word': return same(response === ex.answer, ex.options[ex.answer].target);
+    case 'listen_pick': return same(response === ex.answer, ex.options[ex.answer].target);
+    case 'translate_pick': return { correct: response === ex.answer, expected: ex.options[ex.answer].ht, expectedFr: ex.options[ex.answer].fr };
+    case 'fill_blank': return same(response === ex.answer, ex.text.replace('____', ex.options[ex.answer]));
     case 'match_pairs': {
       const r = Array.isArray(response) ? response : [];
-      return { correct: r.length === ex.pairs.length && ex.pairs.every((p, i) => r[i] === p), expected: ex.left.map((l, i) => `${l.ht} = ${ex.right[ex.pairs[i]].target}`).join(', ') };
+      const ok = r.length === ex.pairs.length && ex.pairs.every((p, i) => r[i] === p);
+      return { correct: ok, expected: ex.left.map((l, i) => `${l.ht} = ${ex.right[ex.pairs[i]].target}`).join(', '), expectedFr: ex.left.map((l, i) => `${l.fr} = ${ex.right[ex.pairs[i]].target}`).join(', ') };
     }
     case 'build_sentence': {
       const r = Array.isArray(response) ? response : [];
       const got = r.map(i => ex.tiles[i] ?? '').map(normalize).join(' ');
       const want = ex.answer.map(i => ex.tiles[i]).map(normalize).join(' ');
-      return { correct: got === want, expected: ex.answer.map(i => ex.tiles[i]).join(' ') };
+      return same(got === want, ex.answer.map(i => ex.tiles[i]).join(' '));
     }
   }
 }
@@ -330,4 +332,4 @@ export function courseSummary(lang: CourseId, p: CourseProgress) {
 }
 
 /** All vocabulary of a course, for the "Mo mwen konnen" list and the review deck. */
-export const courseVocab = (lang: CourseId) => CONCEPTS.map(c => ({ id: c.id, ht: c.ht, target: c[lang], img: c.img, audio: tts(lang, c[lang]) }));
+export const courseVocab = (lang: CourseId) => CONCEPTS.map(c => ({ id: c.id, ht: c.ht, fr: c.fr, target: c[lang], img: c.img, audio: tts(lang, c[lang]) }));

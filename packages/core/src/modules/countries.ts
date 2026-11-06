@@ -1,5 +1,7 @@
 import { hasShape } from '../content/shapes.js';
-import { type GenModule, pick, q, ht, shuffleArr } from './base.js';
+import { type GenModule, pick, q, tx, shuffleArr } from './base.js';
+import { LANG_FR } from '../content/world-fr.js';
+import type { LocalizedText } from '../types.js';
 
 import { WORLD, REGIONS, type WorldCountry, type WorldRegion as Region, type Tier } from '../content/world.js';
 import { shuffle, rng } from '../quiz/engine.js';
@@ -18,22 +20,29 @@ function pickCountry(age: keyof typeof AGE_POOL, rand: () => number, filter: (c:
   const pool = COUNTRIES.filter((c) => AGE_POOL[age].includes(c.continent) && c.tier <= AGE_TIER[age] && filter(c));
   return pick(rand, pool.length ? pool : COUNTRIES.filter(filter));
 }
+/** A country's name / capital / currency in both languages (options and prompts). */
+type Field = 'name' | 'capital' | 'currency';
+const FR_FIELD = { name: 'nameFr', capital: 'capitalFr', currency: 'currencyFr' } as const;
+export const both = (c: Country, f: Field): LocalizedText => ({ ht: c[f], fr: c[FR_FIELD[f]] });
+const regionText = (r: Continent): LocalizedText => ({ ht: REGION_LABEL[r].ht, fr: REGION_LABEL[r].fr });
+const langText = (l: string): LocalizedText => ({ ht: l, fr: LANG_FR[l] ?? l });
+
 /** Distractors from the same continent when possible (harder), else anywhere. */
-function distractors(c: Country, n: number, rand: () => number, key: keyof Country) {
+function distractors(c: Country, n: number, rand: () => number, key: Field): LocalizedText[] {
   const same = byContinent(c.continent).filter((x) => x.iso !== c.iso && x[key] !== c[key]);
   const others = COUNTRIES.filter((x) => x.iso !== c.iso && x[key] !== c[key]);
   const src = same.length >= n ? same : others;
-  const out = new Set<string>();
-  for (const x of shuffleArr(src, rand)) { if (out.size >= n) break; out.add(String(x[key])); }
-  return [...out];
+  const out: LocalizedText[] = [];
+  for (const x of shuffleArr(src, rand)) { if (out.length >= n) break; if (!out.some((o) => o.ht === x[key])) out.push(both(x, key)); }
+  return out;
 }
 
 export const capitals: GenModule = {
   id: 'kapital', name: { ht: 'Kapital yo', fr: 'Capitales' }, category: 'peyi', ages: ['6-8', '9-11', '12-14'],
   generate(age, rand) {
     const c = pickCountry(age, rand);
-    if (rand() < 0.5) return q(this, age, rand, ht(`Ki kapital ${c.name}?`), [c.capital, ...distractors(c, 3, rand, 'capital')], c.capital, `${c.capital} se kapital ${c.name}.`, { kind: 'flag', ref: c.iso });
-    return q(this, age, rand, ht(`${c.capital} se kapital ki peyi?`), [c.name, ...distractors(c, 3, rand, 'name')], c.name);
+    if (rand() < 0.5) return q(this, age, rand, tx(`Ki kapital ${c.name}?`, `${c.nameFr} : quelle est sa capitale ?`), [both(c, 'capital'), ...distractors(c, 3, rand, 'capital')], both(c, 'capital'), tx(`${c.capital} se kapital ${c.name}.`, `${c.nameFr} : la capitale est ${c.capitalFr}.`), { kind: 'flag', ref: c.iso });
+    return q(this, age, rand, tx(`${c.capital} se kapital ki peyi?`, `${c.capitalFr} est la capitale de quel pays ?`), [both(c, 'name'), ...distractors(c, 3, rand, 'name')], both(c, 'name'));
   },
 };
 
@@ -41,7 +50,7 @@ export const flags: GenModule = {
   id: 'drapo', name: { ht: 'Drapo yo', fr: 'Drapeaux' }, category: 'peyi', ages: ['6-8', '9-11', '12-14'],
   generate(age, rand) {
     const c = pickCountry(age, rand);
-    return q(this, age, rand, ht('Ki peyi drapo sa a ye?'), [c.name, ...distractors(c, 3, rand, 'name')], c.name, undefined, { kind: 'flag', ref: c.iso });
+    return q(this, age, rand, tx('Ki peyi drapo sa a ye?', 'À quel pays est ce drapeau ?'), [both(c, 'name'), ...distractors(c, 3, rand, 'name')], both(c, 'name'), undefined, { kind: 'flag', ref: c.iso });
   },
 };
 
@@ -49,7 +58,7 @@ export const shapes: GenModule = {
   id: 'fom', name: { ht: 'Fòm peyi', fr: 'Formes des pays' }, category: 'peyi', ages: ['6-8', '9-11', '12-14'],
   generate(age, rand) {
     const c = pickCountry(age, rand, (x) => hasShape(x.iso)); // only countries we have an outline for
-    return q(this, age, rand, ht('Ki peyi sa a?'), [c.name, ...distractors(c, 3, rand, 'name')], c.name, undefined, { kind: 'shape', ref: c.iso });
+    return q(this, age, rand, tx('Ki peyi sa a?', 'Quel est ce pays ?'), [both(c, 'name'), ...distractors(c, 3, rand, 'name')], both(c, 'name'), undefined, { kind: 'shape', ref: c.iso });
   },
 };
 
@@ -58,7 +67,7 @@ export const continents: GenModule = {
   generate(age, rand) {
     const c = pickCountry(age, rand);
     const all: Continent[] = ['Amerik di Nò', 'Karayib', 'Amerik di Sid', 'Ewòp', 'Afrik', 'Azi', 'Oseyani'];
-    return q(this, age, rand, ht(`Nan ki kontinan ${c.name} ye?`), [c.continent, ...shuffleArr(all.filter((x) => x !== c.continent), rand).slice(0, 3)], c.continent);
+    return q(this, age, rand, tx(`Nan ki kontinan ${c.name} ye?`, `${c.nameFr} se trouve dans quelle région du monde ?`), [c.continent, ...shuffleArr(all.filter((x) => x !== c.continent), rand).slice(0, 3)].map(regionText), regionText(c.continent));
   },
 };
 
@@ -66,7 +75,7 @@ export const currencies: GenModule = {
   id: 'lajan-peyi', name: { ht: 'Lajan peyi yo', fr: 'Monnaies' }, category: 'jewografi', ages: ['12-14'],
   generate(age, rand) {
     const c = pickCountry(age, rand);
-    return q(this, age, rand, ht(`Ki lajan yo itilize nan ${c.name}?`), [c.currency, ...distractors(c, 3, rand, 'currency')], c.currency);
+    return q(this, age, rand, tx(`Ki lajan yo itilize nan ${c.name}?`, `${c.nameFr} : quelle est sa monnaie ?`), [both(c, 'currency'), ...distractors(c, 3, rand, 'currency')], both(c, 'currency'));
   },
 };
 
@@ -76,7 +85,7 @@ export const languages: GenModule = {
     const c = pickCountry(age, rand);
     const lang = c.langs[0];
     const others = [...new Set(COUNTRIES.flatMap((x) => x.langs))].filter((l) => !c.langs.includes(l));
-    return q(this, age, rand, ht(`Ki lang yo pale nan ${c.name}?`), [lang, ...shuffleArr(others, rand).slice(0, 3)], lang);
+    return q(this, age, rand, tx(`Ki lang yo pale nan ${c.name}?`, `${c.nameFr} : quelle langue y parle-t-on ?`), [lang, ...shuffleArr(others, rand).slice(0, 3)].map(langText), langText(lang));
   },
 };
 
@@ -89,7 +98,8 @@ export const bigger: GenModule = {
     while ((b.iso === a.iso || Math.max(a.areaKm2, b.areaKm2) / Math.min(a.areaKm2, b.areaKm2) < 1.3) && guard++ < 20) b = pickCountry(age, rand);
     if (b.iso === a.iso) return this.generate(age, rand);
     const big = a.areaKm2 > b.areaKm2 ? a : b;
-    return q(this, age, rand, ht(`Ki peyi ki pi gwo: ${a.name} oswa ${b.name}?`), [a.name, b.name], big.name, `${big.name}: ${big.areaKm2.toLocaleString('fr-FR')} km².`, { kind: 'shape', ref: `${a.iso},${b.iso}` });
+    const km2 = String(big.areaKm2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    return q(this, age, rand, tx(`Ki peyi ki pi gwo: ${a.name} oswa ${b.name}?`, `Quel pays est le plus grand : ${a.nameFr} ou ${b.nameFr} ?`), [both(a, 'name'), both(b, 'name')], both(big, 'name'), tx(`${big.name}: ${km2} km².`, `${big.nameFr} : ${km2} km².`), { kind: 'shape', ref: `${a.iso},${b.iso}` });
   },
 };
 
@@ -113,14 +123,14 @@ export function countryPool(o: CountryQuizOptions): Country[] {
   return pool;
 }
 
-function pickDistractors(c: Country, pool: Country[], o: CountryQuizOptions, key: keyof Country, rand: () => number, n = 3): string[] {
+function pickDistractors(c: Country, pool: Country[], o: CountryQuizOptions, key: 'iso' | Field, rand: () => number, n = 3): Country[] {
   // level 1: easy — other famous countries, often from other continents; level 2–3: same continent first
   const notSame = (x: Country) => x.iso !== c.iso && x[key] !== c[key];
   const world = COUNTRIES.filter((x) => notSame(x) && x.tier <= Math.max(o.level, 1));
   const same = pool.filter((x) => notSame(x) && x.continent === c.continent);
   const src = o.level === 1 ? shuffle(world.filter((x) => x.tier === 1), rand) : [...shuffle(same, rand), ...shuffle(world, rand)];
-  const out: string[] = [];
-  for (const x of src) { const v = String(x[key]); if (!out.includes(v)) out.push(v); if (out.length === n) break; }
+  const out: Country[] = [];
+  for (const x of src) { if (!out.some((o) => o[key] === x[key])) out.push(x); if (out.length === n) break; }
   return out;
 }
 
@@ -150,15 +160,15 @@ export function generateCountryQuiz(o: CountryQuizOptions, age: AgeBand, count: 
       if (reverseOk && rand() < 0.4) {
         // reverse: name → pick the flag (options are flags)
         const ds = pickDistractors(c, pool, o, 'iso', rand);
-        qq = q(mod, age, rand, ht(`Ki drapo ${c.name}?`), [flagEmoji(c.iso), ...ds.map(flagEmoji)], flagEmoji(c.iso));
+        qq = q(mod, age, rand, tx(`Ki drapo ${c.name}?`, `${c.nameFr} : quel est son drapeau ?`), [flagEmoji(c.iso), ...ds.map((x) => flagEmoji(x.iso))], flagEmoji(c.iso));
       } else {
-        qq = q(mod, age, rand, ht('Ki peyi drapo sa a ye?'), [c.name, ...pickDistractors(c, pool, o, 'name', rand)], c.name, undefined, { kind: 'flag', ref: c.iso });
+        qq = q(mod, age, rand, tx('Ki peyi drapo sa a ye?', 'À quel pays est ce drapeau ?'), [both(c, 'name'), ...pickDistractors(c, pool, o, 'name', rand).map((x) => both(x, 'name'))], both(c, 'name'), undefined, { kind: 'flag', ref: c.iso });
       }
     } else if (o.mode === 'kapital') {
-      if (reverseOk && rand() < 0.5) qq = q(mod, age, rand, ht(`${c.capital} se kapital ki peyi?`), [c.name, ...pickDistractors(c, pool, o, 'name', rand)], c.name);
-      else qq = q(mod, age, rand, ht(`Ki kapital ${c.name}?`), [c.capital, ...pickDistractors(c, pool, o, 'capital', rand)], c.capital, `${c.capital} se kapital ${c.name}.`, o.level === 1 ? { kind: 'flag', ref: c.iso } : undefined);
+      if (reverseOk && rand() < 0.5) qq = q(mod, age, rand, tx(`${c.capital} se kapital ki peyi?`, `${c.capitalFr} est la capitale de quel pays ?`), [both(c, 'name'), ...pickDistractors(c, pool, o, 'name', rand).map((x) => both(x, 'name'))], both(c, 'name'));
+      else qq = q(mod, age, rand, tx(`Ki kapital ${c.name}?`, `${c.nameFr} : quelle est sa capitale ?`), [both(c, 'capital'), ...pickDistractors(c, pool, o, 'capital', rand).map((x) => both(x, 'capital'))], both(c, 'capital'), tx(`${c.capital} se kapital ${c.name}.`, `${c.nameFr} : la capitale est ${c.capitalFr}.`), o.level === 1 ? { kind: 'flag', ref: c.iso } : undefined);
     } else {
-      qq = q(mod, age, rand, ht('Ki peyi sa a?'), [c.name, ...pickDistractors(c, pool, o, 'name', rand)], c.name, undefined, { kind: 'shape', ref: c.iso });
+      qq = q(mod, age, rand, tx('Ki peyi sa a?', 'Quel est ce pays ?'), [both(c, 'name'), ...pickDistractors(c, pool, o, 'name', rand).map((x) => both(x, 'name'))], both(c, 'name'), undefined, { kind: 'shape', ref: c.iso });
     }
     out.push({ ...qq, id: `peyi:${o.mode}:${c.iso}:${seed.toString(36)}` });
   }
