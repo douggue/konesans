@@ -59,11 +59,11 @@ async function png(file, w, h, inner, bg = 'transparent') {
 // Splash: the bird fills the 1024 canvas exactly like <MascotArt size={S}> fills an S×S box (viewBox 160×170, contain),
 // so with imageWidth 180 it matches <MascotArt size={180}> centred on screen — the intro's first frame.
 await png('splash-logo.png', 1024, 1024, sized(mascotXml('happy', false, { fx: false }), 1024));
-// App icon: bird head-and-shoulders on the brand blue with a soft lighter disc behind.
-const iconArt = (s, shift = 0) => `<div style="position:relative;width:${s}px;height:${s}px">
-  <div style="position:absolute;left:${s * 0.11}px;top:${s * 0.11}px;width:${s * 0.78}px;height:${s * 0.78}px;border-radius:50%;background:#2D59D0"></div>
-  <div style="position:absolute;left:0;top:${s * (0.07 + shift)}px">${sized(mascotXml('happy', false, { shadow: false, fx: false }), s)}</div></div>`;
-await png('icon.png', 1024, 1024, iconArt(1000), BLUE);
+// App icon: the whole bird on the brand blue with a soft lighter disc behind (no clipped feet).
+const iconArt = `<div style="position:relative;width:1024px;height:1024px">
+  <div style="position:absolute;left:112px;top:112px;width:800px;height:800px;border-radius:50%;background:#2D59D0"></div>
+  <div style="position:absolute;left:72px;top:58px">${sized(mascotXml('happy', false, { shadow: false, fx: false }), 880)}</div></div>`;
+await png('icon.png', 1024, 1024, iconArt, BLUE);
 await png('favicon.png', 48, 48, `<div style="margin-top:2px">${sized(mascotXml('happy', false, { shadow: false, fx: false }), 48)}</div>`, BLUE);
 // Android adaptive icon: foreground inside the 66% safe zone (the launcher masks to a circle/squircle).
 await png('android-icon-foreground.png', 1024, 1024, `<div style="margin-top:20px">${sized(mascotXml('happy', false, { shadow: false, fx: false }), 600)}</div>`);

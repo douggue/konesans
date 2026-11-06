@@ -35,7 +35,7 @@ const R1 = '#9E0A27';
 const R3 = '#FF5A6E';
 const HB = '#1F47B5'; // Haiti blue
 const HB1 = '#14307D';
-const BLUSH = '#FF86A6';
+const BLUSH = '#FF8FB4';
 const LID = '#3A66E8'; // eyelid: a step darker than the face so it reads as a lid
 const FACE = '#5C86FF';
 
@@ -215,7 +215,7 @@ function headLayer(p: Pose, blink: boolean) {
     const r = blink && canBlink(p.eyeR) ? ({ kind: 'blink' } as Eye) : p.eyeR;
     return eye(l, EYE_L, -1) + eye(r, EYE_R, 1);
   })();
-  const bo = r1(Math.min(1, 0.5 + (p.blush ?? 0) * 0.5));
+  const bo = r1(Math.min(1, 0.62 + (p.blush ?? 0) * 0.4));
   const blush = p.blush ? `<ellipse cx="47" cy="86" rx="${r1(6.5 + p.blush * 2.5)}" ry="4.2" fill="${BLUSH}" opacity="${bo}"/><ellipse cx="113" cy="86" rx="${r1(6.5 + p.blush * 2.5)}" ry="4.2" fill="${BLUSH}" opacity="${bo}"/>` : '';
   const body = shaded(cr, B1, HB, { sw: 3.4, cx: 80, cy: 20, s: 0.9, dx: -1, dy: -1 })
     + shaded(HEAD, B0, B1, { sw: 4, cx: 80, cy: 66, s: 0.94, dx: -2.5, dy: -3 })
