@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ht">
+<head>
+<meta charset="utf-8">
+<title>Ikòn app la</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&amp;family=Nunito:wght@600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1280px; min-height: 900px; box-sizing: border-box; background: #F6F7FB; font-family: 'Nunito', system-ui, sans-serif; color: #14213D; padding: 48px 56px; display: flex; flex-direction: column; gap: 28px">
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 14px; font-weight: 800; letter-spacing: .08em; color: #5A6480">IKÒN APP LA · 4 OPSYON</span>
+<h1 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 44px; line-height: 1; font-weight: 800">Ki sa yon paran wè nan 48 piksèl?</h1>
+<p style="margin: 0; font-size: 16px; font-weight: 700; color: #3B4560">Chak opsyon parèt nan 192, 96 ak 48 px, plis sou yon ekran telefòn ant lòt app. Sèk pwentiye a se zòn sekirite ikòn adaptif Android (66%).</p>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px">
+<sc-for list="{{icons}}" as="ic" hint-placeholder-count="4">
+<div style="background: #FFFFFF; border: 2px solid #E3E7F1; border-bottom-width: 5px; border-radius: 24px; padding: 18px; display: flex; flex-direction: column; align-items: center; gap: 12px">
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 20px; font-weight: 800">{{ic.letter}} · {{ic.name}}</span>
+<div style="position: relative; width: 192px; height: 192px">
+<dc-import name="IconArt" variant="{{ic.id}}" size="192" hint-size="192px,192px"></dc-import>
+<span aria-hidden="true" style="position: absolute; left: 32px; top: 32px; width: 128px; height: 128px; border-radius: 64px; border: 2px dashed rgba(20,33,61,.35); pointer-events: none"></span>
+</div>
+<div style="display: flex; align-items: flex-end; gap: 14px">
+<dc-import name="IconArt" variant="{{ic.id}}" size="96" hint-size="96px,96px"></dc-import>
+<dc-import name="IconArt" variant="{{ic.id}}" size="48" hint-size="48px,48px"></dc-import>
+</div>
+<p style="margin: 0; font-size: 13px; font-weight: 700; color: #3B4560; text-align: center; line-height: 1.4; min-height: 54px">{{ic.note}}</p>
+</div>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-weight: 800; font-size: 15px; color: #5A6480">Sou yon ekran telefòn, ant lòt app</span>
+<div style="background: linear-gradient(170deg, #2B6B4F, #14307D); border-radius: 28px; padding: 22px 26px; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 18px; align-items: start">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 60px; height: 60px; border-radius: 16px; background: #25D366"></span><span style="font-size: 11px; color: #FFFFFF; font-weight: 700">WhatsApp</span></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><dc-import name="IconArt" variant="a" size="60" hint-size="60px,60px"></dc-import><span style="font-size: 11px; color: #FFFFFF; font-weight: 700">Konesans</span></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 60px; height: 60px; border-radius: 16px; background: #1877F2"></span><span style="font-size: 11px; color: #FFFFFF; font-weight: 700">Facebook</span></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><dc-import name="IconArt" variant="b" size="60" hint-size="60px,60px"></dc-import><span style="font-size: 11px; color: #FFFFFF; font-weight: 700">Konesans</span></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 60px; height: 60px; border-radius: 16px; background: #FF0000"></span><span style="font-size: 11px; color: #FFFFFF; font-weight: 700">YouTube</span></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><dc-import name="IconArt" variant="c" size="60" hint-size="60px,60px"></dc-import><span style="font-size: 11px; color: #FFFFFF; font-weight: 700">Konesans</span></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 60px; height: 60px; border-radius: 16px; background: #E1306C"></span><span style="font-size: 11px; color: #FFFFFF; font-weight: 700">Instagram</span></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><dc-import name="IconArt" variant="d" size="60" hint-size="60px,60px"></dc-import><span style="font-size: 11px; color: #FFFFFF; font-weight: 700">Konesans</span></div>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      icons: [
+        { id: 'a', letter: 'A', name: 'Tèt Ti Zwazo', note: 'Maskòt la sèlman, gwo, sou ble. Pi fasil pou timoun rekonèt. Menm lojik ak Duolingo.' },
+        { id: 'b', letter: 'B', name: 'Sitadèl + zetwal', note: 'Kote a olye de maskòt la. Fyète ayisyen; mwens «timoun», plis «lekòl».' },
+        { id: 'c', letter: 'C', name: 'K ak zèl', note: 'Yon lèt K ki gen yon zèl zwazo. Rekonèt vit, fonksyone kòm logo tou.' },
+        { id: 'd', letter: 'D', name: 'Toti ap gade', note: 'Ti Zwazo k ap gade pa dèyè yon bòdi ble-wouj. Plis pèsonalite, pi plen.' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

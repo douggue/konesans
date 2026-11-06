@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ht">
+<head>
+<meta charset="utf-8">
+<title>Apwobasyon paran</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&amp;family=Nunito:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F47B5;text-decoration:none}
+button,input{font-family:inherit}
+@keyframes cSlide{0%{opacity:0;transform:translateX(40px)}100%{opacity:1;transform:translateX(0)}}
+@keyframes cPop{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.1);opacity:1}100%{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F6F7FB; font-family: 'Nunito', system-ui, sans-serif; color: #14213D; display: flex; flex-direction: column; padding: 20px 20px 26px; gap: 14px; overflow: hidden">
+
+<div style="display: flex; align-items: center; gap: 12px">
+<button type="button" onClick="{{back}}" aria-label="Retounen" style="width: 44px; height: 44px; border-radius: 14px; background: #FFFFFF; border: 2px solid #E3E7F1; display: flex; align-items: center; justify-content: center; color: #14213D; cursor: pointer; flex-shrink: 0">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg>
+</button>
+<div style="flex-grow: 1; display: flex; flex-direction: column">
+<h1 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 24px; line-height: 1.1; font-weight: 800">Yon paran bezwen la</h1>
+<span style="font-size: 13px; color: #5A6480; font-weight: 700">{{sub}}</span>
+</div>
+<span style="display: flex; align-items: center; gap: 4px; background: #E3F4EA; color: #12632F; border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 800"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"></path></svg>COPPA</span>
+</div>
+
+<sc-if value="{{isKid}}" hint-placeholder-val="{{ true }}">
+<div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; animation: cSlide .35s both">
+<svg aria-hidden="true" width="150" height="158" viewBox="-20 -10 200 210">
+<path d="M36 92 C8 100 4 136 22 150 C30 134 38 122 44 110 Z" fill="#14307D"></path><path d="M124 92 C152 100 156 136 138 150 C130 134 122 122 116 110 Z" fill="#14307D"></path>
+<ellipse cx="80" cy="112" rx="50" ry="62" fill="#1F47B5"></ellipse><ellipse cx="80" cy="132" rx="32" ry="38" fill="#E6ECFB"></ellipse>
+<circle cx="62" cy="90" r="13" fill="#FFFFFF"></circle><circle cx="98" cy="90" r="13" fill="#FFFFFF"></circle><circle cx="65" cy="92" r="6" fill="#14213D"></circle><circle cx="95" cy="92" r="6" fill="#14213D"></circle>
+<path d="M70 104 L90 104 L80 120 Z" fill="#F5B700" stroke="#C99400" stroke-width="2"></path>
+<path d="M50 52 L80 38 L110 52 L80 66 Z" fill="#14213D"></path><path d="M60 56 L60 68 Q80 78 100 68 L100 56 L80 66 Z" fill="#14213D"></path><path d="M110 52 L114 74" stroke="#D21034" stroke-width="3" stroke-linecap="round"></path><circle cx="114" cy="78" r="5" fill="#D21034"></circle>
+</svg>
+<h2 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 26px; font-weight: 800">Ale chèche manman w, papa w oswa yon granmoun!</h2>
+<p style="margin: 0; font-size: 15px; font-weight: 700; color: #5A6480">Yo bezwen di «wi» anvan w jwe. Sa pran 1 minit.</p>
+<button type="button" onClick="{{toGate}}" style="margin-top: 10px; min-height: 56px; width: 100%; border-radius: 16px; background: #1F47B5; color: #FFFFFF; border: 3px solid #14213D; box-shadow: 0 5px 0 #14213D; font-size: 18px; font-weight: 800; cursor: pointer">Granmoun nan la</button>
+<button type="button" style="min-height: 48px; width: 100%; border-radius: 16px; background: #FFFFFF; color: #14213D; border: 2px solid #D9DEEA; font-size: 15px; font-weight: 800; cursor: pointer">Voye yon lyen sou WhatsApp paran an</button>
+</div>
+</sc-if>
+
+<sc-if value="{{isGate}}" hint-placeholder-val="{{ false }}">
+<div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; animation: cSlide .35s both">
+<h2 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 24px; font-weight: 800">Pou nou sèten se yon granmoun:</h2>
+<p style="margin: 0; font-size: 18px; font-weight: 700">Ekri an lèt: 23 × 3 = ?</p>
+<div role="group" aria-label="Repons" style="display: flex; flex-direction: column; gap: 10px; width: 100%">
+<sc-for list="{{gate}}" as="g" hint-placeholder-count="3">
+<button type="button" onClick="{{g.pick}}" style="min-height: 56px; border-radius: 16px; background: #FFFFFF; border: 2px solid #D9DEEA; border-bottom-width: 5px; font-size: 18px; font-weight: 800; color: #14213D; cursor: pointer">{{g.label}}</button>
+</sc-for>
+</div>
+<sc-if value="{{wrong}}" hint-placeholder-val="{{ false }}"><span role="status" style="font-size: 15px; font-weight: 800; color: #B00D2B">Se pa sa. Eseye ankò.</span></sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{isForm}}" hint-placeholder-val="{{ false }}">
+<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 12px; animation: cSlide .35s both; min-height: 0; overflow-y: auto">
+<div style="background: #FFFFFF; border: 2px solid #E3E7F1; border-bottom-width: 5px; border-radius: 20px; padding: 14px; display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; font-weight: 800; letter-spacing: .06em; color: #5A6480">SA NOU KOLEKTE SOU TIMOUN LAN</span>
+<span style="font-size: 14px; font-weight: 700; display: flex; gap: 8px"><span style="color: #2F9E44">✓</span>Yon non jwè jenere (Toti 27) ak yon avata desen</span>
+<span style="font-size: 14px; font-weight: 700; display: flex; gap: 8px"><span style="color: #2F9E44">✓</span>Gwoup laj (9–11) ak lang</span>
+<span style="font-size: 14px; font-weight: 700; display: flex; gap: 8px"><span style="color: #2F9E44">✓</span>Pwogrè nan leson ak defi yo</span>
+<span style="font-size: 12px; font-weight: 800; letter-spacing: .06em; color: #5A6480; margin-top: 4px">SA NOU PA JANM KOLEKTE</span>
+<span style="font-size: 14px; font-weight: 700; display: flex; gap: 8px"><span style="color: #D21034">✗</span>Vrè non, dat nesans egzak, foto, vwa, kote l ye</span>
+<span style="font-size: 14px; font-weight: 700; display: flex; gap: 8px"><span style="color: #D21034">✗</span>Pa gen piblisite, pa gen vann done</span>
+</div>
+<label for="pc" style="font-weight: 800; font-size: 15px">Kontak paran (pou rapò ak apwobasyon)</label>
+<input id="pc" type="text" value="+1 (305) 555-0147" style="min-height: 50px; border-radius: 14px; border: 2px solid #D9DEEA; padding: 0 14px; font-size: 16px; font-weight: 700; color: #14213D; background: #FFFFFF; box-sizing: border-box; width: 100%">
+<span style="font-size: 12px; font-weight: 700; color: #5A6480; margin-top: -6px">WhatsApp oswa imèl. Se sèl done kontak nou kenbe, e se pou paran an.</span>
+<sc-for list="{{checks}}" as="c" hint-placeholder-count="3">
+<button type="button" role="checkbox" aria-checked="{{c.on}}" onClick="{{c.flip}}" style="{{c.style}}">
+<span style="{{c.box}}"><sc-if value="{{c.checked}}" hint-placeholder-val="{{ false }}"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></sc-if></span>
+<span style="flex-grow: 1; text-align: left; font-size: 14px; font-weight: 700; line-height: 1.35">{{c.label}}</span>
+</button>
+</sc-for>
+<button type="button" onClick="{{approve}}" disabled="{{cantApprove}}" style="{{approveStyle}}">Mwen apwouve</button>
+<a href="#" style="font-size: 13px; font-weight: 800; color: #1F47B5; text-align: center; min-height: 40px; display: flex; align-items: center; justify-content: center">Li règ konfidansyalite a (2 min)</a>
+</div>
+</sc-if>
+
+<sc-if value="{{isDone}}" hint-placeholder-val="{{ false }}">
+<div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; animation: cPop .45s cubic-bezier(.34,1.56,.64,1) both">
+<svg aria-hidden="true" width="150" height="158" viewBox="-20 -10 200 210">
+<path d="M40 100 C14 88 6 56 18 40 C28 58 38 74 46 90 Z" fill="#14307D"></path><path d="M120 100 C146 88 154 56 142 40 C132 58 122 74 114 90 Z" fill="#14307D"></path>
+<ellipse cx="80" cy="112" rx="50" ry="62" fill="#1F47B5"></ellipse><ellipse cx="80" cy="132" rx="32" ry="38" fill="#E6ECFB"></ellipse>
+<path d="M50 92 Q62 78 74 92 M86 92 Q98 78 110 92" stroke="#14213D" stroke-width="5" fill="none" stroke-linecap="round"></path>
+<path d="M72 110 Q80 128 88 110 Z" fill="#D21034"></path><path d="M70 102 L90 102 L80 112 Z" fill="#F5B700" stroke="#C99400" stroke-width="2"></path>
+<path d="M50 52 L80 38 L110 52 L80 66 Z" fill="#14213D"></path><path d="M60 56 L60 68 Q80 78 100 68 L100 56 L80 66 Z" fill="#14213D"></path><path d="M110 52 L114 74" stroke="#D21034" stroke-width="3" stroke-linecap="round"></path><circle cx="114" cy="78" r="5" fill="#D21034"></circle>
+</svg>
+<h2 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 26px; font-weight: 800">Mèsi! Kont lan apwouve.</h2>
+<p style="margin: 0; font-size: 15px; font-weight: 700; color: #5A6480">Nou voye yon konfimasyon sou WhatsApp. Ou ka chanje tout sa nan Espas Paran.</p>
+<div style="width: 100%; background: #FFF4D1; border: 2px solid #F5B700; border-radius: 16px; padding: 12px 14px; font-size: 14px; font-weight: 700; color: #5C4600; text-align: left; box-sizing: border-box">Kounye a remèt telefòn nan bay timoun lan!</div>
+<a href="Main.dc.html" style="margin-top: 6px; min-height: 58px; width: 100%; border-radius: 18px; background: #2F9E44; color: #FFFFFF; border: 3px solid #14213D; box-shadow: 0 5px 0 #14213D; display: flex; align-items: center; justify-content: center; font-size: 19px; font-weight: 800; box-sizing: border-box">Ann ale!</a>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { phase: 'kid', wrong: false, ck: [false, false, false] };
+  }
+  renderVals() {
+    const s = this.state;
+    const gate = ['swasantnèf', 'swasantsis', 'swasanndouz'].map((label) => ({
+      label, pick: () => (label === 'swasantnèf' ? this.setState({ phase: 'form', wrong: false }) : this.setState({ wrong: true }))
+    }));
+    const labels = ['Mwen se paran oswa gadyen legal timoun lan.', 'Mwen dakò pou Konesans kenbe done ki nan lis la, pa plis.', 'Mwen konprann mwen ka efase kont lan nenpòt lè.'];
+    const checks = labels.map((label, i) => ({
+      label, on: s.ck[i] ? 'true' : 'false', checked: s.ck[i],
+      style: 'min-height: 52px; padding: 8px 12px; border-radius: 14px; display: flex; align-items: center; gap: 12px; cursor: pointer; background: #FFFFFF; color: #14213D; ' + (s.ck[i] ? 'border: 2px solid #1F47B5;' : 'border: 2px solid #D9DEEA;'),
+      box: 'width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border: 2px solid #14213D; background: ' + (s.ck[i] ? '#1F47B5' : '#FFFFFF') + ';',
+      flip: () => { const n = [...s.ck]; n[i] = !n[i]; this.setState({ ck: n }); }
+    }));
+    const all = s.ck.every(Boolean);
+    const subs = { kid: 'Etap 4 / 4 · apwobasyon', gate: 'Verifikasyon granmoun', form: 'Konsantman paran', done: 'Fini' };
+    return {
+      isKid: s.phase === 'kid', isGate: s.phase === 'gate', isForm: s.phase === 'form', isDone: s.phase === 'done',
+      sub: subs[s.phase], gate, wrong: s.wrong, checks,
+      toGate: () => this.setState({ phase: 'gate' }),
+      back: () => this.setState({ phase: s.phase === 'kid' ? 'kid' : 'kid', wrong: false }),
+      cantApprove: !all,
+      approveStyle: 'min-height: 56px; border-radius: 16px; font-size: 18px; font-weight: 800; ' + (all ? 'background: #2F9E44; color: #FFFFFF; border: 3px solid #14213D; box-shadow: 0 5px 0 #14213D; cursor: pointer;' : 'background: #DCE1EE; color: #5A6480; border: 3px solid #DCE1EE; cursor: not-allowed;'),
+      approve: () => { if (all) this.setState({ phase: 'done' }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

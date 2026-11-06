@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ht">
+<head>
+<meta charset="utf-8">
+<title>Abònman Konesans</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&amp;family=Nunito:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F47B5;text-decoration:none}
+button,input{font-family:inherit}
+@keyframes gSlide{0%{opacity:0;transform:translateX(40px)}100%{opacity:1;transform:translateX(0)}}
+@keyframes gPop{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.1);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes gFall{0%{transform:translateY(-40px) rotate(0)}100%{transform:translateY(760px) rotate(540deg)}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important}}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; background: #F6F7FB; font-family: 'Nunito', system-ui, sans-serif; color: #14213D; display: flex; flex-direction: column; padding: 20px 20px 26px; gap: 14px; overflow: hidden">
+
+<div style="display: flex; align-items: center; gap: 12px">
+<button type="button" onClick="{{back}}" aria-label="Retounen" style="width: 44px; height: 44px; border-radius: 14px; background: #FFFFFF; border: 2px solid #E3E7F1; display: flex; align-items: center; justify-content: center; color: #14213D; cursor: pointer; flex-shrink: 0">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg>
+</button>
+<div style="flex-grow: 1; display: flex; flex-direction: column">
+<h1 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 24px; line-height: 1.1; font-weight: 800">Abònman Konesans</h1>
+<span style="font-size: 13px; color: #5A6480; font-weight: 700">{{sub}}</span>
+</div>
+</div>
+
+<sc-if value="{{s1}}" hint-placeholder-val="{{ true }}">
+<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 12px; animation: gSlide .35s ease-out both">
+<div style="background: #FFFFFF; border: 2px solid #E3E7F1; border-bottom-width: 5px; border-radius: 18px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 12px; font-weight: 800; letter-spacing: .06em; color: #5A6480">SA ABÒNMAN W FÈ</span>
+<span style="font-size: 14px; font-weight: 700; display: flex; justify-content: space-between"><span>Tout kou, defi ak rapò pou timoun pa w</span><span style="color: #2F9E44">✓</span></span>
+<span style="font-size: 14px; font-weight: 700; display: flex; justify-content: space-between"><span>5 timoun an Ayiti jwenn app la gratis</span><span style="color: #2F9E44">✓</span></span>
+<span style="font-size: 14px; font-weight: 700; display: flex; justify-content: space-between"><span>Pwofesè ayisyen ekri ak anrejistre leson yo</span><span style="color: #2F9E44">✓</span></span>
+</div>
+<span style="font-weight: 800; font-size: 15px">Chwazi plan ou</span>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{amounts}}" as="a" hint-placeholder-count="3">
+<button type="button" onClick="{{a.pick}}" aria-pressed="{{a.on}}" style="{{a.style}}">
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 24px; font-weight: 800; line-height: 1">{{a.label}}</span>
+<span style="font-size: 12px; font-weight: 700; color: #5A6480; text-align: center; line-height: 1.2">{{a.desc}}</span>
+</button>
+</sc-for>
+</div>
+<div role="group" aria-label="Frekans" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; background: #E3E7F1; border-radius: 16px; padding: 4px">
+<sc-for list="{{freqs}}" as="f" hint-placeholder-count="2">
+<button type="button" onClick="{{f.pick}}" aria-pressed="{{f.on}}" style="{{f.style}}">{{f.label}}</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{s2}}" hint-placeholder-val="{{ false }}">
+<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 12px; animation: gSlide .35s ease-out both">
+<div style="background: #FFFFFF; border: 2px solid #E3E7F1; border-radius: 18px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center">
+<span style="display: flex; flex-direction: column"><span style="font-weight: 800; font-size: 16px">{{amountTxt}} · {{freqTxt}}</span><span style="font-size: 13px; font-weight: 700; color: #5A6480">Ou ka kanpe l nenpòt lè · pa gen renouvèlman kache</span></span>
+<svg aria-hidden="true" width="36" height="36" viewBox="0 0 48 48"><path d="M24 42s-16-9.6-16-20.4C8 15.4 12.4 11 17.6 11c3.2 0 5.6 1.8 6.4 3.4.8-1.6 3.2-3.4 6.4-3.4 5.2 0 9.6 4.4 9.6 10.6C40 32.4 24 42 24 42z" fill="#FF5A6E" stroke="#14213D" stroke-width="2.5" stroke-linejoin="round"></path></svg>
+</div>
+<span style="font-weight: 800; font-size: 15px">Kijan w ap peye?</span>
+<sc-for list="{{pays}}" as="p" hint-placeholder-count="4">
+<button type="button" onClick="{{p.pick}}" aria-pressed="{{p.on}}" style="{{p.style}}">
+<span style="{{p.logo}}">{{p.mono}}</span>
+<span style="flex-grow: 1; display: flex; flex-direction: column; text-align: left"><span style="font-weight: 800; font-size: 15px">{{p.name}}</span><span style="font-size: 12px; font-weight: 700; color: #5A6480">{{p.desc}}</span></span>
+</button>
+</sc-for>
+<label for="nm" style="font-weight: 800; font-size: 15px; margin-top: 4px">Non ou pou mesaj «mèsi» timoun yo (opsyonèl)</label>
+<input id="nm" type="text" value="Tonton Jak, Miami" style="min-height: 50px; border-radius: 14px; border: 2px solid #D9DEEA; padding: 0 14px; font-size: 15px; font-weight: 700; color: #14213D; background: #FFFFFF; box-sizing: border-box; width: 100%">
+</div>
+</sc-if>
+
+<sc-if value="{{s3}}" hint-placeholder-val="{{ false }}">
+<span aria-hidden="true" style="position: absolute; left: 40px; top: 0; width: 12px; height: 8px; border-radius: 2px; background: #00209F; animation: gFall 2.4s linear infinite"></span>
+<span aria-hidden="true" style="position: absolute; left: 130px; top: 0; width: 10px; height: 10px; border-radius: 5px; background: #D21034; animation: gFall 2.1s linear .3s infinite"></span>
+<span aria-hidden="true" style="position: absolute; left: 220px; top: 0; width: 12px; height: 8px; border-radius: 2px; background: #FFD43B; animation: gFall 2.6s linear .15s infinite"></span>
+<span aria-hidden="true" style="position: absolute; left: 310px; top: 0; width: 8px; height: 12px; border-radius: 2px; background: #51CF66; animation: gFall 2.3s linear .5s infinite"></span>
+<div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; animation: gPop .5s cubic-bezier(.34,1.56,.64,1) both">
+<svg aria-hidden="true" width="150" height="158" viewBox="-20 -10 200 210">
+<path d="M40 100 C14 88 6 56 18 40 C28 58 38 74 46 90 Z" fill="#14307D"></path><path d="M120 100 C146 88 154 56 142 40 C132 58 122 74 114 90 Z" fill="#14307D"></path>
+<ellipse cx="80" cy="112" rx="50" ry="62" fill="#1F47B5"></ellipse><ellipse cx="80" cy="132" rx="32" ry="38" fill="#E6ECFB"></ellipse>
+<path d="M50 92 Q62 78 74 92 M86 92 Q98 78 110 92" stroke="#14213D" stroke-width="5" fill="none" stroke-linecap="round"></path>
+<circle cx="50" cy="106" r="6" fill="#F7A1B3" opacity=".8"></circle><circle cx="110" cy="106" r="6" fill="#F7A1B3" opacity=".8"></circle>
+<path d="M72 110 Q80 128 88 110 Z" fill="#D21034"></path><path d="M70 102 L90 102 L80 112 Z" fill="#F5B700" stroke="#C99400" stroke-width="2"></path>
+<path d="M50 52 L80 38 L110 52 L80 66 Z" fill="#14213D"></path><path d="M60 56 L60 68 Q80 78 100 68 L100 56 L80 66 Z" fill="#14213D"></path><path d="M110 52 L114 74" stroke="#D21034" stroke-width="3" stroke-linecap="round"></path><circle cx="114" cy="78" r="5" fill="#D21034"></circle>
+</svg>
+<h2 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 28px; font-weight: 800">Mèsi anpil!</h2>
+<p style="margin: 0; font-size: 16px; font-weight: 700; color: #3B4560; line-height: 1.4">{{thanks}}</p>
+<div style="width: 100%; background: #FFF4D1; border: 2px solid #F5B700; border-radius: 18px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; box-sizing: border-box; text-align: left">
+<svg aria-hidden="true" width="40" height="40" viewBox="0 0 48 48"><path d="M24 5l5.6 11.4 12.6 1.8-9.1 8.9 2.1 12.5L24 33.7l-11.2 5.9 2.1-12.5-9.1-8.9 12.6-1.8z" fill="#FFD43B" stroke="#14213D" stroke-width="3" stroke-linejoin="round"></path></svg>
+<span style="font-size: 14px; font-weight: 700; color: #5C4600; line-height: 1.35">Avata Toti 27 jwenn badj «Parenn/Marenn»: li ka wè konbyen timoun an Ayiti abònman w ede.</span>
+</div>
+<button type="button" style="min-height: 52px; width: 100%; border-radius: 16px; background: #25D366; color: #14213D; border: 3px solid #14213D; box-shadow: 0 4px 0 #14213D; font-size: 16px; font-weight: 800; cursor: pointer">Envite yon lòt moun sou WhatsApp</button>
+<a href="Family.dc.html" style="min-height: 48px; width: 100%; border-radius: 16px; background: #FFFFFF; color: #14213D; border: 2px solid #D9DEEA; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; box-sizing: border-box">Retounen</a>
+</div>
+</sc-if>
+
+<sc-if value="{{showNext}}" hint-placeholder-val="{{ true }}">
+<button type="button" onClick="{{next}}" style="margin-top: auto; min-height: 56px; border-radius: 16px; background: #1F47B5; color: #FFFFFF; border: 3px solid #14213D; box-shadow: 0 5px 0 #14213D; font-size: 18px; font-weight: 800; cursor: pointer">{{nextLabel}}</button>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { step: 1, amt: 0, freq: 'monthly', pay: 0 };
+  }
+  renderVals() {
+    const s = this.state;
+    const amtDefs = [
+      { label: '$4.99', desc: '1 timoun · chak mwa' },
+      { label: '$9.99', desc: 'Fanmi · 3 timoun · chak mwa' },
+      { label: '$39', desc: '1 an · 1 timoun · ekonomize 35%' },
+    ];
+    const pick = (on) => 'min-height: 64px; padding: 8px 12px; border-radius: 18px; display: flex; align-items: center; gap: 12px; cursor: pointer; background: #FFFFFF; ' + (on ? 'border: 3px solid #1F47B5; box-shadow: 0 4px 0 #1F47B5;' : 'border: 2px solid #D9DEEA; border-bottom-width: 5px;');
+    const amounts = amtDefs.map((a, i) => ({
+      ...a, on: s.amt === i ? 'true' : 'false',
+      style: 'min-height: 84px; padding: 10px 6px; border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; background: #FFFFFF; ' + (s.amt === i ? 'border: 3px solid #1F47B5; box-shadow: 0 4px 0 #1F47B5;' : 'border: 2px solid #D9DEEA; border-bottom-width: 5px;'),
+      pick: () => this.setState({ amt: i })
+    }));
+    const freqs = [['monthly', 'Pou timoun pa m'], ['gift', 'Kado pou yon timoun an Ayiti']].map(([id, label]) => ({
+      label, on: s.freq === id ? 'true' : 'false',
+      style: 'min-height: 44px; border: none; border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; ' + (s.freq === id ? 'background: #FFFFFF; color: #1F47B5; box-shadow: 0 2px 6px rgba(20,33,61,.12);' : 'background: transparent; color: #5A6480;'),
+      pick: () => this.setState({ freq: id })
+    }));
+    const payDefs = [
+      { name: 'Kat bankè', desc: 'Visa, Mastercard', mono: '💳', bg: '#E6ECFB' },
+      { name: 'Apple Pay / Google Pay', desc: 'Rapid, sou telefòn nan', mono: '', bg: '#14213D' },
+      { name: 'MonCash / NatCash', desc: 'An Ayiti app la gratis: sèlman pou yon kado', mono: 'M', bg: '#D21034' },
+    ];
+    const pays = payDefs.map((p, i) => ({
+      ...p, on: s.pay === i ? 'true' : 'false', style: pick(s.pay === i),
+      logo: 'width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: \'Baloo 2\', sans-serif; font-weight: 800; font-size: 20px; color: #FFFFFF; border: 2px solid #14213D; background: ' + p.bg + ';',
+      pick: () => this.setState({ pay: i })
+    }));
+    const subs = ['Chwazi plan ou', 'Peman', 'Mèsi'];
+    return {
+      s1: s.step === 1, s2: s.step === 2, s3: s.step === 3, sub: subs[s.step - 1],
+      amounts, freqs, pays,
+      amountTxt: amtDefs[s.amt].label, freqTxt: s.freq === 'gift' ? 'kado · kòd WhatsApp' : 'abònman',
+      thanks: s.freq === 'gift' ? 'Men kòd la: KNS-7H4P-2M. Voye l sou WhatsApp; timoun lan mete l nan app la. Valab 90 jou.' : 'Toti 27 gen tout app la. Chak mwa, 5 timoun an Ayiti ap jwenn Konesans gratis gras a ou.',
+      showNext: s.step < 3,
+      nextLabel: s.step === 2 ? 'Peye ' + amtDefs[s.amt].label : 'Kontinye',
+      next: () => this.setState({ step: s.step + 1 }),
+      back: () => this.setState({ step: Math.max(1, s.step - 1) })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "target": "ES5", "module": "ESNext", "moduleResolution": "Bundler", "lib": ["ES2020"],
+    "downlevelIteration": true, "strict": false, "noImplicitAny": false, "skipLibCheck": true,
+    "typeRoots": ["../../node_modules", "../../node_modules/@types"], "types": ["nakama-runtime"],
+    "paths": { "@konesans/core": ["../../packages/core/src/index.ts"] }
+  },
+  "include": ["src"]
+}

@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ht">
+<head>
+<meta charset="utf-8">
+<title>Kalkil Mantal</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&amp;family=Nunito:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F47B5;text-decoration:none}
+button{font-family:inherit}
+@keyframes qPop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes qShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+@keyframes qHop{0%,100%{transform:translateY(0)}45%{transform:translateY(-12px)}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F6F7FB; font-family: 'Nunito', system-ui, sans-serif; color: #14213D; display: flex; flex-direction: column; padding: 20px 20px 26px; gap: 14px; overflow: hidden">
+
+<div style="display: flex; align-items: center; gap: 12px">
+<a href="Main.dc.html" aria-label="Kite" style="width: 44px; height: 44px; border-radius: 14px; background: #FFFFFF; border: 2px solid #E3E7F1; display: flex; align-items: center; justify-content: center; color: #14213D; box-sizing: border-box; flex-shrink: 0">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M18 6 6 18"></path><path d="M6 6l12 12"></path></svg>
+</a>
+<div style="flex-grow: 1; display: flex; flex-direction: column">
+<h1 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 24px; line-height: 1.1; font-weight: 800">Kalkil Mantal</h1>
+<span style="font-size: 13px; color: #5A6480; font-weight: 700">Rekò ou: 23 · Nivo: Miltiplikasyon</span>
+</div>
+<span style="display: flex; align-items: center; gap: 6px; background: #14213D; color: #FFFFFF; border-radius: 999px; padding: 6px 12px; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 18px">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+{{secs}}
+</span>
+</div>
+
+<div style="height: 14px; border-radius: 7px; background: #E3E7F1; overflow: hidden">
+<div style="height: 14px; border-radius: 7px; background: #FF9F43; transition: width 1s linear; {{timeW}}"></div>
+</div>
+
+<sc-if value="{{idle}}" hint-placeholder-val="{{ true }}">
+<div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center">
+<svg aria-hidden="true" width="150" height="158" viewBox="-20 -10 200 210" style="animation: qHop 1.6s ease-in-out infinite">
+<path d="M36 92 C8 100 4 136 22 150 C30 134 38 122 44 110 Z" fill="#14307D"></path><path d="M124 92 C152 100 156 136 138 150 C130 134 122 122 116 110 Z" fill="#14307D"></path>
+<ellipse cx="80" cy="112" rx="50" ry="62" fill="#1F47B5"></ellipse><ellipse cx="80" cy="132" rx="32" ry="38" fill="#E6ECFB"></ellipse>
+<circle cx="62" cy="90" r="13" fill="#FFFFFF"></circle><circle cx="98" cy="90" r="13" fill="#FFFFFF"></circle><circle cx="65" cy="92" r="6" fill="#14213D"></circle><circle cx="95" cy="92" r="6" fill="#14213D"></circle>
+<path d="M70 104 L90 104 L80 120 Z" fill="#F5B700" stroke="#C99400" stroke-width="2"></path>
+<path d="M50 52 L80 38 L110 52 L80 66 Z" fill="#14213D"></path><path d="M60 56 L60 68 Q80 78 100 68 L100 56 L80 66 Z" fill="#14213D"></path><path d="M110 52 L114 74" stroke="#D21034" stroke-width="3" stroke-linecap="round"></path><circle cx="114" cy="78" r="5" fill="#D21034"></circle>
+<text x="80" y="160" text-anchor="middle" font-family="Baloo 2, sans-serif" font-size="30" font-weight="800" fill="#14307D">7 × 8 ?</text>
+</svg>
+<h2 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 28px; font-weight: 800">60 segonn. Konbyen w ka fè?</h2>
+<p style="margin: 0; font-size: 15px; font-weight: 700; color: #5A6480">Chak bon repons = 1 pwen. Yon seri 5 bon = bonis.</p>
+<button type="button" onClick="{{start}}" style="margin-top: 8px; min-height: 60px; padding: 0 40px; border-radius: 18px; background: #FF9F43; color: #14213D; border: 3px solid #14213D; box-shadow: 0 5px 0 #14213D; font-family: 'Baloo 2', sans-serif; font-size: 22px; font-weight: 800; cursor: pointer">ALE!</button>
+</div>
+</sc-if>
+
+<sc-if value="{{playing}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<span style="font-weight: 800; font-size: 15px; color: #5A6480">Pwen: <span style="color: #14213D; font-size: 20px; font-family: 'Baloo 2', sans-serif">{{score}}</span></span>
+<span style="{{comboStyle}}">{{comboText}}</span>
+</div>
+<div role="status" style="background: #FFFFFF; border: 3px solid #14213D; border-bottom-width: 7px; border-radius: 24px; padding: 26px 16px; display: flex; align-items: center; justify-content: center; gap: 12px; font-family: 'Baloo 2', sans-serif; font-size: 52px; font-weight: 800; {{qAnim}}">
+<span>{{a}}</span><span style="color: #FF9F43">{{op}}</span><span>{{b}}</span><span style="color: #5A6480">=</span>
+<span style="min-width: 70px; text-align: left; color: #1F47B5">{{typed}}</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: auto">
+<sc-for list="{{keys}}" as="k" hint-placeholder-count="12">
+<button type="button" onClick="{{k.press}}" aria-label="{{k.aria}}" style="{{k.style}}">{{k.label}}</button>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{done}}" hint-placeholder-val="{{ false }}">
+<div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; animation: qPop .5s cubic-bezier(.34,1.56,.64,1) both">
+<span style="font-size: 13px; font-weight: 800; letter-spacing: .08em; color: #5A6480">TAN FINI</span>
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 96px; line-height: 1; font-weight: 800; color: #1F47B5">{{score}}</span>
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 24px; font-weight: 800">{{verdict}}</span>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; margin-top: 8px">
+<div style="background: #FFFFFF; border: 2px solid #E3E7F1; border-radius: 16px; padding: 10px"><span style="display: block; font-family: 'Baloo 2', sans-serif; font-size: 22px; font-weight: 800">{{score}}</span><span style="font-size: 12px; font-weight: 800; color: #5A6480">bon</span></div>
+<div style="background: #FFFFFF; border: 2px solid #E3E7F1; border-radius: 16px; padding: 10px"><span style="display: block; font-family: 'Baloo 2', sans-serif; font-size: 22px; font-weight: 800">{{misses}}</span><span style="font-size: 12px; font-weight: 800; color: #5A6480">erè</span></div>
+<div style="background: #FFF4D1; border: 2px solid #F5B700; border-radius: 16px; padding: 10px"><span style="display: block; font-family: 'Baloo 2', sans-serif; font-size: 22px; font-weight: 800; color: #5C4600">+{{xp}}</span><span style="font-size: 12px; font-weight: 800; color: #5C4600">pwen</span></div>
+</div>
+<button type="button" onClick="{{start}}" style="margin-top: 10px; min-height: 56px; width: 100%; border-radius: 16px; background: #FF9F43; color: #14213D; border: 3px solid #14213D; box-shadow: 0 5px 0 #14213D; font-size: 18px; font-weight: 800; cursor: pointer">Jwe ankò</button>
+<a href="Duel.dc.html" style="min-height: 52px; width: 100%; border-radius: 16px; background: #FFFFFF; color: #14213D; border: 2px solid #D9DEEA; border-bottom-width: 5px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; box-sizing: border-box">Defye yon zanmi nan kalkil</a>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { phase: 'idle', secs: 60, score: 0, misses: 0, combo: 0, a: 7, b: 8, op: '×', typed: '', flash: '' };
+  }
+  componentWillUnmount() { if (this.t) clearInterval(this.t); }
+  nextQ() {
+    const ops = ['+', '−', '×'];
+    const op = ops[Math.floor(Math.random() * 3)];
+    let a = 2 + Math.floor(Math.random() * 11), b = 2 + Math.floor(Math.random() * 9);
+    if (op === '−' && b > a) { const t = a; a = b; b = t; }
+    return { a, b, op, typed: '', flash: '' };
+  }
+  answer() {
+    const { a, b, op, typed } = this.state;
+    const want = op === '+' ? a + b : op === '−' ? a - b : a * b;
+    if (typed === '') return;
+    if (Number(typed) === want) {
+      this.setState({ ...this.nextQ(), score: this.state.score + 1 + (this.state.combo >= 4 ? 1 : 0), combo: this.state.combo + 1, flash: 'ok' });
+    } else {
+      this.setState({ typed: '', misses: this.state.misses + 1, combo: 0, flash: 'bad' });
+    }
+  }
+  renderVals() {
+    const s = this.state;
+    const start = () => {
+      if (this.t) clearInterval(this.t);
+      this.setState({ phase: 'playing', secs: 60, score: 0, misses: 0, combo: 0, ...this.nextQ() });
+      this.t = setInterval(() => {
+        if (this.state.secs <= 1) { clearInterval(this.t); this.t = null; this.setState({ secs: 0, phase: 'done' }); }
+        else this.setState({ secs: this.state.secs - 1 });
+      }, 1000);
+    };
+    const keyBase = 'min-height: 58px; border-radius: 16px; font-family: \'Baloo 2\', sans-serif; font-size: 26px; font-weight: 800; cursor: pointer; ';
+    const labels = ['1','2','3','4','5','6','7','8','9','⌫','0','OK'];
+    const keys = labels.map((l) => ({
+      label: l,
+      aria: l === '⌫' ? 'Efase' : l === 'OK' ? 'Reponn' : l,
+      style: keyBase + (l === 'OK' ? 'background: #2F9E44; color: #FFFFFF; border: 3px solid #14213D; box-shadow: 0 4px 0 #14213D;' : l === '⌫' ? 'background: #FDE7EC; color: #8F0A22; border: 2px solid #D9DEEA; border-bottom-width: 5px;' : 'background: #FFFFFF; color: #14213D; border: 2px solid #D9DEEA; border-bottom-width: 5px;'),
+      press: () => {
+        if (l === 'OK') this.answer();
+        else if (l === '⌫') this.setState({ typed: s.typed.slice(0, -1) });
+        else if (s.typed.length < 3) this.setState({ typed: s.typed + l, flash: '' });
+      }
+    }));
+    const verdict = s.score >= 24 ? 'NOUVO REKÒ! Ti Zwazo fyè de ou!' : s.score >= 15 ? 'Trè byen! Rekò a se 23.' : 'Bon kòmansman! Eseye ankò.';
+    return {
+      idle: s.phase === 'idle', playing: s.phase === 'playing', done: s.phase === 'done',
+      secs: s.secs + ' s', timeW: 'width: ' + (s.secs / 60 * 100) + '%;',
+      score: s.score, misses: s.misses, xp: s.score * 2, verdict,
+      a: s.a, b: s.b, op: s.op, typed: s.typed || '?',
+      comboText: s.combo >= 5 ? 'SERI ×' + s.combo + ' · pwen doub!' : s.combo >= 2 ? 'Seri ×' + s.combo : '',
+      comboStyle: 'font-weight: 800; font-size: 14px; border-radius: 999px; padding: 4px 10px; ' + (s.combo >= 5 ? 'background: #FF9F43; color: #14213D;' : 'background: #E6ECFB; color: #1F47B5;') + (s.combo >= 2 ? '' : ' visibility: hidden;'),
+      qAnim: s.flash === 'bad' ? 'animation: qShake .3s; border-color: #D21034;' : s.flash === 'ok' ? 'animation: qPop .25s; border-color: #2F9E44;' : '',
+      keys, start
+    };
+  }
+}
+</script>
+</body>
+</html>

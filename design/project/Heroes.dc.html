@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ht">
+<head>
+<meta charset="utf-8">
+<title>Kat Ewo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&amp;family=Nunito:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F47B5;text-decoration:none}a:hover{color:#163585}
+button{font-family:inherit}
+@keyframes hShine{0%{transform:translateX(-120%) rotate(20deg)}100%{transform:translateX(320%) rotate(20deg)}}
+@keyframes hHint{0%,100%{transform:rotate(0)}50%{transform:rotate(-14deg)}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F6F7FB; font-family: 'Nunito', system-ui, sans-serif; color: #14213D; display: flex; flex-direction: column; padding: 20px 20px 24px; gap: 12px">
+
+<div style="display: flex; align-items: center; gap: 12px">
+<a href="Main.dc.html" aria-label="Retounen lakay" style="width: 44px; height: 44px; border-radius: 14px; background: #FFFFFF; border: 2px solid #E3E7F1; display: flex; align-items: center; justify-content: center; color: #14213D; flex-shrink: 0; box-sizing: border-box">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg>
+</a>
+<div style="flex-grow: 1; display: flex; flex-direction: column">
+<h1 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 24px; line-height: 1.1; font-weight: 800">Kat Ewo</h1>
+<span style="font-size: 13px; color: #5A6480; font-weight: 700">Genyen kat lè w fini yon defi</span>
+</div>
+<span style="background: #FFF4D1; color: #5C4600; border: 2px solid #F5B700; border-radius: 999px; padding: 5px 12px; font-weight: 800; font-size: 14px">{{count}}</span>
+</div>
+
+<div role="group" aria-label="Koleksyon" style="display: flex; gap: 8px">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+<button type="button" onClick="{{t.pick}}" aria-pressed="{{t.pressed}}" style="{{t.style}}">{{t.label}}</button>
+</sc-for>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{cards}}" as="c" hint-placeholder-count="9">
+<button type="button" onClick="{{c.pick}}" aria-label="{{c.aria}}" aria-pressed="{{c.pressed}}" style="{{c.style}}">
+<div style="{{c.topStyle}}">
+<sc-if value="{{c.owned}}" hint-placeholder-val="{{ true }}">
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 24px; font-weight: 800; color: #FFFFFF; line-height: 1">{{c.mono}}</span>
+</sc-if>
+<sc-if value="{{c.locked}}" hint-placeholder-val="{{ false }}">
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 26px; font-weight: 800; color: #8A93A8; line-height: 1">?</span>
+</sc-if>
+</div>
+<span style="font-size: 12px; font-weight: 800; line-height: 1.15; text-align: center; padding: 0 4px">{{c.short}}</span>
+</button>
+</sc-for>
+</div>
+
+<button type="button" onClick="{{flip}}" aria-label="{{flipLabel}}" aria-pressed="{{flippedAttr}}" style="margin-top: auto; height: 236px; width: 100%; padding: 0; border: none; background: transparent; perspective: 1000px; cursor: pointer; color: #14213D">
+<div style="position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .75s cubic-bezier(.3,1.35,.45,1); {{cardTransform}}">
+
+<div style="{{frontStyle}}">
+<div style="width: 118px; flex-shrink: 0; align-self: stretch; border-radius: 16px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.18); border: 2px solid rgba(255,255,255,.5)">
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 48px; font-weight: 800; color: #FFFFFF; line-height: 1">{{detail.mono}}</span>
+<span aria-hidden="true" style="position: absolute; top: -20px; left: 0; width: 34px; height: 260px; background: rgba(255,255,255,.35); animation: hShine 2.8s ease-in-out 1s infinite"></span>
+</div>
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; text-align: left; color: #FFFFFF">
+<span style="align-self: flex-start; background: #FFD43B; color: #14213D; border: 2px solid #14213D; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 800; letter-spacing: .04em">{{detail.tag}}</span>
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 23px; font-weight: 800; line-height: 1.1">{{detail.name}}</span>
+<span style="margin-top: auto; display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 800; color: #FFFFFF">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="animation: hHint 1.6s ease-in-out infinite"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"></path><path d="M21 3v5h-5"></path></svg>
+Tape pou vire kat la
+</span>
+</div>
+</div>
+
+<div style="position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; transform: rotateY(180deg); background: #FFFFFF; border: 3px solid #14213D; border-bottom-width: 7px; border-radius: 24px; padding: 16px; box-sizing: border-box; display: flex; gap: 10px; align-items: flex-start; text-align: left">
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 12px; font-weight: 800; letter-spacing: .08em; color: #5A6480">OU KONNEN?</span>
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 20px; font-weight: 800; line-height: 1.1">{{detail.name}}</span>
+<p style="margin: 0; font-size: 15px; font-weight: 700; color: #3B4560; line-height: 1.4">{{detail.fact}}</p>
+<span style="margin-top: 2px; font-size: 13px; font-weight: 800; color: #1F47B5">+5 pwen pou w li l</span>
+</div>
+<svg aria-hidden="true" width="74" height="78" viewBox="-20 -10 200 210" style="flex-shrink: 0; align-self: flex-end">
+<path d="M66 172 l-6 12 M66 172 l2 12 M94 172 l-2 12 M94 172 l6 12" stroke="#F5B700" stroke-width="5" stroke-linecap="round"></path>
+<path d="M36 92 C8 100 4 136 22 150 C30 134 38 122 44 110 Z" fill="#14307D"></path>
+<ellipse cx="80" cy="112" rx="50" ry="62" fill="#1F47B5"></ellipse>
+<ellipse cx="80" cy="132" rx="32" ry="38" fill="#E6ECFB"></ellipse>
+<circle cx="62" cy="90" r="13" fill="#FFFFFF"></circle><circle cx="68" cy="86" r="6" fill="#14213D"></circle>
+<path d="M86 92 Q98 86 110 92" stroke="#14213D" stroke-width="5" fill="none" stroke-linecap="round"></path>
+<path d="M72 104 L90 102 L82 118 Z" fill="#F5B700" stroke="#C99400" stroke-width="2" stroke-linejoin="round"></path>
+<path d="M122 102 C134 114 120 132 96 126 C104 118 110 110 114 102 Z" fill="#14307D"></path>
+<path d="M50 52 L80 38 L110 52 L80 66 Z" fill="#14213D"></path><path d="M60 56 L60 68 Q80 78 100 68 L100 56 L80 66 Z" fill="#14213D"></path><path d="M110 52 L114 74" stroke="#D21034" stroke-width="3" stroke-linecap="round"></path><circle cx="114" cy="78" r="5" fill="#D21034"></circle>
+</svg>
+</div>
+
+</div>
+</button>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: 'ewo', sel: 'dessalines', flipped: false };
+  }
+  renderVals() {
+    const heroes = [
+      { id: 'dessalines', name: 'Jean-Jacques Dessalines', short: 'Dessalines', mono: 'JD', color: '#1F47B5', shade: '#14307D', rarity: 'Lejand', fact: 'Li te deklare endepandans Ayiti 1ye janvye 1804, nan Gonayiv.' },
+      { id: 'toussaint', name: 'Toussaint Louverture', short: 'Toussaint', mono: 'TL', color: '#D21034', shade: '#8F0A22', rarity: 'Lejand', fact: 'Youn nan pi gwo lidè Revolisyon Ayisyen an. Li te yon gwo estratèj militè.' },
+      { id: 'flon', name: 'Catherine Flon', short: 'Catherine Flon', mono: 'CF', color: '#0E7C86', shade: '#085A61', rarity: 'Ra', fact: 'Dapre istwa a, se li ki te koud premye drapo ble e wouj la, nan Akayè, 18 me 1803.' },
+      { id: 'belair', name: 'Sanite Bélair', short: 'Sanite Bélair', mono: 'SB', color: '#5B3FB5', shade: '#3D2A80', rarity: 'Ra', fact: 'Yon lyetnan nan lame revolisyonè a. Li te goumen ak kouraj pou libète.' },
+      { id: 'christophe', name: 'Henri Christophe', short: 'Christophe', mono: 'HC', color: '#B5651D', shade: '#7A4212', rarity: 'Ra', fact: 'Se li ki te fè bati Sitadèl Laferyè, nan Nò.' },
+      { id: 'capois', name: 'François Capois (Capois-La-Mort)', short: 'Capois-La-Mort', mono: 'CM', color: '#14213D', shade: '#000000', rarity: 'Ra', fact: 'Youn nan ewo Batay Vètyè, 18 novanm 1803.' },
+      { id: 'lamartiniere', name: 'Marie-Jeanne Lamartinière', short: 'Marie-Jeanne', mono: 'ML', color: '#17803F', shade: '#0F5A2C', rarity: 'Ra', fact: 'Li te goumen nan batay Krèt-a-Pyewo an 1802.' },
+      { id: 'lock1', locked: true },
+      { id: 'lock2', locked: true }
+    ];
+    const { tab, sel, flipped } = this.state;
+    const list = tab === 'ewo' ? heroes : Array.from({ length: 9 }, (_, i) => ({ id: tab + i, locked: true }));
+    const cardBase = 'padding: 0 0 8px; border-radius: 16px; background: #FFFFFF; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; overflow: hidden; color: #14213D; box-sizing: border-box; ';
+    const cards = list.map((h, i) => {
+      const on = !h.locked && h.id === sel;
+      const tilt = [-2, 1, -1, 2, -2, 1, 2, -1, 1][i % 9];
+      return {
+        owned: !h.locked,
+        locked: !!h.locked,
+        mono: h.mono || '',
+        short: h.locked ? '???' : h.short,
+        aria: h.locked ? 'Kat fèmen' : h.name,
+        pressed: on ? 'true' : 'false',
+        style: cardBase + 'transform: rotate(' + (on ? 0 : tilt) + 'deg) ' + (on ? 'translateY(-4px)' : '') + '; transition: transform .25s cubic-bezier(.34,1.56,.64,1); ' + (on ? 'border: 3px solid #14213D; border-bottom-width: 6px;' : 'border: 2px solid #E3E7F1; border-bottom-width: 5px;'),
+        topStyle: 'width: 100%; height: 56px; display: flex; align-items: center; justify-content: center; background: ' + (h.locked ? '#DCE1EE' : h.color) + ';',
+        pick: () => { if (!h.locked) this.setState({ sel: h.id, flipped: false }); }
+      };
+    });
+    const tabBase = 'min-height: 44px; padding: 8px 14px; border-radius: 999px; font-weight: 800; font-size: 14px; cursor: pointer; ';
+    const tabs = [
+      { id: 'ewo', label: 'Ewo' },
+      { id: 'bet', label: 'Bèt' },
+      { id: 'manje', label: 'Manje' },
+      { id: 'kote', label: 'Kote' }
+    ].map((t) => {
+      const on = t.id === tab;
+      return {
+        label: t.label,
+        pressed: on ? 'true' : 'false',
+        style: tabBase + (on ? 'background: #14213D; color: #FFFFFF; border: 2px solid #14213D;' : 'background: #FFFFFF; color: #14213D; border: 2px solid #D9DEEA;'),
+        pick: () => this.setState({ tab: t.id })
+      };
+    });
+    const s = heroes.find((h) => h.id === sel);
+    return {
+      tabs,
+      cards,
+      count: tab === 'ewo' ? '7 / 24' : '0 / 24',
+      flip: () => this.setState({ flipped: !this.state.flipped }),
+      flipLabel: flipped ? 'Vire kat ' + s.name + ' pou wè devan an' : 'Vire kat ' + s.name + ' pou li istwa l',
+      flippedAttr: flipped ? 'true' : 'false',
+      cardTransform: 'transform: rotateY(' + (flipped ? 180 : 0) + 'deg);',
+      frontStyle: 'position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 24px; padding: 14px; box-sizing: border-box; display: flex; gap: 14px; background: ' + s.color + '; border: 3px solid #14213D; border-bottom-width: 7px;',
+      detail: {
+        name: s.name,
+        mono: s.mono,
+        fact: s.fact,
+        tag: s.rarity === 'Lejand' ? 'KAT LEJAND' : 'KAT RA'
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

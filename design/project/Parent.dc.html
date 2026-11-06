@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ht">
+<head>
+<meta charset="utf-8">
+<title>Espas Paran</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&amp;family=Nunito:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F47B5;text-decoration:none}a:hover{color:#163585}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F6F7FB; font-family: 'Nunito', system-ui, sans-serif; color: #14213D; display: flex; flex-direction: column; padding: 20px 20px 24px; gap: 12px">
+
+<div style="display: flex; align-items: center; gap: 12px">
+<a href="Family.dc.html" aria-label="Retounen" style="width: 44px; height: 44px; border-radius: 14px; background: #FFFFFF; border: 2px solid #E3E7F1; display: flex; align-items: center; justify-content: center; color: #14213D; flex-shrink: 0">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg>
+</a>
+<div style="flex-grow: 1; display: flex; flex-direction: column">
+<h1 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 24px; line-height: 1.1; font-weight: 800">Espas Paran</h1>
+<span style="font-size: 13px; color: #5A6480; font-weight: 700">Toti 27 · 9–11 an</span>
+</div>
+</div>
+
+<sc-if value="{{locked}}" hint-placeholder-val="{{ true }}">
+<div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding-bottom: 60px">
+<div style="width: 80px; height: 80px; border-radius: 24px; background: #14213D; display: flex; align-items: center; justify-content: center">
+<svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+</div>
+<h2 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 24px; font-weight: 800; text-align: center">Pou paran sèlman</h2>
+<p style="margin: 0; font-size: 16px; font-weight: 700; color: #3B4560; text-align: center">Reponn kesyon sa a pou w antre:<br>Konbyen 7 × 6 fè?</p>
+<div role="group" aria-label="Repons" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; width: 100%">
+<sc-for list="{{gate}}" as="g" hint-placeholder-count="3">
+<button type="button" onClick="{{g.pick}}" style="min-height: 64px; border-radius: 16px; background: #FFFFFF; border: 2px solid #D9DEEA; border-bottom-width: 4px; font-family: 'Baloo 2', sans-serif; font-size: 26px; font-weight: 800; color: #14213D; cursor: pointer">{{g.label}}</button>
+</sc-for>
+</div>
+<sc-if value="{{wrong}}" hint-placeholder-val="{{ false }}">
+<span role="status" style="font-size: 15px; font-weight: 800; color: #B00D2B">Se pa sa. Eseye ankò.</span>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{unlocked}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 12px">
+
+<h2 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 18px; font-weight: 800">Semèn sa a</h2>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<div style="background: #FFFFFF; border: 2px solid #E3E7F1; border-bottom-width: 5px; border-radius: 16px; padding: 12px 10px; display: flex; flex-direction: column; gap: 2px">
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 24px; font-weight: 800; line-height: 1.1; color: #1F47B5">12</span>
+<span style="font-size: 13px; font-weight: 700; color: #5A6480">leson fini</span>
+</div>
+<div style="background: #FFFFFF; border: 2px solid #E3E7F1; border-bottom-width: 5px; border-radius: 16px; padding: 12px 10px; display: flex; flex-direction: column; gap: 2px">
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 24px; font-weight: 800; line-height: 1.1; color: #1F47B5">40</span>
+<span style="font-size: 13px; font-weight: 700; color: #5A6480">mo angle nouvo</span>
+</div>
+<div style="background: #FFFFFF; border: 2px solid #E3E7F1; border-bottom-width: 5px; border-radius: 16px; padding: 12px 10px; display: flex; flex-direction: column; gap: 2px">
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 24px; font-weight: 800; line-height: 1.1; color: #1F47B5">3 h 30</span>
+<span style="font-size: 13px; font-weight: 700; color: #5A6480">tan pou aprann</span>
+</div>
+</div>
+
+<table style="width: 100%; border-collapse: separate; border-spacing: 0; background: #FFFFFF; border: 2px solid #E3E7F1; border-bottom-width: 5px; border-radius: 16px; padding: 8px 6px; table-layout: fixed">
+<caption style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Minit chak jou semèn sa a</caption>
+<thead>
+<tr>
+<th scope="col" style="font-size: 13px; font-weight: 800; color: #5A6480; padding: 4px 0">Le</th>
+<th scope="col" style="font-size: 13px; font-weight: 800; color: #5A6480; padding: 4px 0">Ma</th>
+<th scope="col" style="font-size: 13px; font-weight: 800; color: #5A6480; padding: 4px 0">Me</th>
+<th scope="col" style="font-size: 13px; font-weight: 800; color: #5A6480; padding: 4px 0">Je</th>
+<th scope="col" style="font-size: 13px; font-weight: 800; color: #5A6480; padding: 4px 0">Va</th>
+<th scope="col" style="font-size: 13px; font-weight: 800; color: #5A6480; padding: 4px 0">Sa</th>
+<th scope="col" style="font-size: 13px; font-weight: 800; color: #5A6480; padding: 4px 0">Di</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center; font-size: 15px; font-weight: 800; padding: 4px 0">20</td>
+<td style="text-align: center; font-size: 15px; font-weight: 800; padding: 4px 0">35</td>
+<td style="text-align: center; font-size: 15px; font-weight: 800; padding: 4px 0">15</td>
+<td style="text-align: center; font-size: 15px; font-weight: 800; padding: 4px 0">40</td>
+<td style="text-align: center; font-size: 15px; font-weight: 800; padding: 4px 0">25</td>
+<td style="text-align: center; font-size: 15px; font-weight: 800; padding: 4px 0">45</td>
+<td style="text-align: center; font-size: 15px; font-weight: 800; padding: 4px 0">30</td>
+</tr>
+<tr>
+<td colspan="7" style="text-align: center; font-size: 12px; font-weight: 700; color: #5A6480; padding-top: 2px">minit pa jou</td>
+</tr>
+</tbody>
+</table>
+
+<a href="Schedule.dc.html" style="background: #E6ECFB; border: 2px solid #C9D5F5; border-bottom-width: 5px; border-radius: 18px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; color: #14213D">
+<svg aria-hidden="true" width="36" height="36" viewBox="0 0 48 48"><circle cx="24" cy="26" r="17" fill="#FFFFFF" stroke="#14213D" stroke-width="2.5"></circle><path d="M24 15v11l7 4" fill="none" stroke="#14213D" stroke-width="3" stroke-linecap="round"></path><path d="M10 9l6-5M38 9l-6-5" stroke="#14213D" stroke-width="3" stroke-linecap="round"></path><circle cx="24" cy="26" r="2.5" fill="#FF5A6E"></circle></svg>
+<span style="flex-grow: 1; display: flex; flex-direction: column"><span style="font-weight: 800; font-size: 15px">Orè Etid</span><span style="font-size: 13px; font-weight: 700; color: #5A6480">Lendi–vandredi · 16:00 · 15 min</span></span>
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#14213D" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>
+</a>
+
+<h2 style="margin: 4px 0 0; font-family: 'Baloo 2', sans-serif; font-size: 18px; font-weight: 800">Kontwòl</h2>
+<div style="background: #FFFFFF; border: 2px solid #E3E7F1; border-bottom-width: 5px; border-radius: 18px; padding: 4px 14px; display: flex; flex-direction: column">
+<div style="min-height: 56px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #EEF1F7">
+<span style="flex-grow: 1; font-weight: 800; font-size: 15px">Tan maksimòm pa jou</span>
+<button type="button" onClick="{{less}}" aria-label="Mwens tan" style="width: 44px; height: 44px; border-radius: 12px; border: 2px solid #D9DEEA; background: #FFFFFF; font-size: 22px; font-weight: 800; color: #14213D; cursor: pointer">−</button>
+<span role="status" style="min-width: 62px; text-align: center; font-weight: 800; font-size: 16px">{{limit}} min</span>
+<button type="button" onClick="{{more}}" aria-label="Plis tan" style="width: 44px; height: 44px; border-radius: 12px; border: 2px solid #D9DEEA; background: #FFFFFF; font-size: 22px; font-weight: 800; color: #14213D; cursor: pointer">+</button>
+</div>
+<sc-for list="{{toggles}}" as="t" hint-placeholder-count="3">
+<div style="{{t.rowStyle}}">
+<span style="flex-grow: 1; display: flex; flex-direction: column">
+<span style="font-weight: 800; font-size: 15px">{{t.label}}</span>
+<span style="font-size: 12px; font-weight: 700; color: #5A6480">{{t.hint}}</span>
+</span>
+<button type="button" role="switch" aria-checked="{{t.checked}}" aria-label="{{t.label}}" onClick="{{t.flip}}" style="{{t.trackStyle}}">
+<span style="{{t.knobStyle}}"></span>
+</button>
+</div>
+</sc-for>
+</div>
+
+<div style="background: #FFF4D1; border: 2px solid #F5B700; border-radius: 18px; padding: 12px 14px; display: flex; align-items: center; gap: 12px">
+<div style="flex-grow: 1; display: flex; flex-direction: column">
+<span style="font-weight: 800; font-size: 15px">Abònman · se Tonton Jak (Miami) ki peye</span>
+<span style="font-size: 13px; font-weight: 700; color: #5C4600">Aktif · peye pou 5 timoun an Ayiti tou</span>
+</div>
+<a href="Gift.dc.html" style="min-height: 44px; padding: 0 12px; border-radius: 12px; background: #14213D; color: #FFFFFF; border: 2px solid #14213D; font-size: 14px; font-weight: 800; display: flex; align-items: center; box-sizing: border-box">Jere</a>
+</div>
+
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { unlocked: false, wrong: false, limit: 45, sw: { bed: true, wa: true, strangers: false, streak: true, onenotif: true } };
+  }
+  renderVals() {
+    const { unlocked, wrong, limit, sw } = this.state;
+    const gate = [36, 42, 48].map((n) => ({
+      label: String(n),
+      pick: () => (n === 42 ? this.setState({ unlocked: true, wrong: false }) : this.setState({ wrong: true }))
+    }));
+    const defs = [
+      { id: 'bed', label: 'Fèmen app la apre 8 è diswa', hint: 'Pou dòmi bonè' },
+      { id: 'wa', label: 'Rapò chak semèn sou WhatsApp', hint: 'Chak dimanch swa' },
+      { id: 'strangers', label: 'Defi ak timoun li pa konnen', hint: 'San chat, non jenere sèlman' },
+      { id: 'streak', label: 'Seri jou (streak)', hint: 'Fèmen l si sa bay timoun lan twòp presyon' },
+      { id: 'onenotif', label: 'Maksimòm 1 rapèl pa jou', hint: 'Ti Zwazo pa janm ensiste' }
+    ];
+    const toggles = defs.map((d, i) => {
+      const on = !!sw[d.id];
+      return {
+        label: d.label,
+        hint: d.hint,
+        checked: on ? 'true' : 'false',
+        rowStyle: 'min-height: 60px; display: flex; align-items: center; gap: 10px;' + (i < defs.length - 1 ? ' border-bottom: 1px solid #EEF1F7;' : ''),
+        trackStyle: 'width: 52px; height: 32px; border-radius: 16px; border: none; padding: 3px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; background: ' + (on ? '#17803F' : '#B9C2D6') + '; justify-content: ' + (on ? 'flex-end' : 'flex-start') + ';',
+        knobStyle: 'width: 26px; height: 26px; border-radius: 13px; background: #FFFFFF; box-shadow: 0 1px 3px rgba(20,33,61,0.3); display: block;',
+        flip: () => this.setState({ sw: { ...this.state.sw, [d.id]: !this.state.sw[d.id] } })
+      };
+    });
+    return {
+      locked: !unlocked,
+      unlocked,
+      wrong,
+      gate,
+      limit,
+      less: () => this.setState({ limit: Math.max(15, this.state.limit - 15) }),
+      more: () => this.setState({ limit: Math.min(120, this.state.limit + 15) }),
+      toggles
+    };
+  }
+}
+</script>
+</body>
+</html>

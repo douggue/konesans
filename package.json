@@ -1,0 +1,14 @@
+{
+  "name": "konesans",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "server/nakama",
+    "apps/*"
+  ],
+  "scripts": {
+    "test": "npm run test -w @konesans/core",
+    "build": "npm run build -w @konesans/core && npm run build -w @konesans/nakama",
+    "postinstall": "npm run build -w @konesans/core"
+  }
+}

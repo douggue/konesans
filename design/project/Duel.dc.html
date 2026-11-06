@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ht">
+<head>
+<meta charset="utf-8">
+<title>Defi 1 kont 1</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&amp;family=Nunito:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F47B5;text-decoration:none}a:hover{color:#163585}
+button{font-family:inherit}
+@keyframes sUp{0%{transform:translateY(105%)}100%{transform:translateY(0)}}
+@keyframes sScrim{0%{opacity:0}100%{opacity:1}}
+@keyframes sPop{0%{transform:translateY(30px) scale(.6);opacity:0}70%{transform:translateY(-6px) scale(1.06);opacity:1}100%{transform:translateY(0) scale(1);opacity:1}}
+@keyframes sFade{0%{transform:translateY(10px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes mHop{0%,100%{transform:translateY(0)}45%{transform:translateY(-12px)}}
+@keyframes mShake{0%,100%{transform:rotate(0)}25%{transform:rotate(-5deg)}75%{transform:rotate(5deg)}}
+@media (prefers-reduced-motion: reduce){*{animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important}}
+</style>
+</helmet>
+<div style="position: relative; overflow: hidden; width: 390px; height: 844px; box-sizing: border-box; background: #F6F7FB; font-family: 'Nunito', system-ui, sans-serif; color: #14213D; display: flex; flex-direction: column; padding: 20px 20px 24px; gap: 14px">
+
+<div style="display: flex; align-items: center; justify-content: space-between">
+<button type="button" onClick="{{askQuit}}" aria-label="Kite match la" style="width: 44px; height: 44px; border-radius: 14px; background: #FFFFFF; border: 2px solid #E3E7F1; display: flex; align-items: center; justify-content: center; color: #14213D; cursor: pointer">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="M6 6l12 12"></path></svg>
+</button>
+<span style="font-weight: 800; font-size: 15px; color: #5A6480">Kesyon 10 / 10</span>
+<span style="background: #FDE7EC; color: #B00D2B; border-radius: 999px; padding: 6px 12px; font-weight: 800; font-size: 13px">Istwa Ayiti</span>
+</div>
+
+<div style="background: #FFFFFF; border: 2px solid #E3E7F1; border-bottom-width: 5px; border-radius: 22px; padding: 14px 16px; display: flex; align-items: center; gap: 10px">
+<div style="flex-grow: 1; display: flex; align-items: center; gap: 10px">
+<div style="width: 44px; height: 44px; border-radius: 22px; background: #1F47B5; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 20px">M</div>
+<div style="display: flex; flex-direction: column">
+<span style="font-size: 12px; font-weight: 700; color: #5A6480">Ou</span>
+<span style="font-weight: 800; font-size: 14px">Toti 27</span>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; font-family: 'Baloo 2', sans-serif; font-weight: 800">
+<span style="font-size: 30px; color: #1F47B5">{{myScore}}</span>
+<span style="font-size: 14px; color: #5A6480">VS</span>
+<span style="font-size: 30px; color: #D21034">2</span>
+</div>
+<div style="flex-grow: 1; display: flex; align-items: center; gap: 10px; justify-content: flex-end">
+<div style="display: flex; flex-direction: column; align-items: flex-end">
+<span style="font-size: 12px; font-weight: 700; color: #5A6480">Jwè</span>
+<span style="font-weight: 800; font-size: 14px">Toro 11</span>
+</div>
+<div style="width: 44px; height: 44px; border-radius: 22px; background: #D21034; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 20px">T</div>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 10px">
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5A6480" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+<div style="flex-grow: 1; height: 12px; border-radius: 6px; background: #E3E7F1; overflow: hidden">
+<div style="width: 60%; height: 12px; border-radius: 6px; background: #F5B700"></div>
+</div>
+<span style="font-weight: 800; font-size: 15px; min-width: 28px; text-align: right">9 s</span>
+</div>
+
+<div style="display: flex; align-items: flex-start; gap: 10px; margin: 6px 0 4px"><button type="button" aria-label="Koute kesyon an" style="width: 44px; height: 44px; border-radius: 14px; background: #4D7CFE; color: #FFFFFF; border: 2px solid #14213D; box-shadow: 0 3px 0 #14213D; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"></polygon><path d="M15.5 8.5a5 5 0 0 1 0 7"></path><path d="M19 5a10 10 0 0 1 0 14"></path></svg></button><h1 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 26px; line-height: 1.15; font-weight: 800">Ki ane Ayiti te vin yon peyi endepandan?</h1></div>
+
+<div role="group" aria-label="Repons" style="display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{answers}}" as="ans" hint-placeholder-count="4">
+<button type="button" onClick="{{ans.pick}}" style="{{ans.style}}">
+<span style="{{ans.badgeStyle}}">{{ans.letter}}</span>
+<span style="flex-grow: 1; text-align: left">{{ans.text}}</span>
+<sc-if value="{{ans.showOk}}" hint-placeholder-val="{{ false }}">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#17803F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+</sc-if>
+<sc-if value="{{ans.showBad}}" hint-placeholder-val="{{ false }}">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D21034" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="M6 6l12 12"></path></svg>
+</sc-if>
+</button>
+</sc-for>
+</div>
+
+
+<div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 13px; font-weight: 800; color: #5A6480">Voye yon reyaksyon</span>
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<button type="button" style="min-height: 44px; padding: 8px 14px; border-radius: 999px; background: #FFFFFF; border: 2px solid #D9DEEA; color: #14213D; font-weight: 800; font-size: 14px; cursor: pointer">Bravo!</button>
+<button type="button" style="min-height: 44px; padding: 8px 14px; border-radius: 999px; background: #FFFFFF; border: 2px solid #D9DEEA; color: #14213D; font-weight: 800; font-size: 14px; cursor: pointer">Wow!</button>
+<button type="button" style="min-height: 44px; padding: 8px 14px; border-radius: 999px; background: #FFFFFF; border: 2px solid #D9DEEA; color: #14213D; font-weight: 800; font-size: 14px; cursor: pointer">Byen jwe!</button>
+<button type="button" style="min-height: 44px; padding: 8px 14px; border-radius: 999px; background: #FFFFFF; border: 2px solid #D9DEEA; color: #14213D; font-weight: 800; font-size: 14px; cursor: pointer">Ankò!</button>
+</div>
+<span style="font-size: 12px; font-weight: 600; color: #5A6480">Pou sekirite, se sèlman mesaj prepare yo ki disponib.</span>
+</div>
+
+<sc-if value="{{picked}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; justify-content: flex-end">
+<div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(20,33,61,.35); animation: sScrim .3s ease-out both"></div>
+<div role="status" style="{{sheetStyle}}">
+<div aria-hidden="true" style="position: absolute; left: 50%; top: 10px; width: 44px; height: 5px; margin-left: -22px; border-radius: 3px; background: rgba(20,33,61,.18)"></div>
+
+<sc-if value="{{right}}" hint-placeholder-val="{{ true }}">
+<svg aria-hidden="true" width="120" height="126" viewBox="-20 -10 200 210" style="position: absolute; left: 14px; top: -92px; animation: sPop .5s cubic-bezier(.34,1.56,.64,1) .25s both">
+<g style="animation: mHop 1s ease-in-out .8s infinite">
+<ellipse cx="80" cy="182" rx="46" ry="7" fill="#14213D" opacity=".15"></ellipse>
+<path d="M66 172 l-6 12 M66 172 l2 12 M94 172 l-2 12 M94 172 l6 12" stroke="#F5B700" stroke-width="5" stroke-linecap="round"></path>
+<path d="M40 100 C14 88 6 56 18 40 C28 58 38 74 46 90 Z" fill="#14307D"></path>
+<path d="M120 100 C146 88 154 56 142 40 C132 58 122 74 114 90 Z" fill="#14307D"></path>
+<ellipse cx="80" cy="112" rx="50" ry="62" fill="#1F47B5"></ellipse>
+<ellipse cx="80" cy="132" rx="32" ry="38" fill="#E6ECFB"></ellipse>
+<path d="M50 92 Q62 78 74 92 M86 92 Q98 78 110 92" stroke="#14213D" stroke-width="5" fill="none" stroke-linecap="round"></path>
+<circle cx="50" cy="106" r="6" fill="#F7A1B3" opacity=".8"></circle><circle cx="110" cy="106" r="6" fill="#F7A1B3" opacity=".8"></circle>
+<path d="M72 110 Q80 128 88 110 Z" fill="#D21034"></path>
+<path d="M70 102 L90 102 L80 112 Z" fill="#F5B700" stroke="#C99400" stroke-width="2" stroke-linejoin="round"></path>
+<path d="M50 52 L80 38 L110 52 L80 66 Z" fill="#14213D"></path><path d="M60 56 L60 68 Q80 78 100 68 L100 56 L80 66 Z" fill="#14213D"></path><path d="M110 52 L114 74" stroke="#D21034" stroke-width="3" stroke-linecap="round"></path><circle cx="114" cy="78" r="5" fill="#D21034"></circle>
+<path d="M0 18 L4 26 L12 30 L4 34 L0 42 L-4 34 L-12 30 L-4 26 Z" fill="#F5B700"></path>
+<path d="M162 12 L166 20 L174 24 L166 28 L162 36 L158 28 L150 24 L158 20 Z" fill="#F5B700"></path>
+</g>
+</svg>
+</sc-if>
+<sc-if value="{{wrong}}" hint-placeholder-val="{{ false }}">
+<svg aria-hidden="true" width="120" height="126" viewBox="-20 -10 200 210" style="position: absolute; left: 14px; top: -92px; animation: sPop .5s cubic-bezier(.34,1.56,.64,1) .25s both">
+<g style="transform-origin: 80px 180px; animation: mShake .5s ease-in-out .8s 2">
+<ellipse cx="80" cy="182" rx="46" ry="7" fill="#14213D" opacity=".15"></ellipse>
+<path d="M66 172 l-6 12 M66 172 l2 12 M94 172 l-2 12 M94 172 l6 12" stroke="#F5B700" stroke-width="5" stroke-linecap="round"></path>
+<path d="M38 100 C20 120 22 150 32 164 C36 146 40 130 46 116 Z" fill="#14307D"></path>
+<path d="M122 100 C140 120 138 150 128 164 C124 146 120 130 114 116 Z" fill="#14307D"></path>
+<ellipse cx="80" cy="112" rx="50" ry="62" fill="#1F47B5"></ellipse>
+<ellipse cx="80" cy="132" rx="32" ry="38" fill="#E6ECFB"></ellipse>
+<circle cx="62" cy="92" r="13" fill="#FFFFFF"></circle><circle cx="98" cy="92" r="13" fill="#FFFFFF"></circle>
+<circle cx="63" cy="97" r="6" fill="#14213D"></circle><circle cx="97" cy="97" r="6" fill="#14213D"></circle>
+<path d="M48 80 L72 74 M112 80 L88 74" stroke="#14213D" stroke-width="4" stroke-linecap="round"></path>
+<path d="M70 106 L90 106 L80 120 Z" fill="#F5B700" stroke="#C99400" stroke-width="2" stroke-linejoin="round"></path>
+<path d="M50 52 L80 38 L110 52 L80 66 Z" fill="#14213D"></path><path d="M60 56 L60 68 Q80 78 100 68 L100 56 L80 66 Z" fill="#14213D"></path><path d="M110 52 L114 74" stroke="#D21034" stroke-width="3" stroke-linecap="round"></path><circle cx="114" cy="78" r="5" fill="#D21034"></circle>
+<path d="M124 64 q7 11 0 16 q-7 -5 0 -16 Z" fill="#8EC5FF"></path>
+</g>
+</svg>
+</sc-if>
+
+<div style="display: flex; flex-direction: column; gap: 2px; margin-left: 132px; min-height: 44px; animation: sFade .35s ease-out .3s both">
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 24px; font-weight: 800; line-height: 1.1">{{sheetTitle}}</span>
+<span style="font-size: 15px; font-weight: 700">{{sheetScore}}</span>
+</div>
+<div style="background: rgba(255,255,255,.65); border-radius: 14px; padding: 10px 12px; font-size: 15px; font-weight: 700; line-height: 1.4; animation: sFade .35s ease-out .38s both">
+<span>{{feedback}}</span>
+</div>
+<a href="Reward.dc.html" style="{{nextStyle}} display: flex; align-items: center; justify-content: center; box-sizing: border-box">Wè rezilta ak kado w</a>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{quitting}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; justify-content: flex-end">
+<button type="button" onClick="{{stay}}" aria-label="Rete nan match la" style="position: absolute; inset: 0; width: 100%; height: 100%; border: none; padding: 0; background: rgba(20,33,61,.45); cursor: pointer; animation: sScrim .25s both"></button>
+<div role="dialog" aria-label="Kite match la?" style="position: relative; background: #FFFFFF; border-radius: 28px 28px 0 0; border-top: 3px solid #14213D; padding: 22px 20px 30px; display: flex; flex-direction: column; gap: 12px; animation: sUp .45s cubic-bezier(.32,.72,0,1) both">
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 24px; font-weight: 800">Ou vle kite match la?</span>
+<span style="font-size: 15px; font-weight: 700; color: #3B4560; line-height: 1.4">Si w kite kounye a, Toro 11 ap genyen. Ou gen sèlman 1 kesyon ki rete!</span>
+<button type="button" onClick="{{stay}}" style="min-height: 56px; border-radius: 16px; background: #2F9E44; color: #FFFFFF; border: 3px solid #14213D; box-shadow: 0 4px 0 #14213D; font-size: 18px; font-weight: 800; cursor: pointer">Mwen rete</button>
+<a href="Main.dc.html" style="min-height: 48px; border-radius: 16px; background: #FFFFFF; color: #8F0A22; border: 2px solid #F5BFC9; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; box-sizing: border-box">Kite kanmenm</a>
+</div>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { picked: null, quitting: false };
+  }
+  renderVals() {
+    const picked = this.state.picked;
+    const options = [
+      { letter: 'A', text: '1791' },
+      { letter: 'B', text: '1804', ok: true },
+      { letter: 'C', text: '1825' },
+      { letter: 'D', text: '1915' }
+    ];
+    const base = 'min-height: 58px; width: 100%; display: flex; align-items: center; gap: 12px; padding: 8px 14px; border-radius: 16px; font-size: 19px; font-weight: 800; color: #14213D; cursor: pointer; box-sizing: border-box; ';
+    const badgeBase = 'width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; flex-shrink: 0; ';
+    const answers = options.map((o) => {
+      const isPicked = picked === o.letter;
+      let style = base + 'background: #FFFFFF; border: 2px solid #D9DEEA; border-bottom-width: 4px;';
+      let badgeStyle = badgeBase + 'background: #E6ECFB; color: #1F47B5;';
+      let showOk = false;
+      let showBad = false;
+      if (picked && o.ok) {
+        style = base + 'background: #E3F4EA; border: 2px solid #17803F; border-bottom-width: 4px;';
+        badgeStyle = badgeBase + 'background: #17803F; color: #FFFFFF;';
+        showOk = true;
+      } else if (isPicked) {
+        style = base + 'background: #FDE7EC; border: 2px solid #D21034; border-bottom-width: 4px;';
+        badgeStyle = badgeBase + 'background: #D21034; color: #FFFFFF;';
+        showBad = true;
+      }
+      return {
+        ...o,
+        style,
+        badgeStyle,
+        showOk,
+        showBad,
+        pick: () => { if (!this.state.picked) this.setState({ picked: o.letter }); }
+      };
+    });
+    const right = picked === 'B';
+    return {
+      quitting: this.state.quitting,
+      askQuit: () => this.setState({ quitting: true }),
+      stay: () => this.setState({ quitting: false }),
+      answers,
+      picked: !!picked,
+      right: !!picked && right,
+      wrong: !!picked && !right,
+      sheetTitle: right ? 'Bravo!' : 'Pa grav!',
+      sheetScore: right ? 'Ou devan: 4 kont 2' : 'Toro 11 jwenn li. Se 3 kont 3.',
+      sheetStyle: 'position: relative; margin: 0 -0px; padding: 26px 20px 28px; border-radius: 28px 28px 0 0; display: flex; flex-direction: column; gap: 12px; animation: sUp .55s cubic-bezier(.32,.72,0,1) both; ' + (right ? 'background: #D3F9D8; color: #12632F; border-top: 3px solid #51CF66;' : 'background: #FFE3E8; color: #8F0A22; border-top: 3px solid #FF8FA3;'),
+      nextStyle: 'min-height: 56px; width: 100%; border-radius: 16px; border: 2px solid #14213D; font-size: 18px; font-weight: 800; color: #FFFFFF; cursor: pointer; animation: sFade .35s ease-out .45s both; ' + (right ? 'background: #2F9E44; box-shadow: 0 4px 0 #14213D;' : 'background: #E03150; box-shadow: 0 4px 0 #14213D;'),
+      nextQ: () => this.setState({ picked: null }),
+      myScore: right ? 4 : 3,
+      feedback: right
+        ? 'Bravo! Ayiti te deklare endepandans li 1ye janvye 1804, nan Gonayiv.'
+        : 'Se pa sa. Ayiti te deklare endepandans li 1ye janvye 1804, nan Gonayiv.',
+      feedbackStyle: 'border-radius: 14px; padding: 12px 14px; font-size: 14px; font-weight: 700; line-height: 1.35; ' + (right ? 'background: #E3F4EA; color: #12632F;' : 'background: #FDE7EC; color: #8F0A22;')
+    };
+  }
+}
+</script>
+</body>
+</html>

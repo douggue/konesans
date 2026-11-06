@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ht">
+<head>
+<meta charset="utf-8">
+<title>Kesyon 6–8 an</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&amp;family=Nunito:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F47B5;text-decoration:none}
+button{font-family:inherit}
+@keyframes kPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes kBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes kPop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F6F7FB; font-family: 'Nunito', system-ui, sans-serif; color: #14213D; display: flex; flex-direction: column; padding: 20px 20px 26px; gap: 14px; overflow: hidden">
+
+<div style="display: flex; align-items: center; gap: 12px">
+<a href="Categories.dc.html" aria-label="Kite" style="width: 52px; height: 52px; border-radius: 16px; background: #FFFFFF; border: 2px solid #E3E7F1; display: flex; align-items: center; justify-content: center; color: #14213D; box-sizing: border-box; flex-shrink: 0">
+<svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M18 6 6 18"></path><path d="M6 6l12 12"></path></svg>
+</a>
+<div style="flex-grow: 1; height: 16px; border-radius: 8px; background: #E3E7F1; overflow: hidden"><div style="width: 40%; height: 16px; border-radius: 8px; background: #51CF66; box-shadow: inset 0 -4px 0 #2F9E44"></div></div>
+<span style="background: #FFF4D1; border: 2px solid #F5B700; border-radius: 999px; padding: 4px 12px; font-weight: 800; font-size: 14px; color: #5C4600">6–8 an</span>
+</div>
+
+<div style="display: flex; align-items: center; gap: 12px">
+<svg aria-hidden="true" width="96" height="101" viewBox="-20 -10 200 210" style="flex-shrink: 0; animation: kBob 3s ease-in-out infinite">
+<path d="M36 92 C8 100 4 136 22 150 C30 134 38 122 44 110 Z" fill="#14307D"></path><path d="M124 92 C152 100 156 136 138 150 C130 134 122 122 116 110 Z" fill="#14307D"></path>
+<ellipse cx="80" cy="112" rx="50" ry="62" fill="#1F47B5"></ellipse><ellipse cx="80" cy="132" rx="32" ry="38" fill="#E6ECFB"></ellipse>
+<circle cx="62" cy="90" r="13" fill="#FFFFFF"></circle><circle cx="98" cy="90" r="13" fill="#FFFFFF"></circle><circle cx="66" cy="91" r="6" fill="#14213D"></circle><circle cx="102" cy="91" r="6" fill="#14213D"></circle>
+<path d="M70 104 L90 104 L80 120 Z" fill="#F5B700" stroke="#C99400" stroke-width="2"></path>
+<path d="M50 52 L80 38 L110 52 L80 66 Z" fill="#14213D"></path><path d="M60 56 L60 68 Q80 78 100 68 L100 56 L80 66 Z" fill="#14213D"></path><path d="M110 52 L114 74" stroke="#D21034" stroke-width="3" stroke-linecap="round"></path><circle cx="114" cy="78" r="5" fill="#D21034"></circle>
+</svg>
+<button type="button" onClick="{{speak}}" aria-label="Koute kesyon an" style="flex-grow: 1; min-height: 96px; border-radius: 24px; background: #FFFFFF; border: 3px solid #14213D; border-bottom-width: 7px; display: flex; align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer; text-align: left">
+<span style="width: 56px; height: 56px; border-radius: 18px; background: #4D7CFE; color: #FFFFFF; display: flex; align-items: center; justify-content: center; flex-shrink: 0; {{pulse}}">
+<svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"></polygon><path d="M15.5 8.5a5 5 0 0 1 0 7"></path><path d="M19 5a10 10 0 0 1 0 14"></path></svg>
+</span>
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 22px; font-weight: 800; line-height: 1.15; color: #14213D">Ki bèt sa a ki senbòl Ayiti?</span>
+</button>
+</div>
+
+<div role="group" aria-label="Repons" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; flex-grow: 1">
+<sc-for list="{{opts}}" as="o" hint-placeholder-count="4">
+<button type="button" onClick="{{o.pick}}" aria-label="{{o.label}}" style="{{o.style}}">
+<span style="font-size: 72px; line-height: 1">{{o.pic}}</span>
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 20px; font-weight: 800">{{o.label}}</span>
+<button type="button" aria-label="Koute: {{o.label}}" style="width: 40px; height: 40px; border-radius: 12px; background: #E6ECFB; border: 2px solid #14213D; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14213D" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="#14213D"></polygon><path d="M15.5 8.5a5 5 0 0 1 0 7"></path></svg></button>
+</button>
+</sc-for>
+</div>
+
+<sc-if value="{{picked}}" hint-placeholder-val="{{ false }}">
+<div role="status" style="{{fb}}">
+<span style="font-size: 40px; line-height: 1">{{fbPic}}</span>
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 22px; font-weight: 800; line-height: 1.1">{{fbText}}</span>
+<button type="button" aria-label="Koute esplikasyon an" style="margin-left: auto; width: 48px; height: 48px; border-radius: 14px; background: #FFFFFF; border: 2px solid #14213D; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#14213D" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="#14213D"></polygon><path d="M15.5 8.5a5 5 0 0 1 0 7"></path></svg></button>
+</div>
+<button type="button" onClick="{{next}}" style="min-height: 64px; border-radius: 18px; background: #2F9E44; color: #FFFFFF; border: 3px solid #14213D; box-shadow: 0 5px 0 #14213D; font-family: 'Baloo 2', sans-serif; font-size: 24px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>Pwochen</button>
+</sc-if>
+<sc-if value="{{notPicked}}" hint-placeholder-val="{{ true }}">
+<p style="margin: 0; font-size: 13px; font-weight: 700; color: #5A6480; text-align: center">Mòd 6–8 an: tout kesyon ak repons yo gen son. Foto anvan, mo apre.</p>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { picked: null, spoke: 0 };
+  }
+  renderVals() {
+    const s = this.state;
+    const list = [
+      { id: 'zwazo', label: 'Toti', pic: '🦅', ok: true },
+      { id: 'lyon', label: 'Lyon', pic: '🦁' },
+      { id: 'kabrit', label: 'Kabrit', pic: '🐐' },
+      { id: 'pwason', label: 'Pwason', pic: '🐟' }
+    ];
+    const base = 'border-radius: 22px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 10px; ';
+    const opts = list.map((o) => {
+      let st = base + 'background: #FFFFFF; border: 3px solid #D9DEEA; border-bottom-width: 7px;';
+      if (s.picked && o.ok) st = base + 'background: #D3F9D8; border: 3px solid #2F9E44; border-bottom-width: 7px;';
+      else if (s.picked === o.id) st = base + 'background: #FFE3E8; border: 3px solid #D21034; border-bottom-width: 7px;';
+      return { ...o, style: st, pick: () => { if (!s.picked) this.setState({ picked: o.id }); } };
+    });
+    const right = s.picked === 'zwazo';
+    return {
+      opts, picked: !!s.picked, notPicked: !s.picked,
+      speak: () => this.setState({ spoke: s.spoke + 1 }),
+      pulse: s.spoke % 2 ? 'animation: kPulse .6s ease-in-out 3;' : '',
+      fb: 'border-radius: 20px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; animation: kPop .35s both; ' + (right ? 'background: #D3F9D8; color: #12632F; border: 2px solid #2F9E44;' : 'background: #FFE3E8; color: #8F0A22; border: 2px solid #D21034;'),
+      fbPic: right ? '🎉' : '💪',
+      fbText: right ? 'Bravo! Toti a sou zam peyi a.' : 'Se zwazo a! Li sou zam peyi a.',
+      next: () => this.setState({ picked: null })
+    };
+  }
+}
+</script>
+</body>
+</html>

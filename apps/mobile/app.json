@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "Konesans",
+    "slug": "konesans",
+    "version": "0.1.0",
+    "scheme": "konesans",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F6F7FB",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1F47B5"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "ht.konesans.app"
+    },
+    "android": {
+      "package": "ht.konesans.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#1F47B5",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "asyncRoutes": {
+            "web": false,
+            "default": "development"
+          }
+        }
+      ],
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": false,
+      "baseUrl": "."
+    }
+  }
+}

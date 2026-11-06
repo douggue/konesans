@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ht">
+<head>
+<meta charset="utf-8">
+<title>Lig</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&amp;family=Nunito:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F47B5;text-decoration:none}a:hover{color:#163585}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F6F7FB; font-family: 'Nunito', system-ui, sans-serif; color: #14213D; display: flex; flex-direction: column; padding: 20px 20px 24px; gap: 12px">
+
+<div style="display: flex; align-items: center; gap: 12px">
+<a href="Family.dc.html" aria-label="Retounen" style="width: 44px; height: 44px; border-radius: 14px; background: #FFFFFF; border: 2px solid #E3E7F1; display: flex; align-items: center; justify-content: center; color: #14213D; flex-shrink: 0">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg>
+</a>
+<h1 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 24px; line-height: 1.1; font-weight: 800">Lig</h1>
+</div>
+
+<div role="group" aria-label="Klasman" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; background: #E3E7F1; border-radius: 16px; padding: 4px">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="2">
+<button type="button" onClick="{{t.pick}}" aria-pressed="{{t.pressed}}" style="{{t.style}}">{{t.label}}</button>
+</sc-for>
+</div>
+
+<sc-if value="{{isWeek}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="background: #FFFFFF; border: 2px solid #E3E7F1; border-bottom-width: 5px; border-radius: 20px; padding: 12px 14px; display: flex; align-items: center; gap: 12px">
+<div style="width: 48px; height: 48px; border-radius: 14px; background: #DCE1EE; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+<svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="#A7B0C4" stroke="#5A6480" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"></path></svg>
+</div>
+<div style="flex-grow: 1; display: flex; flex-direction: column">
+<span style="font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 19px; line-height: 1.15">Lig Ajan</span>
+<span style="font-size: 13px; font-weight: 700; color: #5A6480">Top 3 yo monte nan Lig Lò · 3 jou rete</span>
+</div>
+</div>
+<ol aria-label="Klasman Lig Ajan" style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px">
+<sc-for list="{{players}}" as="p" hint-placeholder-count="10">
+<li style="{{p.rowStyle}}">
+<span style="width: 22px; font-weight: 800; font-size: 15px; text-align: center">{{p.rank}}</span>
+<div style="{{p.avatarStyle}}">{{p.mono}}</div>
+<span style="flex-grow: 1; font-weight: 800; font-size: 15px">{{p.name}}</span>
+<sc-if value="{{p.hasZone}}" hint-placeholder-val="{{ false }}">
+<span style="{{p.zoneStyle}}">{{p.zone}}</span>
+</sc-if>
+<span style="font-weight: 800; font-size: 14px; min-width: 64px; text-align: right">{{p.xp}}</span>
+</li>
+</sc-for>
+</ol>
+</div>
+</sc-if>
+
+<sc-if value="{{isRegion}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="background: #14213D; color: #FFFFFF; border-radius: 20px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; font-weight: 800; letter-spacing: 0.06em; color: #F5B700">GWO DEFI SEMÈN NAN</span>
+<div style="display: flex; align-items: center; justify-content: space-between">
+<div style="display: flex; flex-direction: column">
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 26px; font-weight: 800; line-height: 1">48 320</span>
+<span style="font-size: 14px; font-weight: 800; color: #C9D5F5">Ayiti</span>
+</div>
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 18px; font-weight: 800; color: #A7B0C4">VS</span>
+<div style="display: flex; flex-direction: column; align-items: flex-end">
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 26px; font-weight: 800; line-height: 1">41 975</span>
+<span style="font-size: 14px; font-weight: 800; color: #C9D5F5">Dyaspora</span>
+</div>
+</div>
+</div>
+<h2 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 18px; font-weight: 800">Depatman pa depatman</h2>
+<ol aria-label="Klasman depatman" style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px">
+<sc-for list="{{deps}}" as="d" hint-placeholder-count="10">
+<li style="{{d.rowStyle}}">
+<span style="width: 22px; font-weight: 800; font-size: 15px; text-align: center">{{d.rank}}</span>
+<span style="flex-grow: 1; font-weight: 800; font-size: 15px">{{d.name}}</span>
+<sc-if value="{{d.mine}}" hint-placeholder-val="{{ false }}">
+<span style="font-size: 11px; font-weight: 800; border-radius: 999px; padding: 2px 8px; background: #1F47B5; color: #FFFFFF">Depatman ou</span>
+</sc-if>
+<span style="font-weight: 800; font-size: 14px; min-width: 64px; text-align: right">{{d.pts}}</span>
+</li>
+</sc-for>
+</ol>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: 'week' };
+  }
+  renderVals() {
+    const tab = this.state.tab;
+    const segBase = 'min-height: 44px; border: none; border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; ';
+    const tabs = [
+      { id: 'week', label: 'Lig semèn nan' },
+      { id: 'region', label: 'Rejyon' }
+    ].map((t) => {
+      const on = t.id === tab;
+      return {
+        label: t.label,
+        pressed: on ? 'true' : 'false',
+        style: segBase + (on ? 'background: #FFFFFF; color: #1F47B5; box-shadow: 0 2px 6px rgba(20,33,61,0.12);' : 'background: transparent; color: #5A6480;'),
+        pick: () => this.setState({ tab: t.id })
+      };
+    });
+    const colors = ['#0E7C86', '#5B3FB5', '#D21034', '#1F47B5', '#B5651D', '#17803F', '#14213D', '#0E7C86', '#D21034', '#5B3FB5'];
+    const names = ['Kolibri 5', 'Lanbi 33', 'Toro 11', 'Toti 27', 'Mango 8', 'Zandolit 14', 'Pèlikan 2', 'Kayiman 19', 'Flanbwayan 6', 'Tanbou 40'];
+    const xps = [1240, 1180, 1050, 980, 910, 870, 800, 760, 640, 590];
+    const rowBase = 'min-height: 44px; border-radius: 14px; padding: 4px 12px 4px 8px; display: flex; align-items: center; gap: 10px; box-sizing: border-box; ';
+    const players = names.map((n, i) => {
+      const me = i === 3;
+      const up = i < 3;
+      const down = i >= 8;
+      let bg = 'background: #FFFFFF; border: 2px solid #E3E7F1;';
+      if (me) bg = 'background: #E6ECFB; border: 2px solid #1F47B5;';
+      return {
+        rank: String(i + 1),
+        name: me ? n + ' (ou)' : n,
+        mono: n.charAt(0),
+        xp: xps[i].toLocaleString('fr-FR') + ' XP',
+        hasZone: up || down,
+        zone: up ? 'Monte' : 'Desann',
+        zoneStyle: 'font-size: 11px; font-weight: 800; border-radius: 999px; padding: 2px 8px; ' + (up ? 'background: #E3F4EA; color: #12632F;' : 'background: #FDE7EC; color: #8F0A22;'),
+        rowStyle: rowBase + bg,
+        avatarStyle: 'width: 32px; height: 32px; border-radius: 16px; background: ' + colors[i] + '; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; flex-shrink: 0;'
+      };
+    });
+    const depList = [['Nò', 6840], ['Lwès', 6510], ['Latibonit', 5920], ['Sid', 5400], ['Sidès', 4980], ['Grandans', 4610], ['Nòdès', 4350], ['Sant', 3990], ['Nòdwès', 3120], ['Nip', 2600]];
+    const deps = depList.map((d, i) => {
+      const mine = d[0] === 'Lwès';
+      return {
+        rank: String(i + 1),
+        name: d[0],
+        pts: d[1].toLocaleString('fr-FR') + ' pwen',
+        mine,
+        rowStyle: rowBase + 'padding-left: 8px; ' + (mine ? 'background: #E6ECFB; border: 2px solid #1F47B5;' : 'background: #FFFFFF; border: 2px solid #E3E7F1;')
+      };
+    });
+    return { tabs, isWeek: tab === 'week', isRegion: tab === 'region', players, deps };
+  }
+}
+</script>
+</body>
+</html>

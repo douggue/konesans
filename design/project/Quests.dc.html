@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ht">
+<head>
+<meta charset="utf-8">
+<title>Misyon Jodi a</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&amp;family=Nunito:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F47B5;text-decoration:none}
+button{font-family:inherit}
+@keyframes cShake{0%,100%{transform:rotate(0)}20%{transform:rotate(-8deg)}40%{transform:rotate(8deg)}60%{transform:rotate(-6deg)}80%{transform:rotate(6deg)}}
+@keyframes cOpen{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
+@keyframes cPop{0%{transform:translateY(20px) scale(.5);opacity:0}70%{transform:translateY(-8px) scale(1.1);opacity:1}100%{transform:translateY(0) scale(1);opacity:1}}
+@keyframes cCheck{0%{transform:scale(0)}70%{transform:scale(1.3)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F6F7FB; font-family: 'Nunito', system-ui, sans-serif; color: #14213D; display: flex; flex-direction: column; padding: 20px 20px 26px; gap: 14px; overflow: hidden">
+
+<div style="display: flex; align-items: center; gap: 12px">
+<a href="Main.dc.html" aria-label="Retounen" style="width: 44px; height: 44px; border-radius: 14px; background: #FFFFFF; border: 2px solid #E3E7F1; display: flex; align-items: center; justify-content: center; color: #14213D; box-sizing: border-box; flex-shrink: 0">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg>
+</a>
+<div style="flex-grow: 1; display: flex; flex-direction: column">
+<h1 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 24px; line-height: 1.1; font-weight: 800">Misyon Jodi a</h1>
+<span style="font-size: 13px; color: #5A6480; font-weight: 700">Nouvo misyon nan 6 è 12 min</span>
+</div>
+</div>
+
+<div style="background: linear-gradient(160deg, #7048E8, #3B1E9C); color: #FFFFFF; border-radius: 24px; padding: 18px; display: flex; align-items: center; gap: 14px; border: 3px solid #14213D; box-shadow: 0 5px 0 #14213D">
+<button type="button" onClick="{{openChest}}" aria-label="{{chestAria}}" disabled="{{chestDisabled}}" style="width: 96px; height: 96px; flex-shrink: 0; background: none; border: none; padding: 0; cursor: pointer; {{chestAnim}}">
+<svg width="96" height="96" viewBox="0 0 48 48"><rect x="4" y="18" width="40" height="24" rx="4" fill="#B5651D" stroke="#14213D" stroke-width="2.5"></rect><path d="M4 22a20 10 0 0 1 40 0v4H4z" fill="#D98A3A" stroke="#14213D" stroke-width="2.5" style="transform-origin: 24px 26px; transition: transform .4s; {{lidT}}"></path><rect x="20" y="20" width="8" height="10" rx="2" fill="#FFD43B" stroke="#14213D" stroke-width="2"></rect><sc-if value="{{opened}}" hint-placeholder-val="{{ false }}"><path d="M24 8l2 4 4 1-3 3 1 4-4-2-4 2 1-4-3-3 4-1z" fill="#FFD43B" stroke="#14213D" stroke-width="1.5" style="animation: cPop .5s both"></path></sc-if></svg>
+</button>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 12px; font-weight: 800; letter-spacing: .08em; color: #D0BFFF">KÒF JODI A</span>
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 22px; font-weight: 800; line-height: 1.1">{{chestTitle}}</span>
+<span style="font-size: 14px; font-weight: 700; color: #E5DBFF">{{chestSub}}</span>
+<div style="margin-top: 4px; height: 10px; border-radius: 5px; background: rgba(255,255,255,.25); overflow: hidden"><div style="height: 10px; border-radius: 5px; background: #FFD43B; transition: width .4s; {{progW}}"></div></div>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{quests}}" as="q" hint-placeholder-count="3">
+<div style="{{q.card}}">
+<div style="{{q.icon}}">
+<sc-if value="{{q.done}}" hint-placeholder-val="{{ false }}">
+<svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="animation: cCheck .4s cubic-bezier(.34,1.56,.64,1) both"><polyline points="20 6 9 17 4 12"></polyline></svg>
+</sc-if>
+<sc-if value="{{q.todo}}" hint-placeholder-val="{{ true }}">
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 22px; font-weight: 800; color: #FFFFFF">{{q.num}}</span>
+</sc-if>
+</div>
+<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0">
+<span style="font-weight: 800; font-size: 16px; line-height: 1.2">{{q.title}}</span>
+<div style="display: flex; align-items: center; gap: 8px">
+<div style="flex-grow: 1; height: 8px; border-radius: 4px; background: #E3E7F1; overflow: hidden"><div style="height: 8px; border-radius: 4px; transition: width .4s; {{q.bar}}"></div></div>
+<span style="font-size: 12px; font-weight: 800; color: #5A6480">{{q.count}}</span>
+</div>
+</div>
+<sc-if value="{{q.todo}}" hint-placeholder-val="{{ true }}">
+<button type="button" onClick="{{q.go}}" style="min-height: 44px; padding: 0 14px; border-radius: 12px; background: #1F47B5; color: #FFFFFF; border: 2px solid #14213D; box-shadow: 0 3px 0 #14213D; font-size: 14px; font-weight: 800; cursor: pointer; flex-shrink: 0">Ale</button>
+</sc-if>
+<sc-if value="{{q.done}}" hint-placeholder-val="{{ false }}">
+<span style="font-size: 13px; font-weight: 800; color: #2F9E44; flex-shrink: 0">+{{q.xp}}</span>
+</sc-if>
+</div>
+</sc-for>
+</div>
+
+<div style="background: #FFFFFF; border: 2px solid #E3E7F1; border-bottom-width: 5px; border-radius: 20px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; margin-top: auto">
+<svg aria-hidden="true" width="40" height="40" viewBox="0 0 48 48"><rect x="6" y="10" width="36" height="32" rx="6" fill="#FFFFFF" stroke="#14213D" stroke-width="2.5"></rect><path d="M6 18h36" stroke="#14213D" stroke-width="2.5"></path><path d="M14 6v8M34 6v8" stroke="#14213D" stroke-width="3" stroke-linecap="round"></path><rect x="12" y="24" width="6" height="6" rx="1.5" fill="#51CF66"></rect><rect x="21" y="24" width="6" height="6" rx="1.5" fill="#51CF66"></rect><rect x="30" y="24" width="6" height="6" rx="1.5" fill="#51CF66"></rect><rect x="12" y="33" width="6" height="6" rx="1.5" fill="#51CF66"></rect><rect x="21" y="33" width="6" height="6" rx="1.5" fill="#FFD43B"></rect><rect x="30" y="33" width="6" height="6" rx="1.5" fill="#E3E7F1"></rect></svg>
+<div style="display: flex; flex-direction: column">
+<span style="font-weight: 800; font-size: 15px">Misyon semèn nan: 4 / 7 jou</span>
+<span style="font-size: 13px; font-weight: 700; color: #5A6480">Fini tout 7 jou → kat ewo Lejand garanti</span>
+</div>
+</div>
+
+<p style="margin: 0; font-size: 12px; font-weight: 700; color: #5A6480; text-align: center">Nan mockup la, peze «Ale» pou simile yon misyon ki fini.</p>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { p: [1, 0, 0], opened: false };
+  }
+  renderVals() {
+    const defs = [
+      { title: 'Genyen 1 defi 1 kont 1', goal: 1, xp: 20, color: '#D21034' },
+      { title: 'Fini 2 leson angle', goal: 2, xp: 30, color: '#1F47B5' },
+      { title: 'Fè 15 pwen nan Kalkil Mantal', goal: 15, xp: 25, color: '#FF9F43' }
+    ];
+    const p = this.state.p;
+    const quests = defs.map((d, i) => {
+      const v = Math.min(p[i], d.goal), done = v >= d.goal;
+      return {
+        num: String(i + 1), title: d.title, xp: d.xp, done, todo: !done,
+        count: v + ' / ' + d.goal,
+        card: 'background: #FFFFFF; border-radius: 20px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; ' + (done ? 'border: 2px solid #51CF66; border-bottom-width: 5px; opacity: .85;' : 'border: 2px solid #E3E7F1; border-bottom-width: 5px;'),
+        icon: 'width: 50px; height: 50px; border-radius: 15px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border: 2px solid #14213D; background: ' + (done ? '#2F9E44' : d.color) + ';',
+        bar: 'width: ' + (v / d.goal * 100) + '%; background: ' + (done ? '#2F9E44' : d.color) + ';',
+        go: () => { const n = [...this.state.p]; n[i] = d.goal; this.setState({ p: n }); }
+      };
+    });
+    const doneN = quests.filter((q) => q.done).length, all = doneN === 3, opened = this.state.opened;
+    return {
+      quests, opened,
+      progW: 'width: ' + (doneN / 3 * 100) + '%;',
+      chestTitle: opened ? 'Ou jwenn 100 pwen + 1 kat!' : all ? 'Kòf la pare!' : doneN + ' sou 3 misyon fini',
+      chestSub: opened ? 'Tounen demen pou yon lòt kòf.' : all ? 'Tape kòf la pou w louvri l.' : 'Fini 3 misyon yo pou w louvri kòf la.',
+      chestAria: all && !opened ? 'Louvri kòf la' : 'Kòf jodi a',
+      chestDisabled: !all || opened,
+      chestAnim: all && !opened ? 'animation: cShake 1.2s ease-in-out infinite;' : opened ? 'animation: cOpen .5s both;' : 'opacity: .7;',
+      lidT: opened ? 'transform: rotate(-35deg) translateY(-6px);' : '',
+      openChest: () => this.setState({ opened: true })
+    };
+  }
+}
+</script>
+</body>
+</html>

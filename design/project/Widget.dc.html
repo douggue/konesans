@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ht">
+<head>
+<meta charset="utf-8">
+<title>Widjèt Ti Zwazo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&amp;family=Nunito:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div role="img" aria-label="{{aria}}" style="position: relative; width: 340px; height: 170px; box-sizing: border-box; border-radius: 28px; overflow: hidden; font-family: 'Nunito', system-ui, sans-serif; display: flex; align-items: flex-end; gap: 4px; padding: 0 16px 0 4px; {{bg}}">
+
+<sc-if value="{{isMaten}}" hint-placeholder-val="{{ true }}">
+<span aria-hidden="true" style="position: absolute; right: -20px; top: -20px; width: 90px; height: 90px; border-radius: 45px; background: #FFD43B; opacity: .7"></span>
+</sc-if>
+<sc-if value="{{isNight}}" hint-placeholder-val="{{ false }}">
+<svg aria-hidden="true" width="340" height="170" viewBox="0 0 340 170" style="position: absolute; left: 0; top: 0"><circle cx="40" cy="22" r="2" fill="#FFFFFF"></circle><circle cx="150" cy="14" r="1.5" fill="#FFFFFF"></circle><circle cx="300" cy="30" r="2" fill="#FFD43B"></circle><circle cx="250" cy="12" r="1.5" fill="#FFFFFF"></circle><path d="M318 52a14 14 0 1 1-14-18 11 11 0 0 0 14 18z" fill="#FFD43B"></path></svg>
+</sc-if>
+
+<div style="width: 132px; height: 150px; flex-shrink: 0; position: relative">
+
+<sc-if value="{{isMaten}}" hint-placeholder-val="{{ true }}">
+<svg aria-hidden="true" width="132" height="139" viewBox="-20 -10 200 210" style="position: absolute; left: 0; bottom: -8px; animation: wBob 3s ease-in-out infinite">
+<path d="M36 92 C8 100 4 136 22 150 C30 134 38 122 44 110 Z" fill="#14307D"></path>
+<path d="M120 100 C146 88 154 56 142 40 C132 58 122 74 114 90 Z" fill="#14307D"></path>
+<ellipse cx="80" cy="112" rx="50" ry="62" fill="#1F47B5" stroke="#14213D" stroke-width="2"></ellipse>
+<ellipse cx="80" cy="132" rx="32" ry="38" fill="#E6ECFB"></ellipse>
+<circle cx="62" cy="90" r="13" fill="#FFFFFF"></circle><circle cx="98" cy="90" r="13" fill="#FFFFFF"></circle>
+<circle cx="65" cy="92" r="6" fill="#14213D"></circle><circle cx="95" cy="92" r="6" fill="#14213D"></circle>
+<circle cx="67" cy="89" r="2" fill="#FFFFFF"></circle><circle cx="97" cy="89" r="2" fill="#FFFFFF"></circle>
+<path d="M70 104 L90 104 L80 120 Z" fill="#F5B700" stroke="#C99400" stroke-width="2" stroke-linejoin="round"></path>
+<path d="M50 52 L80 38 L110 52 L80 66 Z" fill="#14213D"></path><path d="M60 56 L60 68 Q80 78 100 68 L100 56 L80 66 Z" fill="#14213D"></path><path d="M110 52 L114 74" stroke="#D21034" stroke-width="3" stroke-linecap="round"></path><circle cx="114" cy="78" r="5" fill="#D21034"></circle>
+</svg>
+</sc-if>
+
+<sc-if value="{{isMidi}}" hint-placeholder-val="{{ false }}">
+<svg aria-hidden="true" width="132" height="139" viewBox="-20 -10 200 210" style="position: absolute; left: 0; bottom: -8px; animation: wHop 1.4s ease-in-out infinite">
+<path d="M40 100 C14 88 6 56 18 40 C28 58 38 74 46 90 Z" fill="#14307D"></path>
+<path d="M120 100 C146 88 154 56 142 40 C132 58 122 74 114 90 Z" fill="#14307D"></path>
+<ellipse cx="80" cy="112" rx="50" ry="62" fill="#1F47B5" stroke="#FFFFFF" stroke-width="3"></ellipse>
+<ellipse cx="80" cy="132" rx="32" ry="38" fill="#E6ECFB"></ellipse>
+<path d="M50 92 Q62 78 74 92 M86 92 Q98 78 110 92" stroke="#14213D" stroke-width="5" fill="none" stroke-linecap="round"></path>
+<circle cx="50" cy="106" r="6" fill="#F7A1B3" opacity=".8"></circle><circle cx="110" cy="106" r="6" fill="#F7A1B3" opacity=".8"></circle>
+<path d="M72 110 Q80 128 88 110 Z" fill="#D21034"></path>
+<path d="M70 102 L90 102 L80 112 Z" fill="#F5B700" stroke="#C99400" stroke-width="2" stroke-linejoin="round"></path>
+<path d="M50 52 L80 38 L110 52 L80 66 Z" fill="#14213D"></path><path d="M60 56 L60 68 Q80 78 100 68 L100 56 L80 66 Z" fill="#14213D"></path><path d="M110 52 L114 74" stroke="#D21034" stroke-width="3" stroke-linecap="round"></path><circle cx="114" cy="78" r="5" fill="#D21034"></circle>
+</svg>
+</sc-if>
+
+<sc-if value="{{isAswe}}" hint-placeholder-val="{{ false }}">
+<svg aria-hidden="true" width="132" height="139" viewBox="-20 -10 200 210" style="position: absolute; left: 0; bottom: -8px; animation: wBob 3.4s ease-in-out infinite">
+<path d="M36 92 C8 100 4 136 22 150 C30 134 38 122 44 110 Z" fill="#14307D"></path>
+<ellipse cx="80" cy="112" rx="50" ry="62" fill="#1F47B5" stroke="#14213D" stroke-width="2"></ellipse>
+<ellipse cx="80" cy="132" rx="32" ry="38" fill="#E6ECFB"></ellipse>
+<circle cx="62" cy="90" r="13" fill="#FFFFFF"></circle><circle cx="68" cy="86" r="6" fill="#14213D"></circle>
+<circle cx="98" cy="90" r="13" fill="#FFFFFF"></circle><circle cx="104" cy="86" r="6" fill="#14213D"></circle>
+<path d="M86 74 L108 70" stroke="#14213D" stroke-width="4" stroke-linecap="round"></path>
+<path d="M72 104 L90 102 L82 118 Z" fill="#F5B700" stroke="#C99400" stroke-width="2" stroke-linejoin="round"></path>
+<path d="M122 102 C134 114 120 132 96 126 C104 118 110 110 114 102 Z" fill="#14307D"></path>
+<path d="M50 52 L80 38 L110 52 L80 66 Z" fill="#14213D"></path><path d="M60 56 L60 68 Q80 78 100 68 L100 56 L80 66 Z" fill="#14213D"></path><path d="M110 52 L114 74" stroke="#D21034" stroke-width="3" stroke-linecap="round"></path><circle cx="114" cy="78" r="5" fill="#D21034"></circle>
+</svg>
+</sc-if>
+
+<sc-if value="{{isDanje}}" hint-placeholder-val="{{ false }}">
+<svg aria-hidden="true" width="132" height="139" viewBox="-20 -10 200 210" style="position: absolute; left: 0; bottom: -8px; animation: wShake .6s ease-in-out infinite">
+<path d="M38 100 C20 120 22 150 32 164 C36 146 40 130 46 116 Z" fill="#14307D"></path>
+<path d="M122 100 C140 120 138 150 128 164 C124 146 120 130 114 116 Z" fill="#14307D"></path>
+<ellipse cx="80" cy="112" rx="50" ry="62" fill="#1F47B5" stroke="#FFFFFF" stroke-width="3"></ellipse>
+<ellipse cx="80" cy="132" rx="32" ry="38" fill="#E6ECFB"></ellipse>
+<circle cx="62" cy="92" r="14" fill="#FFFFFF"></circle><circle cx="98" cy="92" r="14" fill="#FFFFFF"></circle>
+<circle cx="62" cy="94" r="5" fill="#14213D"></circle><circle cx="98" cy="94" r="5" fill="#14213D"></circle>
+<path d="M46 76 L72 70 M114 76 L88 70" stroke="#14213D" stroke-width="4" stroke-linecap="round"></path>
+<ellipse cx="80" cy="116" rx="7" ry="5" fill="#D21034"></ellipse>
+<path d="M70 102 L90 102 L80 112 Z" fill="#F5B700" stroke="#C99400" stroke-width="2" stroke-linejoin="round"></path>
+<path d="M50 52 L80 38 L110 52 L80 66 Z" fill="#14213D"></path><path d="M60 56 L60 68 Q80 78 100 68 L100 56 L80 66 Z" fill="#14213D"></path><path d="M110 52 L114 74" stroke="#D21034" stroke-width="3" stroke-linecap="round"></path><circle cx="114" cy="78" r="5" fill="#D21034"></circle>
+<path d="M126 62 q7 11 0 16 q-7 -5 0 -16 Z" fill="#8EC5FF"></path>
+<path d="M30 60 q-6 9 0 13 q6 -4 0 -13 Z" fill="#8EC5FF"></path>
+</svg>
+</sc-if>
+
+<sc-if value="{{isNight}}" hint-placeholder-val="{{ false }}">
+<svg aria-hidden="true" width="132" height="139" viewBox="-20 -10 200 210" style="position: absolute; left: 0; bottom: -8px">
+<path d="M36 92 C8 100 4 136 22 150 C30 134 38 122 44 110 Z" fill="#0E2466"></path>
+<path d="M124 92 C152 100 156 136 138 150 C130 134 122 122 116 110 Z" fill="#0E2466"></path>
+<ellipse cx="80" cy="112" rx="50" ry="62" fill="#1F47B5" stroke="#3B4C7A" stroke-width="2"></ellipse>
+<ellipse cx="80" cy="132" rx="32" ry="38" fill="#C9D5F5"></ellipse>
+<path d="M50 90 Q62 100 74 90 M86 90 Q98 100 110 90" stroke="#14213D" stroke-width="5" fill="none" stroke-linecap="round"></path>
+<path d="M70 104 L90 104 L80 118 Z" fill="#F5B700" stroke="#C99400" stroke-width="2" stroke-linejoin="round"></path>
+<g transform="rotate(-14 80 52)"><path d="M50 52 L80 38 L110 52 L80 66 Z" fill="#14213D" stroke="#3B4C7A" stroke-width="1"></path><path d="M60 56 L60 68 Q80 78 100 68 L100 56 L80 66 Z" fill="#14213D" stroke="#3B4C7A" stroke-width="1"></path><path d="M110 52 L114 74" stroke="#D21034" stroke-width="3" stroke-linecap="round"></path><circle cx="114" cy="78" r="5" fill="#D21034"></circle></g>
+<text x="124" y="40" font-family="Baloo 2, sans-serif" font-size="20" font-weight="800" fill="#C9D5F5" style="animation: wZ 2.4s ease-out infinite">z</text>
+<text x="142" y="20" font-family="Baloo 2, sans-serif" font-size="28" font-weight="800" fill="#C9D5F5" style="animation: wZ 2.4s ease-out 1.2s infinite">Z</text>
+</svg>
+</sc-if>
+
+</div>
+
+<div style="position: relative; flex-grow: 1; min-width: 0; align-self: stretch; padding: 16px 0 14px; display: flex; flex-direction: column; gap: 6px; {{textColor}}">
+<span style="align-self: flex-start; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 800; letter-spacing: .03em; {{chip}}">{{time}}</span>
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 19px; font-weight: 800; line-height: 1.12">{{message}}</span>
+<div style="margin-top: auto; display: flex; align-items: center; gap: 8px">
+<span style="display: flex; align-items: center; gap: 3px; font-weight: 800; font-size: 15px">
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 48 48" style="{{flameStyle}}"><path d="M24 43c-7.5 0-12.5-5-12.5-11.5 0-6 4-9.5 6.5-15 1.5 3.5 3 5 5 6-.5-7 3-13 9-17-1.5 6 1 9.5 3.5 13 2 2.8 3 5.6 3 8.5C38.5 37 32 43 24 43z" fill="#FF7A45" stroke="#14213D" stroke-width="3" stroke-linejoin="round"></path><path d="M24 43c-3.6 0-6-2.4-6-5.6 0-3.4 3-5.4 4.4-8.4 1 2 2.4 3 3.6 3.4.4-2 1.4-3.6 2.6-4.8.6 2.4 1.4 4 1.4 6.4 0 5-2.6 9-6 9z" fill="#FFD43B"></path></svg>
+{{streak}}
+</span>
+<span style="margin-left: auto; border-radius: 12px; padding: 5px 14px; font-weight: 800; font-size: 14px; border: 2px solid #14213D; box-shadow: 0 3px 0 #14213D; {{btn}}">{{cta}}</span>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mood":{"editor":"enum","options":["maten","midi","aswe","danje","lannwit"],"default":"maten"},"$preview":{"width":340,"height":170}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const mood = this.props.mood ?? 'maten';
+    const m = {
+      maten: { time: '7:30 · MATEN', message: 'Bonjou! Ann fè leson jodi a.', streak: '5 jou', cta: 'Jwe', bg: 'background: linear-gradient(160deg, #FFE7A8 0%, #BFE0FF 100%);', text: 'color: #14213D;', chip: 'background: #FFFFFF; color: #8A4B00;', btn: 'background: #FFFFFF; color: #14213D;' },
+      midi: { time: '12:30 · MIDI', message: 'Yon ti kesyon pandan w ap manje?', streak: '5 jou', cta: 'Jwe', bg: 'background: linear-gradient(160deg, #4D7CFE 0%, #1F47B5 100%);', text: 'color: #FFFFFF;', chip: 'background: rgba(255,255,255,.22); color: #FFFFFF;', btn: 'background: #FFD43B; color: #14213D;' },
+      aswe: { time: '18:00 · ASWÈ', message: 'Ou poko jwe jodi a… M ap tann ou!', streak: '5 jou', cta: 'Jwe', bg: 'background: linear-gradient(160deg, #FFC078 0%, #FF8FA3 100%);', text: 'color: #14213D;', chip: 'background: #FFFFFF; color: #A63A0A;', btn: 'background: #FFFFFF; color: #14213D;' },
+      danje: { time: '19:30 · DÈNYE RAPÈL', message: 'Yon ti leson 5 minit anvan dòmi? Seri w ap kontan.', streak: '5 jou', cta: 'Ann fè l', bg: 'background: linear-gradient(160deg, #7048E8 0%, #3B1E9C 100%);', text: 'color: #FFFFFF;', chip: 'background: #FF5A6E; color: #FFFFFF;', btn: 'background: #FF5A6E; color: #FFFFFF;' },
+      lannwit: { time: '22:00 · LANNWIT', message: 'Bòn nwi! Leson jodi a fèt.', streak: '6 jou', cta: 'Demen', bg: 'background: linear-gradient(160deg, #1B2A52 0%, #0B1530 100%);', text: 'color: #FFFFFF;', chip: 'background: rgba(255,255,255,.16); color: #FFFFFF;', btn: 'background: #3B4C7A; color: #FFFFFF;' }
+    }[mood] || null;
+    const d = m || {};
+    return {
+      isMaten: mood === 'maten',
+      isMidi: mood === 'midi',
+      isAswe: mood === 'aswe',
+      isDanje: mood === 'danje',
+      isNight: mood === 'lannwit',
+      time: d.time,
+      message: d.message,
+      streak: d.streak,
+      cta: d.cta,
+      bg: d.bg,
+      textColor: d.text,
+      chip: d.chip,
+      btn: d.btn,
+      flameStyle: mood === 'danje' ? 'filter: saturate(.4); opacity: .8;' : '',
+      aria: 'Widjèt Ti Zwazo, ' + d.time + ': ' + d.message
+    };
+  }
+}
+</script>
+</body>
+</html>

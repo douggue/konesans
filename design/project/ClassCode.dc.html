@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ht">
+<head>
+<meta charset="utf-8">
+<title>Klas mwen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&amp;family=Nunito:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F47B5;text-decoration:none}
+button{font-family:inherit}
+@keyframes kSlide{0%{opacity:0;transform:translateX(40px)}100%{opacity:1;transform:translateX(0)}}
+@keyframes kPop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F6F7FB; font-family: 'Nunito', system-ui, sans-serif; color: #14213D; display: flex; flex-direction: column; padding: 20px 20px 26px; gap: 14px; overflow: hidden">
+
+<div style="display: flex; align-items: center; gap: 12px">
+<a href="Main.dc.html" aria-label="Retounen" style="width: 44px; height: 44px; border-radius: 14px; background: #FFFFFF; border: 2px solid #E3E7F1; display: flex; align-items: center; justify-content: center; color: #14213D; box-sizing: border-box; flex-shrink: 0">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg>
+</a>
+<div style="flex-grow: 1; display: flex; flex-direction: column">
+<h1 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 24px; line-height: 1.1; font-weight: 800">Klas mwen</h1>
+<span style="font-size: 13px; color: #5A6480; font-weight: 700">{{sub}}</span>
+</div>
+</div>
+
+<sc-if value="{{isJoin}}" hint-placeholder-val="{{ true }}">
+<div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 16px; padding-top: 10px; animation: kSlide .4s ease-out both">
+<svg aria-hidden="true" width="120" height="120" viewBox="0 0 48 48"><rect x="4" y="8" width="40" height="28" rx="4" fill="#2B6B4F" stroke="#14213D" stroke-width="2.5"></rect><rect x="8" y="12" width="32" height="20" fill="#3D8B68"></rect><path d="M12 18h14M12 24h20" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"></path><rect x="18" y="36" width="12" height="4" fill="#B5651D" stroke="#14213D" stroke-width="2"></rect><path d="M14 40h20" stroke="#14213D" stroke-width="3" stroke-linecap="round"></path></svg>
+<h2 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 26px; font-weight: 800; text-align: center">Mete kòd pwofesè w la</h2>
+<p style="margin: 0; font-size: 15px; font-weight: 700; color: #5A6480; text-align: center">Pwofesè a ekri l sou tablo a. 6 chif.</p>
+<div role="group" aria-label="Kòd klas" style="display: flex; gap: 8px">
+<sc-for list="{{slots}}" as="sl" hint-placeholder-count="6">
+<span style="{{sl.style}}">{{sl.ch}}</span>
+</sc-for>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; width: 100%; margin-top: auto">
+<sc-for list="{{keys}}" as="k" hint-placeholder-count="12">
+<button type="button" onClick="{{k.press}}" aria-label="{{k.aria}}" style="{{k.style}}">{{k.label}}</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{isConfirm}}" hint-placeholder-val="{{ false }}">
+<div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 14px; padding-top: 10px; animation: kPop .45s cubic-bezier(.34,1.56,.64,1) both">
+<div style="width: 100%; background: #FFFFFF; border: 3px solid #14213D; border-bottom-width: 7px; border-radius: 24px; padding: 18px; display: flex; flex-direction: column; align-items: center; gap: 8px; box-sizing: border-box; text-align: center">
+<span style="font-size: 12px; font-weight: 800; letter-spacing: .08em; color: #5A6480">NOU JWENN KLAS LA</span>
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 26px; font-weight: 800; line-height: 1.1">5yèm AF · Lekòl Nasyonal Kafou</span>
+<span style="font-size: 15px; font-weight: 700; color: #3B4560">Pwofesè: Mèt Jean-Baptiste · 32 elèv</span>
+</div>
+<div style="width: 100%; background: #E6ECFB; border-radius: 18px; padding: 14px; display: flex; flex-direction: column; gap: 8px; box-sizing: border-box">
+<span style="font-weight: 800; font-size: 15px; color: #14307D">Sa pwofesè a ap wè:</span>
+<span style="font-size: 14px; font-weight: 700; color: #14307D; display: flex; gap: 8px"><span>✓</span><span>Non jwè w (Toti 27), pwen ak leson ou fini</span></span>
+<span style="font-size: 14px; font-weight: 700; color: #14307D; display: flex; gap: 8px"><span>✓</span><span>Kesyon ou rate, pou l ka ede w</span></span>
+<span style="font-size: 14px; font-weight: 700; color: #8F0A22; display: flex; gap: 8px"><span>✗</span><span>Pa vrè non w, pa foto, pa mesaj</span></span>
+</div>
+<p style="margin: 0; font-size: 13px; font-weight: 700; color: #5A6480; text-align: center">Paran w ap resevwa yon mesaj pou l apwouve.</p>
+<button type="button" onClick="{{join}}" style="margin-top: auto; min-height: 56px; width: 100%; border-radius: 16px; background: #2F9E44; color: #FFFFFF; border: 3px solid #14213D; box-shadow: 0 5px 0 #14213D; font-size: 18px; font-weight: 800; cursor: pointer">Antre nan klas la</button>
+<button type="button" onClick="{{back}}" style="min-height: 48px; width: 100%; border-radius: 16px; background: #FFFFFF; color: #14213D; border: 2px solid #D9DEEA; font-size: 15px; font-weight: 800; cursor: pointer">Se pa klas mwen</button>
+</div>
+</sc-if>
+
+<sc-if value="{{isIn}}" hint-placeholder-val="{{ false }}">
+<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 12px; animation: kSlide .4s ease-out both">
+<div style="background: linear-gradient(160deg, #2B6B4F, #14213D); color: #FFFFFF; border-radius: 22px; padding: 16px; display: flex; flex-direction: column; gap: 4px; border: 3px solid #14213D; box-shadow: 0 5px 0 #14213D">
+<span style="font-size: 12px; font-weight: 800; letter-spacing: .08em; color: #B8E0CC">DEVWA SEMÈN NAN · MÈT JEAN-BAPTISTE</span>
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 20px; font-weight: 800; line-height: 1.15">Istwa: 10 kesyon sou 1804</span>
+<div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px">
+<span style="font-size: 13px; font-weight: 700; color: #B8E0CC">Dat limit: vandredi · 21 / 32 elèv fini</span>
+<a href="Duel.dc.html" style="background: #FFD43B; color: #14213D; border-radius: 12px; padding: 8px 14px; font-weight: 800; font-size: 14px; border: 2px solid #14213D">Fè l</a>
+</div>
+</div>
+<span style="font-weight: 800; font-size: 15px">Klasman klas la · semèn sa a</span>
+<ol aria-label="Klasman klas" style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+<li style="{{r.style}}">
+<span style="width: 24px; font-weight: 800; text-align: center">{{r.rank}}</span>
+<span style="{{r.av}}">{{r.mono}}</span>
+<span style="flex-grow: 1; font-weight: 800; font-size: 15px">{{r.name}}</span>
+<span style="font-weight: 800; font-size: 14px">{{r.pts}}</span>
+</li>
+</sc-for>
+</ol>
+<p style="margin: auto 0 0; font-size: 12px; font-weight: 700; color: #5A6480; text-align: center">Non jenere sèlman · pa gen chat nan klas la</p>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { code: '', phase: 'join' };
+  }
+  renderVals() {
+    const { code, phase } = this.state;
+    const slots = Array.from({ length: 6 }, (_, i) => ({
+      ch: code[i] || '',
+      style: 'width: 48px; height: 58px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-family: \'Baloo 2\', sans-serif; font-size: 28px; font-weight: 800; background: #FFFFFF; ' + (i === code.length ? 'border: 3px solid #1F47B5;' : 'border: 2px solid #D9DEEA; border-bottom-width: 5px;')
+    }));
+    const keyBase = 'min-height: 56px; border-radius: 16px; font-family: \'Baloo 2\', sans-serif; font-size: 24px; font-weight: 800; cursor: pointer; ';
+    const keys = ['1','2','3','4','5','6','7','8','9','⌫','0','OK'].map((l) => ({
+      label: l, aria: l === '⌫' ? 'Efase' : l === 'OK' ? 'Valide' : l,
+      style: keyBase + (l === 'OK' ? (code.length === 6 ? 'background: #2F9E44; color: #FFFFFF; border: 3px solid #14213D; box-shadow: 0 4px 0 #14213D;' : 'background: #DCE1EE; color: #5A6480; border: 2px solid #DCE1EE;') : l === '⌫' ? 'background: #FDE7EC; color: #8F0A22; border: 2px solid #D9DEEA; border-bottom-width: 5px;' : 'background: #FFFFFF; color: #14213D; border: 2px solid #D9DEEA; border-bottom-width: 5px;'),
+      press: () => {
+        if (l === 'OK') { if (code.length === 6) this.setState({ phase: 'confirm' }); }
+        else if (l === '⌫') this.setState({ code: code.slice(0, -1) });
+        else if (code.length < 6) this.setState({ code: code + l });
+      }
+    }));
+    const colors = ['#0E7C86', '#5B3FB5', '#1F47B5', '#D21034', '#B5651D', '#17803F'];
+    const data = [['Kolibri 5', 420], ['Lanbi 33', 390], ['Toti 27', 360], ['Zandolit 14', 310], ['Mango 8', 280], ['Tanbou 40', 240]];
+    const rows = data.map((d, i) => {
+      const me = d[0] === 'Toti 27';
+      return {
+        rank: String(i + 1), name: me ? d[0] + ' (ou)' : d[0], mono: d[0].charAt(0), pts: d[1] + ' pwen',
+        style: 'min-height: 46px; border-radius: 14px; padding: 4px 12px 4px 8px; display: flex; align-items: center; gap: 10px; ' + (me ? 'background: #E6ECFB; border: 2px solid #1F47B5;' : 'background: #FFFFFF; border: 2px solid #E3E7F1;'),
+        av: 'width: 32px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-weight: 800; font-size: 14px; background: ' + colors[i] + ';'
+      };
+    });
+    return {
+      slots, keys, rows,
+      isJoin: phase === 'join', isConfirm: phase === 'confirm', isIn: phase === 'in',
+      sub: phase === 'in' ? '5yèm AF · Lekòl Nasyonal Kafou' : 'Rantre nan klas pwofesè w la',
+      join: () => this.setState({ phase: 'in' }),
+      back: () => this.setState({ phase: 'join', code: '' })
+    };
+  }
+}
+</script>
+</body>
+</html>

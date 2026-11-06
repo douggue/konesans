@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ht">
+<head>
+<meta charset="utf-8">
+<title>Widjèt Ti Zwazo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&amp;family=Nunito:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font-family:inherit}
+@keyframes wBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes wHop{0%,100%{transform:translateY(0)}45%{transform:translateY(-10px)}}
+@keyframes wShake{0%,100%{transform:rotate(0)}25%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}
+@keyframes wZ{0%{transform:translate(0,0);opacity:0}30%{opacity:1}100%{transform:translate(8px,-14px);opacity:0}}
+@keyframes wSwap{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important}}
+</style>
+</helmet>
+<div style="width: 1280px; min-height: 860px; box-sizing: border-box; background: #F6F7FB; font-family: 'Nunito', system-ui, sans-serif; color: #14213D; padding: 48px 56px; display: flex; flex-direction: column; gap: 28px">
+
+<div style="display: flex; align-items: flex-end; gap: 40px">
+<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 14px; font-weight: 800; letter-spacing: .08em; color: #5A6480">WIDJÈT EKRAN LAKAY TELEFÒN NAN</span>
+<h1 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 48px; line-height: 1; font-weight: 800">Imè Ti Zwazo chanje pandan jounen an</h1>
+<p style="margin: 0; font-size: 18px; font-weight: 700; color: #3B4560; max-width: 760px; line-height: 1.45">Widjèt la gade lè a, si timoun lan fè leson jodi a, ak si seri jou li an danje. Ti Zwazo reyaji pou l ankouraje l tounen, san presyon twòp.</p>
+</div>
+</div>
+
+<div style="display: flex; gap: 32px; align-items: stretch">
+
+<div style="width: 420px; flex-shrink: 0; border-radius: 36px; padding: 28px 24px; box-sizing: border-box; background: linear-gradient(170deg, #0E7C86 0%, #14307D 100%); display: flex; flex-direction: column; gap: 18px">
+<span style="font-size: 14px; font-weight: 800; letter-spacing: .06em; color: #C9D5F5">ESEYE L · CHWAZI LÈ A</span>
+<div role="group" aria-label="Lè nan jounen an" style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{times}}" as="t" hint-placeholder-count="5">
+<button type="button" onClick="{{t.pick}}" aria-pressed="{{t.pressed}}" style="{{t.style}}">{{t.label}}</button>
+</sc-for>
+</div>
+<div style="align-self: center; margin-top: 8px; {{swap}}">
+<dc-import name="Widget" mood="{{live}}" hint-size="340px,170px"></dc-import>
+</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: auto; padding: 8px 6px 0">
+<span aria-hidden="true" style="aspect-ratio: 1; border-radius: 18px; background: rgba(255,255,255,.18)"></span>
+<span aria-hidden="true" style="aspect-ratio: 1; border-radius: 18px; background: rgba(255,255,255,.18)"></span>
+<span aria-hidden="true" style="aspect-ratio: 1; border-radius: 18px; background: rgba(255,255,255,.18)"></span>
+<span aria-hidden="true" style="aspect-ratio: 1; border-radius: 18px; background: rgba(255,255,255,.18)"></span>
+</div>
+<span style="font-size: 14px; font-weight: 700; color: #C9D5F5; text-align: center">Lòt aplikasyon sou telefòn nan</span>
+</div>
+
+<div style="flex-grow: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 24px">
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-weight: 800; font-size: 16px">Maten (6 è – 11 è)</span>
+<dc-import name="Widget" mood="maten" hint-size="340px,170px"></dc-import>
+<span style="font-size: 14px; font-weight: 700; color: #5A6480">Li fèk leve, li souke zèl li. Mesaj kout, pozitif.</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-weight: 800; font-size: 16px">Midi (11 è – 16 è)</span>
+<dc-import name="Widget" mood="midi" hint-size="340px,170px"></dc-import>
+<span style="font-size: 14px; font-weight: 700; color: #5A6480">Li sote ak kè kontan. Envite pou yon kesyon rapid.</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-weight: 800; font-size: 16px">Aswè (16 è – 20 è), leson poko fèt</span>
+<dc-import name="Widget" mood="aswe" hint-size="340px,170px"></dc-import>
+<span style="font-size: 14px; font-weight: 700; color: #5A6480">Li reflechi, li sonje timoun lan. Pa gen repwòch.</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-weight: 800; font-size: 16px">19:30, dènye rapèl jounen an</span>
+<dc-import name="Widget" mood="danje" hint-size="340px,170px"></dc-import>
+<span style="font-size: 14px; font-weight: 700; color: #5A6480">Yon sèl rapèl dous. Pa gen «danje», pa gen kilpabilite.</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-weight: 800; font-size: 16px">Leson fèt / lannwit</span>
+<dc-import name="Widget" mood="lannwit" hint-size="340px,170px"></dc-import>
+<span style="font-size: 14px; font-weight: 700; color: #5A6480">Li dòmi kè poze. Seri a monte: 6 jou.</span>
+</div>
+
+<div style="background: #FFFFFF; border: 2px solid #E3E7F1; border-bottom-width: 5px; border-radius: 24px; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px">
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 20px; font-weight: 800">Règ yo</span>
+<span style="font-size: 14px; font-weight: 700; color: #3B4560; line-height: 1.45">1. Si leson jodi a fèt → toujou kè kontan oswa ap dòmi.</span>
+<span style="font-size: 14px; font-weight: 700; color: #3B4560; line-height: 1.45">2. Si pa fèt → imè a swiv lè a.</span>
+<span style="font-size: 14px; font-weight: 700; color: #3B4560; line-height: 1.45">3. Maksimòm 1 rapèl pa jou. Paran ka fèmen seri a nèt.</span>
+</div>
+
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":860}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { mood: 'maten', n: 0 };
+  }
+  renderVals() {
+    const list = [
+      { id: 'maten', label: '7:30' },
+      { id: 'midi', label: '12:30' },
+      { id: 'aswe', label: '18:00' },
+      { id: 'danje', label: '19:30' },
+      { id: 'lannwit', label: '22:00' }
+    ];
+    const base = 'min-height: 44px; padding: 8px 14px; border-radius: 999px; font-weight: 800; font-size: 15px; cursor: pointer; ';
+    const times = list.map((t) => {
+      const on = this.state.mood === t.id;
+      return {
+        label: t.label,
+        pressed: on ? 'true' : 'false',
+        style: base + (on ? 'background: #FFFFFF; color: #14213D; border: 2px solid #FFFFFF;' : 'background: transparent; color: #FFFFFF; border: 2px solid rgba(255,255,255,.5);'),
+        pick: () => this.setState({ mood: t.id, n: this.state.n + 1 })
+      };
+    });
+    return {
+      times,
+      live: this.state.mood,
+      swap: 'animation: ' + (this.state.n % 2 ? 'wSwap' : 'wSwap') + ' .35s cubic-bezier(.34,1.56,.64,1) both;'
+    };
+  }
+}
+</script>
+</body>
+</html>

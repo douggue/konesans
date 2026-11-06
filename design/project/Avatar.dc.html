@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ht">
+<head>
+<meta charset="utf-8">
+<title>Avata m</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&amp;family=Nunito:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F47B5;text-decoration:none}
+button{font-family:inherit}
+@keyframes aBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F6F7FB; font-family: 'Nunito', system-ui, sans-serif; color: #14213D; display: flex; flex-direction: column; padding: 20px 20px 26px; gap: 12px; overflow: hidden">
+
+<div style="display: flex; align-items: center; gap: 12px">
+<a href="Main.dc.html" aria-label="Retounen" style="width: 44px; height: 44px; border-radius: 14px; background: #FFFFFF; border: 2px solid #E3E7F1; display: flex; align-items: center; justify-content: center; color: #14213D; box-sizing: border-box; flex-shrink: 0">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg>
+</a>
+<div style="flex-grow: 1; display: flex; flex-direction: column">
+<h1 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 24px; line-height: 1.1; font-weight: 800">Avata m</h1>
+<span style="font-size: 13px; color: #5A6480; font-weight: 700">Pa gen foto. Se ou ki kreye tèt ou!</span>
+</div>
+<span style="display: flex; align-items: center; gap: 4px; background: #FFF4D1; border: 2px solid #F5B700; border-radius: 999px; padding: 3px 10px 3px 6px; font-weight: 800; font-size: 14px; color: #5C4600">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 48 48"><path d="M24 5l5.6 11.4 12.6 1.8-9.1 8.9 2.1 12.5L24 33.7l-11.2 5.9 2.1-12.5-9.1-8.9 12.6-1.8z" fill="#FFD43B" stroke="#14213D" stroke-width="3" stroke-linejoin="round"></path></svg>
+{{coins}}
+</span>
+</div>
+
+<div style="align-self: center; width: 230px; height: 230px; border-radius: 115px; display: flex; align-items: center; justify-content: center; border: 3px solid #14213D; {{bgStyle}}">
+<svg role="img" aria-label="Avata ou" width="190" height="190" viewBox="0 0 120 120" style="animation: aBob 3s ease-in-out infinite">
+<path d="M30 118c0-18 13-28 30-28s30 10 30 28z" fill="{{shirt}}" stroke="#14213D" stroke-width="2.5"></path>
+<sc-if value="{{uniform}}" hint-placeholder-val="{{ false }}"><path d="M48 92l12 10 12-10" fill="none" stroke="#FFFFFF" stroke-width="3"></path><path d="M60 102v16" stroke="#14213D" stroke-width="2"></path></sc-if>
+<ellipse cx="60" cy="58" rx="30" ry="34" fill="{{skin}}" stroke="#14213D" stroke-width="2.5"></ellipse>
+<sc-if value="{{hairAfro}}" hint-placeholder-val="{{ true }}"><path d="M28 50c-6-26 10-38 32-38s38 12 32 38c-4-14-16-18-32-18S32 36 28 50z" fill="{{hairColor}}" stroke="#14213D" stroke-width="2.5"></path></sc-if>
+<sc-if value="{{hairBraids}}" hint-placeholder-val="{{ false }}"><path d="M30 46c0-20 12-30 30-30s30 10 30 30c-4-10-14-14-30-14S34 36 30 46z" fill="{{hairColor}}" stroke="#14213D" stroke-width="2.5"></path><path d="M32 46c-4 16-6 30-2 44M88 46c4 16 6 30 2 44M40 44c-3 18-4 34 0 48M80 44c3 18 4 34 0 48" fill="none" stroke="{{hairColor}}" stroke-width="7" stroke-linecap="round"></path><path d="M32 46c-4 16-6 30-2 44M88 46c4 16 6 30 2 44M40 44c-3 18-4 34 0 48M80 44c3 18 4 34 0 48" fill="none" stroke="#14213D" stroke-width="1.5" stroke-dasharray="3 5"></path></sc-if>
+<sc-if value="{{hairShort}}" hint-placeholder-val="{{ false }}"><path d="M30 46c2-18 14-26 30-26s28 8 30 26c-6-8-16-10-30-10s-24 2-30 10z" fill="{{hairColor}}" stroke="#14213D" stroke-width="2.5"></path></sc-if>
+<sc-if value="{{hairPuffs}}" hint-placeholder-val="{{ false }}"><circle cx="30" cy="30" r="16" fill="{{hairColor}}" stroke="#14213D" stroke-width="2.5"></circle><circle cx="90" cy="30" r="16" fill="{{hairColor}}" stroke="#14213D" stroke-width="2.5"></circle><path d="M32 44c4-10 14-14 28-14s24 4 28 14" fill="{{hairColor}}" stroke="#14213D" stroke-width="2.5"></path></sc-if>
+<circle cx="48" cy="58" r="4" fill="#14213D"></circle><circle cx="72" cy="58" r="4" fill="#14213D"></circle>
+<circle cx="49.5" cy="56.5" r="1.3" fill="#FFFFFF"></circle><circle cx="73.5" cy="56.5" r="1.3" fill="#FFFFFF"></circle>
+<path d="M50 74q10 9 20 0" fill="none" stroke="#14213D" stroke-width="3" stroke-linecap="round"></path>
+<sc-if value="{{glasses}}" hint-placeholder-val="{{ false }}"><circle cx="48" cy="58" r="10" fill="none" stroke="#14213D" stroke-width="3"></circle><circle cx="72" cy="58" r="10" fill="none" stroke="#14213D" stroke-width="3"></circle><path d="M58 58h4" stroke="#14213D" stroke-width="3"></path></sc-if>
+<sc-if value="{{maskOn}}" hint-placeholder-val="{{ false }}"><path d="M30 56c6-12 18-16 30-16s24 4 30 16c-6 8-16 12-30 12S36 64 30 56z" fill="#FF5A6E" stroke="#14213D" stroke-width="2.5"></path><circle cx="48" cy="58" r="6" fill="#FFFFFF" stroke="#14213D" stroke-width="2"></circle><circle cx="72" cy="58" r="6" fill="#FFFFFF" stroke="#14213D" stroke-width="2"></circle><path d="M40 40l-6-14M60 36V20M80 40l6-14" stroke="#FFD43B" stroke-width="5" stroke-linecap="round"></path><circle cx="34" cy="24" r="4" fill="#51CF66" stroke="#14213D" stroke-width="1.5"></circle><circle cx="60" cy="18" r="4" fill="#4D7CFE" stroke="#14213D" stroke-width="1.5"></circle><circle cx="86" cy="24" r="4" fill="#FF9F43" stroke="#14213D" stroke-width="1.5"></circle></sc-if>
+<sc-if value="{{capOn}}" hint-placeholder-val="{{ false }}"><path d="M28 36c4-16 16-22 32-22s28 6 32 22z" fill="#14213D"></path><path d="M24 36h72l-8 6H32z" fill="#14213D"></path><path d="M92 36l3 14" stroke="#D21034" stroke-width="3" stroke-linecap="round"></path><circle cx="95" cy="52" r="4" fill="#D21034"></circle></sc-if>
+</svg>
+</div>
+
+<div role="tablist" aria-label="Kategori" style="display: flex; gap: 6px">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="5">
+<button type="button" role="tab" aria-selected="{{t.sel}}" onClick="{{t.pick}}" style="{{t.style}}">{{t.label}}</button>
+</sc-for>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{items}}" as="it" hint-placeholder-count="8">
+<button type="button" onClick="{{it.pick}}" aria-label="{{it.aria}}" aria-pressed="{{it.on}}" style="{{it.style}}">
+<span style="{{it.swatch}}">{{it.glyph}}</span>
+<sc-if value="{{it.locked}}" hint-placeholder-val="{{ false }}"><span style="font-size: 11px; font-weight: 800; color: #5C4600; display: flex; align-items: center; gap: 2px"><svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>{{it.price}}</span></sc-if>
+<sc-if value="{{it.free}}" hint-placeholder-val="{{ true }}"><span style="font-size: 11px; font-weight: 800; color: #5A6480">{{it.name}}</span></sc-if>
+</button>
+</sc-for>
+</div>
+
+<a href="Main.dc.html" style="margin-top: auto; min-height: 56px; border-radius: 16px; background: #2F9E44; color: #FFFFFF; border: 3px solid #14213D; box-shadow: 0 5px 0 #14213D; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; box-sizing: border-box">Sove avata m</a>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: 'po', skin: 1, hair: 'afro', hairColor: 0, shirt: 2, extra: 'none', bg: 0, coins: 240, owned: {} };
+  }
+  renderVals() {
+    const s = this.state;
+    const skins = ['#8D5524', '#5C3A1E', '#C68642', '#3B2314', '#E0AC69'];
+    const hairColors = ['#14213D', '#3B2314', '#7A4212', '#D21034'];
+    const shirts = ['#FF5A6E', '#4D7CFE', '#51CF66', '#FFD43B', '#9775FA'];
+    const bgs = ['#E6ECFB', '#FFE8DC', '#D3F9D8', '#FFF4D1', '#14213D'];
+    const sets = {
+      po: skins.map((c, i) => ({ id: i, glyph: '', sw: c, name: 'Po ' + (i + 1), on: s.skin === i, pick: () => this.setState({ skin: i }) })),
+      cheve: [
+        { id: 'afro', glyph: '●', name: 'Afwo' }, { id: 'braids', glyph: '∥', name: 'Très' }, { id: 'short', glyph: '◠', name: 'Kout' }, { id: 'puffs', glyph: '○○', name: 'Pouf' }
+      ].map((h) => ({ ...h, sw: hairColors[s.hairColor], on: s.hair === h.id, pick: () => this.setState({ hair: h.id }) })).concat(
+        hairColors.map((c, i) => ({ id: 'hc' + i, glyph: '', sw: c, name: 'Koulè', on: s.hairColor === i, pick: () => this.setState({ hairColor: i }) }))
+      ),
+      rad: shirts.map((c, i) => ({ id: i, glyph: '', sw: c, name: 'Rad ' + (i + 1), on: s.shirt === i && s.extra !== 'uniform', pick: () => this.setState({ shirt: i, extra: s.extra === 'uniform' ? 'none' : s.extra }) })).concat([
+        { id: 'uniform', glyph: '🎓', sw: '#4D7CFE', name: 'Inifòm', price: 80, on: s.extra === 'uniform', pick: () => this.setState({ extra: 'uniform' }) }
+      ]),
+      akseswa: [
+        { id: 'none', glyph: '∅', sw: '#FFFFFF', name: 'Anyen', on: s.extra === 'none' || s.extra === 'uniform', pick: () => this.setState({ extra: 'none' }) },
+        { id: 'glasses', glyph: '👓', sw: '#FFFFFF', name: 'Linèt', on: s.extra === 'glasses', pick: () => this.setState({ extra: 'glasses' }) },
+        { id: 'cap', glyph: '🎓', sw: '#14213D', name: 'Kaskèt', price: 150, on: s.extra === 'cap', pick: () => this.setState({ extra: 'cap' }) },
+        { id: 'mask', glyph: '🎭', sw: '#FF5A6E', name: 'Mask Kanaval', price: 300, on: s.extra === 'mask', pick: () => this.setState({ extra: 'mask' }) }
+      ],
+      fon: bgs.map((c, i) => ({ id: i, glyph: '', sw: c, name: 'Fon ' + (i + 1), price: i === 4 ? 120 : 0, on: s.bg === i, pick: () => this.setState({ bg: i }) }))
+    };
+    const tabs = [['po', 'Po'], ['cheve', 'Cheve'], ['rad', 'Rad'], ['akseswa', 'Akseswa'], ['fon', 'Fon']].map(([id, label]) => ({
+      label, sel: s.tab === id ? 'true' : 'false',
+      style: 'flex: 1; min-height: 42px; border-radius: 999px; font-size: 13px; font-weight: 800; cursor: pointer; ' + (s.tab === id ? 'background: #14213D; color: #FFFFFF; border: 2px solid #14213D;' : 'background: #FFFFFF; color: #14213D; border: 2px solid #D9DEEA;'),
+      pick: () => this.setState({ tab: id })
+    }));
+    const items = sets[s.tab].map((it) => {
+      const key = s.tab + ':' + it.id, price = it.price || 0, locked = price > 0 && !s.owned[key];
+      return {
+        glyph: it.glyph, name: it.name, price, locked, free: !locked, on: it.on ? 'true' : 'false',
+        aria: it.name + (locked ? ', ' + price + ' pwen' : ''),
+        style: 'min-height: 74px; padding: 6px 4px; border-radius: 16px; background: #FFFFFF; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; ' + (it.on ? 'border: 3px solid #1F47B5; box-shadow: 0 3px 0 #1F47B5;' : 'border: 2px solid #D9DEEA; border-bottom-width: 5px;') + (locked ? ' opacity: .8;' : ''),
+        swatch: 'width: 38px; height: 38px; border-radius: 12px; border: 2px solid #14213D; display: flex; align-items: center; justify-content: center; font-size: 18px; color: ' + (it.sw === '#14213D' ? '#FFFFFF' : '#14213D') + '; background: ' + it.sw + ';',
+        pick: () => {
+          if (locked) {
+            if (s.coins >= price) this.setState({ coins: s.coins - price, owned: { ...s.owned, [key]: true } }, it.pick);
+            return;
+          }
+          it.pick();
+        }
+      };
+    });
+    return {
+      tabs, items, coins: s.coins,
+      skin: skins[s.skin], hairColor: hairColors[s.hairColor], shirt: s.extra === 'uniform' ? '#4D7CFE' : shirts[s.shirt],
+      hairAfro: s.hair === 'afro', hairBraids: s.hair === 'braids', hairShort: s.hair === 'short', hairPuffs: s.hair === 'puffs',
+      uniform: s.extra === 'uniform', glasses: s.extra === 'glasses', capOn: s.extra === 'cap', maskOn: s.extra === 'mask',
+      bgStyle: 'background: ' + bgs[s.bg] + ';'
+    };
+  }
+}
+</script>
+</body>
+</html>

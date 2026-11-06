@@ -1,0 +1,8 @@
+node_modules/
+dist/
+build/
+.expo/
+*.tgz
+*.tar.gz
+.DS_Store
+server/nakama/build/

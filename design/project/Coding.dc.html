@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ht">
+<head>
+<meta charset="utf-8">
+<title>Enfòmatik</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&amp;family=Nunito:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F47B5;text-decoration:none}a:hover{color:#163585}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F6F7FB; font-family: 'Nunito', system-ui, sans-serif; color: #14213D; display: flex; flex-direction: column">
+<div style="flex-grow: 1; padding: 20px 20px 14px; display: flex; flex-direction: column; gap: 14px">
+
+<div style="display: flex; align-items: flex-end; justify-content: space-between">
+<div style="display: flex; flex-direction: column">
+<h1 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 26px; line-height: 1.1; font-weight: 800">Enfòmatik</h1>
+<span style="font-size: 14px; color: #5A6480; font-weight: 600">Nivo 3 · Bouk (repete)</span>
+</div>
+<span style="background: #14213D; color: #FFFFFF; border-radius: 999px; padding: 6px 12px; font-weight: 800; font-size: 13px">Kòd blòk</span>
+</div>
+
+<div style="background: #FFFFFF; border: 2px solid #E3E7F1; border-bottom-width: 5px; border-radius: 22px; padding: 14px; display: flex; flex-direction: column; gap: 10px; align-items: center">
+<span style="align-self: flex-start; font-weight: 800; font-size: 16px">Ede Robo rive jwenn zetwal la</span>
+<div role="img" aria-label="Labirent 5 sou 5: Robo anba agoch, zetwal la anwo adwat" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; width: 244px">
+<sc-for list="{{cells}}" as="cell" hint-placeholder-count="25">
+<div style="{{cell.style}}">
+<sc-if value="{{cell.robot}}" hint-placeholder-val="{{ false }}">
+<svg aria-hidden="true" width="34" height="34" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="15" rx="5" fill="#1F47B5"></rect><path d="M12 5V2" stroke="#1F47B5" stroke-width="2" stroke-linecap="round"></path><circle cx="12" cy="2" r="1.4" fill="#D21034"></circle><circle cx="8.5" cy="12" r="2.2" fill="#FFFFFF"></circle><circle cx="15.5" cy="12" r="2.2" fill="#FFFFFF"></circle><path d="M9 16.5h6" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round"></path></svg>
+</sc-if>
+<sc-if value="{{cell.goal}}" hint-placeholder-val="{{ false }}">
+<svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="#F5B700" stroke="#C99400" stroke-width="1.5" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-weight: 800; font-size: 15px">Pwogram ou</span>
+<div style="display: flex; flex-direction: column; gap: 6px">
+
+<div style="background: #FDE7EC; border: 2px solid #D21034; border-radius: 14px; padding: 6px 8px 8px; display: flex; flex-direction: column; gap: 6px">
+<span style="font-weight: 800; font-size: 14px; color: #8F0A22; display: flex; align-items: center; gap: 6px">
+<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"></path><path d="M3 11v-1a4 4 0 0 1 4-4h14"></path><path d="M7 22l-4-4 4-4"></path><path d="M21 13v1a4 4 0 0 1-4 4H3"></path></svg>
+Repete 3 fwa
+</span>
+<span style="margin-left: 18px; background: #1F47B5; color: #FFFFFF; border-radius: 10px; padding: 6px 12px; font-weight: 800; font-size: 14px; display: flex; align-items: center; gap: 6px">
+<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"></path><path d="M5 12l7-7 7 7"></path></svg>
+Avanse
+</span>
+</div>
+
+<span style="background: #14213D; color: #FFFFFF; border-radius: 10px; padding: 7px 12px; font-weight: 800; font-size: 14px; display: flex; align-items: center; gap: 6px">
+<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20v-7a4 4 0 0 1 4-4h12"></path><path d="M15 4l5 5-5 5"></path></svg>
+Vire adwat
+</span>
+
+<div style="background: #FDE7EC; border: 2px solid #D21034; border-radius: 14px; padding: 6px 8px 8px; display: flex; flex-direction: column; gap: 6px">
+<span style="font-weight: 800; font-size: 14px; color: #8F0A22; display: flex; align-items: center; gap: 6px">
+<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"></path><path d="M3 11v-1a4 4 0 0 1 4-4h14"></path><path d="M7 22l-4-4 4-4"></path><path d="M21 13v1a4 4 0 0 1-4 4H3"></path></svg>
+Repete 3 fwa
+</span>
+<span style="margin-left: 18px; background: #1F47B5; color: #FFFFFF; border-radius: 10px; padding: 6px 12px; font-weight: 800; font-size: 14px; display: flex; align-items: center; gap: 6px">
+<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"></path><path d="M5 12l7-7 7 7"></path></svg>
+Avanse
+</span>
+</div>
+
+</div>
+</div>
+
+<button type="button" onClick="{{run}}" style="{{runStyle}}">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
+<span>{{runLabel}}</span>
+</button>
+
+</div>
+
+<nav aria-label="Navigasyon prensipal" style="background: #FFFFFF; border-top: 1px solid #E3E7F1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 8px 8px 14px">
+<a href="Main.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 48px; justify-content: center; color: #5A6480; font-weight: 700; font-size: 12px">
+<span style="padding: 2px 10px; display: flex"><svg aria-hidden="true" width="28" height="28" viewBox="0 0 48 48" style="filter: grayscale(1); opacity: .55"><path d="M10 20v19a2 2 0 0 0 2 2h24a2 2 0 0 0 2-2V20L24 9z" fill="#FFB86B" stroke="#14213D" stroke-width="2.5" stroke-linejoin="round"></path><path d="M4 22L24 5l20 17-3.5 3.5L24 11 7.5 25.5z" fill="#FF5A6E" stroke="#14213D" stroke-width="2.5" stroke-linejoin="round"></path><rect x="20" y="28" width="8" height="13" rx="2" fill="#4D7CFE" stroke="#14213D" stroke-width="2.5"></rect></svg></span>
+<span>Lakay</span>
+</a>
+<a href="Categories.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 48px; justify-content: center; color: #5A6480; font-weight: 700; font-size: 12px">
+<span style="padding: 2px 10px; display: flex"><svg aria-hidden="true" width="28" height="28" viewBox="0 0 48 48" style="filter: grayscale(1); opacity: .55"><path d="M27 4L10 27h11l-3 17 19-24H26z" fill="#FFD43B" stroke="#14213D" stroke-width="2.5" stroke-linejoin="round"></path></svg></span>
+<span>Defi</span>
+</a>
+<a href="Course.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 48px; justify-content: center; color: #5A6480; font-weight: 700; font-size: 12px">
+<span style="padding: 2px 10px; display: flex"><svg aria-hidden="true" width="28" height="28" viewBox="0 0 48 48" style="filter: grayscale(1); opacity: .55"><path d="M24 12c-4-3-10-4-17-3v26c7-1 13 0 17 3z" fill="#4D7CFE" stroke="#14213D" stroke-width="2.5" stroke-linejoin="round"></path><path d="M24 12c4-3 10-4 17-3v26c-7-1-13 0-17 3z" fill="#7FA2FF" stroke="#14213D" stroke-width="2.5" stroke-linejoin="round"></path></svg></span>
+<span>Kou</span>
+</a>
+<a href="Coding.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 48px; justify-content: center; color: #1F47B5; font-weight: 800; font-size: 12px">
+<span style="background: #E6ECFB; border-radius: 12px; padding: 2px 10px; display: flex"><svg aria-hidden="true" width="28" height="28" viewBox="0 0 48 48"><circle cx="24" cy="6" r="3" fill="#FF5A6E" stroke="#14213D" stroke-width="2.5"></circle><path d="M24 9v4" stroke="#14213D" stroke-width="2.5"></path><rect x="9" y="13" width="30" height="25" rx="9" fill="#4D7CFE" stroke="#14213D" stroke-width="2.5"></rect><rect x="14" y="18" width="20" height="13" rx="6" fill="#FFFFFF" stroke="#14213D" stroke-width="2.5"></rect><circle cx="20" cy="24" r="2.5" fill="#14213D"></circle><circle cx="28" cy="24" r="2.5" fill="#14213D"></circle></svg></span>
+<span>Enfòmatik</span>
+</a>
+<a href="Profile.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 52px; justify-content: center; color: #5A6480; font-weight: 700; font-size: 12px">
+<span style="padding: 2px 14px; display: flex"><svg aria-hidden="true" width="28" height="28" viewBox="0 0 48 48" style="filter: grayscale(1); opacity: .55"><path d="M10 44c0-9 6-14 14-14s14 5 14 14z" fill="#4D7CFE" stroke="#14213D" stroke-width="2.5" stroke-linejoin="round"></path><circle cx="24" cy="19" r="11" fill="#8D5524" stroke="#14213D" stroke-width="2.5"></circle><path d="M12 18c-2-10 5-15 12-15s14 5 12 15c-2-6-6-8-12-8s-10 2-12 8z" fill="#14213D"></path></svg></span>
+<span>Mwen</span>
+</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { step: 0, running: false, done: false };
+    this.path = [[4, 0], [3, 0], [2, 0], [1, 0], [1, 1], [1, 2], [1, 3]];
+  }
+  componentWillUnmount() {
+    if (this.timer) clearInterval(this.timer);
+  }
+  renderVals() {
+    const { step, running, done } = this.state;
+    const pos = this.path[step];
+    const goal = this.path[this.path.length - 1];
+    const onPath = (r, c) => this.path.some((p) => p[0] === r && p[1] === c);
+    const cells = [];
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        const isRobot = pos[0] === r && pos[1] === c;
+        const isGoal = goal[0] === r && goal[1] === c && !isRobot;
+        const bg = onPath(r, c) ? '#E6ECFB' : '#DCE1EE';
+        cells.push({
+          robot: isRobot,
+          goal: isGoal,
+          style: 'height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: ' + (isGoal ? '#FFF4D1' : bg) + ';'
+        });
+      }
+    }
+    const run = () => {
+      if (this.state.running) return;
+      if (this.state.done) { this.setState({ step: 0, done: false }); return; }
+      this.setState({ step: 0, running: true });
+      this.timer = setInterval(() => {
+        const next = this.state.step + 1;
+        if (next >= this.path.length - 1) {
+          clearInterval(this.timer);
+          this.timer = null;
+          this.setState({ step: next, running: false, done: true });
+        } else {
+          this.setState({ step: next });
+        }
+      }, 380);
+    };
+    const btnBase = 'min-height: 54px; width: 100%; border: none; border-radius: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 17px; font-weight: 800; color: #FFFFFF; cursor: pointer; ';
+    return {
+      cells,
+      run,
+      runLabel: done ? 'Bravo! +15 pwen · Rekòmanse' : (running ? 'Robo ap mache…' : 'Kouri pwogram nan'),
+      runStyle: btnBase + (done ? 'background: #17803F; box-shadow: 0 4px 0 #0F5A2C;' : 'background: #1F47B5; box-shadow: 0 4px 0 #14307D;')
+    };
+  }
+}
+</script>
+</body>
+</html>

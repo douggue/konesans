@@ -1,0 +1,230 @@
+/// <reference types="nakama-runtime" />
+/**
+ * Konesans Nakama module (TypeScript runtime).
+ * - RPC `find_duel`: matchmaking by age band + category, bot fallback after 10s.
+ * - Match handler `duel`: authoritative loop driven by @konesans/core `reduce`.
+ * - RPC `sync_progress`: idempotent event-log upload, server folds progress.
+ * - RPC `consent_confirm`: parent clicked the confirmation link.
+ * Clients never see the answer key during a question (see core `publicView`).
+ */
+import {
+  createDuel, reduce, publicView, selectQuestions, SAMPLE_QUESTIONS, planBotAnswer, BOT_PROFILES, BOT_NAMES,
+  rng, ratingDelta, mergeLogs, foldProgress, canMatch, PRESET_REACTIONS,
+  type DuelState, type AgeBand, type CategoryId, type SyncEvent,
+} from '@konesans/core';
+
+const TICK_RATE = 5; // 5 ticks/s is plenty for a quiz
+const OP = { STATE: 1, ANSWER: 2, REACT: 3 } as const;
+const COLL = { PROGRESS: 'progress', LOG: 'eventlog', CONSENT: 'consent', MOD: 'moderation', RATING: 'rating' } as const;
+
+interface MatchLabel { age: AgeBand; category: CategoryId | 'mix'; open: boolean }
+interface MatchState { duel: DuelState; botPlan?: { atMs: number; chosen: number }; botId?: string; seed: number; presences: Record<string, nkruntime.Presence> }
+
+// ---------- Match handler ----------
+
+const matchInit: nkruntime.MatchInitFunction<MatchState> = (ctx, logger, nk, params) => {
+  const age = (params.age as AgeBand) ?? '9-11';
+  const category = (params.category as CategoryId | 'mix') ?? 'mix';
+  const seed = Math.floor(Math.random() * 2 ** 31);
+  const questions = selectQuestions(loadBank(nk), { age, category, count: 10, seed });
+  const duel = createDuel(ctx.matchId, questions, Date.now());
+  const label: MatchLabel = { age, category, open: true };
+  return { state: { duel, seed, presences: {} }, tickRate: TICK_RATE, label: JSON.stringify(label) };
+};
+
+const matchJoinAttempt: nkruntime.MatchJoinAttemptFunction<MatchState> = (ctx, logger, nk, dispatcher, tick, state, presence) => {
+  if (state.duel.phase !== 'lobby' || state.duel.players.length >= 2) return { state, accept: false, rejectMessage: 'full' };
+  return { state, accept: true };
+};
+
+const matchJoin: nkruntime.MatchJoinFunction<MatchState> = (ctx, logger, nk, dispatcher, tick, state, presences) => {
+  for (const p of presences) {
+    state.presences[p.userId] = p;
+    const username = nk.usersGetId([p.userId])[0]?.username ?? 'Jwè';
+    state.duel = reduce(state.duel, { type: 'join', player: { id: p.userId, username, isBot: false } }, Date.now());
+  }
+  if (state.duel.players.length === 2) dispatcher.matchLabelUpdate(JSON.stringify({ ...JSON.parse(ctx.matchLabel ?? '{}'), open: false }));
+  broadcast(dispatcher, state);
+  return { state };
+};
+
+const matchLeave: nkruntime.MatchLeaveFunction<MatchState> = (ctx, logger, nk, dispatcher, tick, state, presences) => {
+  for (const p of presences) {
+    delete state.presences[p.userId];
+    state.duel = reduce(state.duel, { type: 'leave', playerId: p.userId }, Date.now());
+  }
+  broadcast(dispatcher, state);
+  return { state };
+};
+
+const matchLoop: nkruntime.MatchLoopFunction<MatchState> = (ctx, logger, nk, dispatcher, tick, state, messages) => {
+  const now = Date.now();
+  let d = state.duel;
+
+  // 1. player messages
+  for (const m of messages) {
+    const data = safeJson(m.data);
+    if (m.opCode === OP.ANSWER && typeof data?.chosen === 'number') d = reduce(d, { type: 'answer', playerId: m.sender.userId, chosen: data.chosen }, now);
+    else if (m.opCode === OP.REACT && typeof data?.reaction === 'string') d = reduce(d, { type: 'react', playerId: m.sender.userId, reaction: data.reaction }, now);
+  }
+
+  // 2. bot fallback: nobody joined within the lobby timeout → add a bot instead of ending
+  if (d.phase === 'lobby' && d.players.length === 1 && now - d.phaseStartedAt >= d.lobbyTimeoutMs - 500 && !state.botId) {
+    const rand = rng(state.seed);
+    state.botId = 'bot:' + ctx.matchId;
+    d = reduce(d, { type: 'join', player: { id: state.botId, username: BOT_NAMES[Math.floor(rand() * BOT_NAMES.length)], isBot: true } }, now);
+  }
+
+  // 3. bot answers at its planned time
+  if (state.botId && d.phase === 'question') {
+    const label = JSON.parse(ctx.matchLabel ?? '{}') as MatchLabel;
+    if (!state.botPlan) state.botPlan = planBotAnswer(d, BOT_PROFILES[label.age ?? '9-11'], rng(state.seed + d.index));
+    if (now - d.phaseStartedAt >= state.botPlan.atMs) {
+      d = reduce(d, { type: 'answer', playerId: state.botId, chosen: state.botPlan.chosen }, now);
+    }
+  }
+  if (d.phase !== 'question') state.botPlan = undefined;
+
+  // 4. timers
+  const before = d;
+  d = reduce(d, { type: 'tick' }, now);
+
+  const changed = d !== state.duel;
+  state.duel = d;
+  if (changed) broadcast(dispatcher, state);
+
+  if (d.phase === 'ended' && before.phase !== 'ended') {
+    settle(nk, logger, d);
+  }
+  if (d.phase === 'ended' && now - d.phaseStartedAt > 10_000) return null; // close match
+  return { state };
+};
+
+const matchTerminate: nkruntime.MatchTerminateFunction<MatchState> = (ctx, logger, nk, dispatcher, tick, state) => ({ state });
+const matchSignal: nkruntime.MatchSignalFunction<MatchState> = (ctx, logger, nk, dispatcher, tick, state, data) => ({ state, data });
+
+function broadcast(dispatcher: nkruntime.MatchDispatcher, state: MatchState) {
+  // Each player gets their own projection (their own choice visible, opponent's hidden until reveal).
+  for (const p of state.duel.players) {
+    const pres = state.presences[p.id];
+    if (!pres) continue;
+    dispatcher.broadcastMessage(OP.STATE, JSON.stringify(publicView(state.duel, p.id)), [pres]);
+  }
+}
+
+/** Persist results: ratings, XP events, and a match record for the parent report. */
+function settle(nk: nkruntime.Nakama, logger: nkruntime.Logger, d: DuelState) {
+  const humans = d.players.filter((p) => !p.isBot);
+  for (const p of humans) {
+    const opp = d.players.find((x) => x.id !== p.id)!;
+    const result: 1 | 0.5 | 0 = d.winnerId === null ? 0.5 : d.winnerId === p.id ? 1 : 0;
+    if (!opp.isBot) {
+      const mine = readRating(nk, p.id), theirs = readRating(nk, opp.id);
+      nk.storageWrite([{ collection: COLL.RATING, key: 'elo', userId: p.id, value: { elo: mine + ratingDelta(mine, theirs, result) }, permissionRead: 1, permissionWrite: 0 }]);
+    }
+    const xp = result === 1 ? 40 : result === 0.5 ? 25 : 15;
+    appendEvents(nk, p.id, [{ id: `${d.matchId}:${p.id}:xp`, at: Date.now(), type: 'xp', payload: { amount: xp, matchId: d.matchId } }]);
+    logger.info('duel settled %s user=%s result=%s', d.matchId, p.id, result);
+  }
+}
+
+// ---------- RPCs ----------
+
+/** Find or create an open duel for this kid. Body: { age, category }. Returns { matchId }. */
+const rpcFindDuel: nkruntime.RpcFunction = (ctx, logger, nk, payload) => {
+  const { age = '9-11', category = 'mix' } = safeJson(payload) ?? {};
+  requireOnlineAllowed(nk, ctx.userId);
+  const query = `+label.age:${age} +label.category:${category} +label.open:true`;
+  const open = nk.matchList(10, true, undefined, 1, 1, query);
+  const mod = readModeration(nk);
+  for (const m of open) {
+    const label = JSON.parse((m.label as unknown as string) || '{}');
+    // the match creator's id is stored in the label by rpc below; skip blocked pairs
+    if (label.creator && !canMatch(mod, candidate(nk, ctx.userId, age), candidate(nk, label.creator, age))) continue;
+    return JSON.stringify({ matchId: m.matchId });
+  }
+  const matchId = nk.matchCreate('duel', { age, category, creator: ctx.userId });
+  return JSON.stringify({ matchId });
+};
+
+/** Upload the device event log. Body: { events: SyncEvent[] }. Returns { acked: string[], progress }. */
+const rpcSyncProgress: nkruntime.RpcFunction = (ctx, logger, nk, payload) => {
+  const { events = [] } = safeJson(payload) ?? {};
+  const log = appendEvents(nk, ctx.userId, events as SyncEvent[]);
+  const progress = foldProgress(log);
+  nk.storageWrite([{ collection: COLL.PROGRESS, key: 'current', userId: ctx.userId, value: progress, permissionRead: 1, permissionWrite: 0 }]);
+  return JSON.stringify({ acked: (events as SyncEvent[]).map((e) => e.id), progress });
+};
+
+/** Parent clicked the confirmation link (token validated by the web endpoint before calling this). */
+const rpcConsentConfirm: nkruntime.RpcFunction = (ctx, logger, nk, payload) => {
+  const { kidId } = safeJson(payload) ?? {};
+  if (!kidId) throw Error('kidId required');
+  const rec = nk.storageRead([{ collection: COLL.CONSENT, key: 'record', userId: kidId }])[0]?.value ?? {};
+  nk.storageWrite([{ collection: COLL.CONSENT, key: 'record', userId: kidId, value: { ...rec, confirmedAt: new Date().toISOString() }, permissionRead: 1, permissionWrite: 0 }]);
+  return JSON.stringify({ ok: true });
+};
+
+/** Report + block. Body: { targetId, reason, matchId }. */
+const rpcReport: nkruntime.RpcFunction = (ctx, logger, nk, payload) => {
+  const { targetId, reason, matchId } = safeJson(payload) ?? {};
+  const mod = readModeration(nk);
+  mod.reports.push({ reporterId: ctx.userId, targetId, reason, matchId, at: new Date().toISOString() });
+  (mod.blocked[ctx.userId] ??= []).push(targetId);
+  nk.storageWrite([{ collection: COLL.MOD, key: 'state', userId: SYSTEM_USER, value: mod, permissionRead: 0, permissionWrite: 0 }]);
+  return JSON.stringify({ ok: true, blocked: true });
+};
+
+// ---------- helpers ----------
+
+const SYSTEM_USER = '00000000-0000-0000-0000-000000000000';
+
+function loadBank(nk: nkruntime.Nakama) {
+  // Production: packs are stored in `content` collection, uploaded by the admin panel. Fallback to sample bank.
+  const r = nk.storageRead([{ collection: 'content', key: 'questions', userId: SYSTEM_USER }])[0];
+  return (r?.value?.questions as typeof SAMPLE_QUESTIONS) ?? SAMPLE_QUESTIONS;
+}
+
+function requireOnlineAllowed(nk: nkruntime.Nakama, userId: string) {
+  const c = nk.storageRead([{ collection: COLL.CONSENT, key: 'record', userId }])[0]?.value;
+  if (!c?.confirmedAt) throw Error('parent consent not confirmed');
+}
+
+function candidate(nk: nkruntime.Nakama, id: string, age: string) {
+  const c = nk.storageRead([{ collection: COLL.CONSENT, key: 'record', userId: id }])[0]?.value;
+  const s = nk.storageRead([{ collection: 'settings', key: 'kid', userId: id }])[0]?.value;
+  return { id, age, randomDuelsAllowed: !!s?.randomDuelsAllowed, consentConfirmed: !!c?.confirmedAt };
+}
+
+function readRating(nk: nkruntime.Nakama, userId: string): number {
+  return Number(nk.storageRead([{ collection: COLL.RATING, key: 'elo', userId }])[0]?.value?.elo ?? 1000);
+}
+
+function readModeration(nk: nkruntime.Nakama) {
+  return (nk.storageRead([{ collection: COLL.MOD, key: 'state', userId: SYSTEM_USER }])[0]?.value as { blocked: Record<string, string[]>; reports: any[] }) ?? { blocked: {}, reports: [] };
+}
+
+function appendEvents(nk: nkruntime.Nakama, userId: string, events: SyncEvent[]): SyncEvent[] {
+  const prev = (nk.storageRead([{ collection: COLL.LOG, key: 'log', userId }])[0]?.value?.events as SyncEvent[]) ?? [];
+  const log = mergeLogs(prev, events.map((e) => ({ ...e, synced: true })));
+  nk.storageWrite([{ collection: COLL.LOG, key: 'log', userId, value: { events: log }, permissionRead: 1, permissionWrite: 0 }]);
+  return log;
+}
+
+function safeJson(s: string | ArrayBuffer | undefined): any {
+  try { return typeof s === 'string' ? JSON.parse(s) : s ? JSON.parse(String.fromCharCode(...new Uint8Array(s))) : undefined; } catch { return undefined; }
+}
+
+// ---------- module entry ----------
+
+const InitModule: nkruntime.InitModule = (ctx, logger, nk, initializer) => {
+  initializer.registerMatch('duel', { matchInit, matchJoinAttempt, matchJoin, matchLeave, matchLoop, matchTerminate, matchSignal });
+  initializer.registerRpc('find_duel', rpcFindDuel);
+  initializer.registerRpc('sync_progress', rpcSyncProgress);
+  initializer.registerRpc('consent_confirm', rpcConsentConfirm);
+  initializer.registerRpc('report_player', rpcReport);
+  logger.info('Konesans module loaded. Reactions allowed: %s', PRESET_REACTIONS.join(','));
+};
+// Nakama looks for a global named InitModule.
+// @ts-ignore
+!InitModule && InitModule.bind(null);

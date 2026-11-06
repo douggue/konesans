@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ht">
+<head>
+<meta charset="utf-8">
+<title>Ikòn nan app la</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&amp;family=Nunito:wght@600;700;800&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 1280px; min-height: 1720px; box-sizing: border-box; background: #F6F7FB; font-family: 'Nunito', system-ui, sans-serif; color: #14213D; padding: 48px 56px; display: flex; flex-direction: column; gap: 24px">
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 14px; font-weight: 800; letter-spacing: .08em; color: #5A6480">IKÒN NAN APP LA · 64 IKÒN</span>
+<h1 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 44px; line-height: 1; font-weight: 800">Yon sèl fanmi ikòn</h1>
+<p style="margin: 0; font-size: 16px; font-weight: 700; color: #3B4560; max-width: 900px; line-height: 1.45">Règ yo: griy 48 px, kontou #14213D 2.5 px, koulè plat (ble #4D7CFE, jòn #FFD43B, wouj #FF5A6E, vèt #51CF66, oranj #FF9F43, vyolèt #B197FC), kwen won, yon ti enklinezon 3–6° lè ikòn nan poukont li. Gri ak 55% opasite lè li pa aktif.</p>
+</div>
+
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="5">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-weight: 800; font-size: 15px; color: #5A6480">{{g.title}}</span>
+<div style="display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{g.items}}" as="it" hint-placeholder-count="9">
+<div style="background: #FFFFFF; border: 2px solid #E3E7F1; border-bottom-width: 5px; border-radius: 18px; padding: 12px 6px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px">
+<svg aria-hidden="true" width="48" height="48" viewBox="0 0 48 48" style="{{it.tilt}}">{{it.svg}}</svg>
+<span style="font-size: 12px; font-weight: 800; text-align: center; line-height: 1.15">{{it.name}}</span>
+<span style="font-size: 10px; font-weight: 700; color: #8A93A8; font-family: monospace">{{it.id}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+
+<div style="background: #FFFFFF; border: 2px solid #E3E7F1; border-bottom-width: 5px; border-radius: 20px; padding: 16px 18px; display: flex; gap: 28px; align-items: center">
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-weight: 800; font-size: 15px">Eta yo</span><span style="font-size: 13px; font-weight: 700; color: #5A6480">Aktif · inaktif · nan yon tuil koulè</span></div>
+<span style="background: #E6ECFB; border-radius: 12px; padding: 4px 14px; display: flex"><svg aria-hidden="true" width="28" height="28" viewBox="0 0 48 48">{{demoActive}}</svg></span>
+<span style="padding: 4px 14px; display: flex"><svg aria-hidden="true" width="28" height="28" viewBox="0 0 48 48" style="filter: grayscale(1); opacity: .55">{{demoActive}}</svg></span>
+<span style="width: 52px; height: 52px; border-radius: 16px; background: #FFF4D1; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="36" height="36" viewBox="0 0 48 48" style="transform: rotate(-5deg)">{{demoTile}}</svg></span>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1720}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = 'stroke="#14213D" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"';
+    const I = {
+      lakay: `<path d="M10 20v19a2 2 0 0 0 2 2h24a2 2 0 0 0 2-2V20L24 9z" fill="#FFB86B" ${S}/><path d="M4 22L24 5l20 17-3.5 3.5L24 11 7.5 25.5z" fill="#FF5A6E" ${S}/><rect x="20" y="28" width="8" height="13" rx="2" fill="#4D7CFE" ${S}/>`,
+      defi: `<path d="M27 4L10 27h11l-3 17 19-24H26z" fill="#FFD43B" ${S}/><path d="M22 13l-5 7.5" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>`,
+      kou: `<path d="M24 12c-4-3-10-4-17-3v26c7-1 13 0 17 3z" fill="#4D7CFE" ${S}/><path d="M24 12c4-3 10-4 17-3v26c-7-1-13 0-17 3z" fill="#7FA2FF" ${S}/><path d="M11 16c3-.3 6 0 9 1M11 21c3-.3 6 0 9 1M28 17c3-1 6-1.3 9-1M28 22c3-1 6-1.3 9-1" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" fill="none"/>`,
+      robo: `<circle cx="24" cy="6" r="3" fill="#FF5A6E" ${S}/><path d="M24 9v4" ${S}/><rect x="5" y="20" width="5" height="10" rx="2.5" fill="#A7B0C4" ${S}/><rect x="38" y="20" width="5" height="10" rx="2.5" fill="#A7B0C4" ${S}/><rect x="9" y="13" width="30" height="25" rx="9" fill="#4D7CFE" ${S}/><rect x="14" y="18" width="20" height="13" rx="6" fill="#FFFFFF" ${S}/><circle cx="20" cy="24" r="2.5" fill="#14213D"/><circle cx="28" cy="24" r="2.5" fill="#14213D"/>`,
+      kesyon: `<path d="M24 6c-8 0-13 6-13 12.5 0 4.5 2.5 7.5 5 9.8 1.4 1.3 2 2.7 2 4.2V34h12v-1.5c0-1.5.6-2.9 2-4.2 2.5-2.3 5-5.3 5-9.8C37 12 32 6 24 6z" fill="#FFD43B" ${S}/><path d="M18 34h12v4a3 3 0 0 1-3 3h-6a3 3 0 0 1-3-3z" fill="#A7B0C4" ${S}/><path d="M17 17c.8-3 3.2-5 6-5.5" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" fill="none"/>`,
+      vwayaj: `<path d="M6 12l11-4 14 4 11-4v28l-11 4-14-4-11 4z" fill="#8FE0A8"/><path d="M17 8l14 4v28l-14-4z" fill="#C6F2D2"/><path d="M6 12l11-4 14 4 11-4v28l-11 4-14-4-11 4zM17 8v28M31 12v28" fill="none" ${S}/><path d="M35 5c-4 0-7 3-7 6.5 0 5 7 11.5 7 11.5s7-6.5 7-11.5C42 8 39 5 35 5z" fill="#FF5A6E" ${S}/><circle cx="35" cy="11.5" r="2.5" fill="#FFFFFF"/>`,
+      ewo: `<rect x="7" y="11" width="22" height="30" rx="4" fill="#FFD43B" ${S} transform="rotate(-10 18 26)"/><rect x="19" y="7" width="22" height="30" rx="4" fill="#FF9F43" ${S} transform="rotate(8 30 22)"/><path d="M30 14l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4-3.9-3.8 5.4-.8z" fill="#FFFFFF" stroke="#14213D" stroke-width="2" stroke-linejoin="round" transform="rotate(8 30 22)"/>`,
+      fanmi: `<path d="M10 20v19a2 2 0 0 0 2 2h24a2 2 0 0 0 2-2V20L24 9z" fill="#FFE3B8" ${S}/><path d="M4 22L24 5l20 17-3.5 3.5L24 11 7.5 25.5z" fill="#4D7CFE" ${S}/><path d="M24 37s-8-4.8-8-10.2c0-2.6 2-4.5 4.4-4.5 1.6 0 2.9.9 3.6 2.1.7-1.2 2-2.1 3.6-2.1 2.4 0 4.4 1.9 4.4 4.5C32 32.2 24 37 24 37z" fill="#FF5A6E" ${S}/>`,
+      kalkil: `<circle cx="24" cy="26" r="17" fill="#FFFFFF" ${S}/><path d="M24 15v11l7 4" fill="none" stroke="#14213D" stroke-width="3" stroke-linecap="round"/><path d="M10 9l6-5M38 9l-6-5" stroke="#14213D" stroke-width="3" stroke-linecap="round"/><text x="24" y="30" text-anchor="middle" font-family="Baloo 2, sans-serif" font-size="11" font-weight="800" fill="#FF9F43">7×8</text>`,
+      drapo: `<path d="M10 6v38" stroke="#14213D" stroke-width="3" stroke-linecap="round"/><path d="M10 8c6-3 10 3 16 0s9-3 14 0v9c-5-3-8-3-14 0s-10-3-16 0z" fill="#00209F"/><path d="M10 17c6-3 10 3 16 0s9-3 14 0v9c-5-3-8-3-14 0s-10-3-16 0z" fill="#D21034"/><path d="M10 8c6-3 10 3 16 0s9-3 14 0v18c-5-3-8-3-14 0s-10-3-16 0z" fill="none" ${S}/><circle cx="10" cy="5" r="2.5" fill="#FFD43B" stroke="#14213D" stroke-width="2"/>`,
+      fom: `<path d="M8 16l10-3 9 4 9-3 6 4-2 8-7 3-3 8-9 2-6-4-4-7z" fill="#FF9F43" ${S}/><ellipse cx="21" cy="21" rx="3" ry="2" fill="#FFFFFF" stroke="#14213D" stroke-width="1.5"/>`,
+      jewo: `<circle cx="24" cy="24" r="18" fill="#4DABF7" ${S}/><path d="M13 13c4 0 5 3 8 3s3 4 0 6-6 1-7 4 1 6-2 6c-2.5-3-4-6.5-4-10 0-3.5 2-6.5 5-9z" fill="#8FE0A8" stroke="#14213D" stroke-width="2" stroke-linejoin="round"/><path d="M31 25c3-1 6 0 8 2-1 4-4 8-8 10-1.5-3-2.5-7 0-12z" fill="#8FE0A8" stroke="#14213D" stroke-width="2" stroke-linejoin="round"/>`,
+      syans: `<path d="M20 5v12L9 37a4 4 0 0 0 3.5 6h23a4 4 0 0 0 3.5-6L28 17V5" fill="#FFFFFF" ${S}/><path d="M14 28h20l5 9a4 4 0 0 1-3.5 6h-23A4 4 0 0 1 9 37z" fill="#B197FC" ${S}/><path d="M17 5h14" stroke="#14213D" stroke-width="3" stroke-linecap="round"/><circle cx="20" cy="35" r="2.2" fill="#FFFFFF"/>`,
+      istwa: `<path d="M6 42V20h5v-5h6v5h4v-5h6v5h4v-5h6v5h5v22z" fill="#E8B07A" ${S}/><path d="M19 42v-8a5 5 0 0 1 10 0v8" fill="#14213D"/><path d="M24 15V4" stroke="#14213D" stroke-width="2.5" stroke-linecap="round"/><rect x="24" y="4" width="10" height="4" fill="#00209F" stroke="#14213D" stroke-width="1.5"/><rect x="24" y="8" width="10" height="4" fill="#D21034" stroke="#14213D" stroke-width="1.5"/>`,
+      kilti: `<path d="M10 14v20c0 3.3 6.3 6 14 6s14-2.7 14-6V14" fill="#E8B07A" ${S}/><polyline points="11,18 16,36 21,19.5 24,39 27,19.5 32,36 37,18" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linejoin="round"/><ellipse cx="24" cy="14" rx="14" ry="6" fill="#FFF1DB" ${S}/>`,
+      espo: `<circle cx="24" cy="24" r="18" fill="#FFFFFF" ${S}/><path d="M24 16.5l7 5.1-2.7 8.2h-8.6l-2.7-8.2z" fill="#14213D"/><path d="M24 16.5V7M31 21.6l8.5-3M28.3 29.8l5.2 7.4M19.7 29.8l-5.2 7.4M17 21.6l-8.5-3" stroke="#14213D" stroke-width="2.5" stroke-linecap="round"/>`,
+      seri: `<path d="M24 43c-7.5 0-12.5-5-12.5-11.5 0-6 4-9.5 6.5-15 1.5 3.5 3 5 5 6-.5-7 3-13 9-17-1.5 6 1 9.5 3.5 13 2 2.8 3 5.6 3 8.5C38.5 37 32 43 24 43z" fill="#FF7A45" stroke="#14213D" stroke-width="3" stroke-linejoin="round"/><path d="M24 43c-3.6 0-6-2.4-6-5.6 0-3.4 3-5.4 4.4-8.4 1 2 2.4 3 3.6 3.4.4-2 1.4-3.6 2.6-4.8.6 2.4 1.4 4 1.4 6.4 0 5-2.6 9-6 9z" fill="#FFD43B"/>`,
+      pwen: `<path d="M24 5l5.6 11.4 12.6 1.8-9.1 8.9 2.1 12.5L24 33.7l-11.2 5.9 2.1-12.5-9.1-8.9 12.6-1.8z" fill="#FFD43B" stroke="#14213D" stroke-width="3" stroke-linejoin="round"/>`,
+      kob: `<circle cx="24" cy="24" r="17" fill="#FFD43B" ${S}/><circle cx="24" cy="24" r="11" fill="none" stroke="#C99400" stroke-width="2.5"/><text x="24" y="30" text-anchor="middle" font-family="Baloo 2, sans-serif" font-size="16" font-weight="800" fill="#14213D">G</text>`,
+      twofe: `<path d="M14 9H7v3a7 7 0 0 0 7 7M34 9h7v3a7 7 0 0 1-7 7" fill="none" ${S}/><path d="M14 6h20v10a10 10 0 0 1-20 0z" fill="#FFD43B" ${S}/><path d="M20 26h8l1 8H19z" fill="#FFB86B" ${S}/><rect x="14" y="34" width="20" height="7" rx="2" fill="#4D7CFE" ${S}/>`,
+      badj: `<circle cx="24" cy="22" r="14" fill="#FFD43B" ${S}/><path d="M24 13l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" fill="#FFFFFF" stroke="#14213D" stroke-width="1.5" stroke-linejoin="round"/><path d="M16 34l-3 10 11-5 11 5-3-10" fill="#FF5A6E" ${S}/>`,
+      kof: `<rect x="4" y="18" width="40" height="24" rx="4" fill="#B5651D" ${S}/><path d="M4 22a20 10 0 0 1 40 0v4H4z" fill="#D98A3A" ${S}/><rect x="20" y="20" width="8" height="10" rx="2" fill="#FFD43B" stroke="#14213D" stroke-width="2"/>`,
+      kado: `<rect x="6" y="20" width="36" height="22" rx="3" fill="#FF5A6E" ${S}/><rect x="4" y="13" width="40" height="8" rx="2" fill="#FF8FA3" ${S}/><path d="M24 13v29" stroke="#FFD43B" stroke-width="4"/><path d="M24 13c-4-6-10-7-10-3s6 3 10 3zM24 13c4-6 10-7 10-3s-6 3-10 3z" fill="#FFD43B" ${S}/>`,
+      avata: `<path d="M10 44c0-9 6-14 14-14s14 5 14 14z" fill="#4D7CFE" ${S}/><circle cx="24" cy="19" r="11" fill="#8D5524" ${S}/><path d="M12 18c-2-10 5-15 12-15s14 5 12 15c-2-6-6-8-12-8s-10 2-12 8z" fill="#14213D"/><circle cx="20" cy="20" r="1.6" fill="#14213D"/><circle cx="28" cy="20" r="1.6" fill="#14213D"/>`,
+      klas: `<rect x="4" y="8" width="40" height="28" rx="4" fill="#2B6B4F" ${S}/><path d="M12 18h14M12 24h20" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/><path d="M14 40h20" stroke="#14213D" stroke-width="3" stroke-linecap="round"/>`,
+      paran: `<path d="M16 21v-6a8 8 0 0 1 16 0v6" fill="none" stroke="#14213D" stroke-width="3" stroke-linecap="round"/><rect x="10" y="20" width="28" height="22" rx="6" fill="#FFD43B" ${S}/><circle cx="24" cy="30" r="3" fill="#14213D"/><path d="M24 32v4" stroke="#14213D" stroke-width="2.5" stroke-linecap="round"/>`,
+      pwoteje: `<path d="M24 4l16 6v12c0 10-7 17-16 21-9-4-16-11-16-21V10z" fill="#51CF66" ${S}/><polyline points="15 24 21 30 33 18" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`,
+      siyale: `<path d="M10 44V6" stroke="#14213D" stroke-width="3" stroke-linecap="round"/><path d="M10 8h26l-5 8 5 8H10z" fill="#FF5A6E" ${S}/>`,
+      ore: `<circle cx="24" cy="26" r="17" fill="#FFFFFF" ${S}/><path d="M24 15v11l7 4" fill="none" stroke="#14213D" stroke-width="3" stroke-linecap="round"/><path d="M10 9l6-5M38 9l-6-5" stroke="#14213D" stroke-width="3" stroke-linecap="round"/><circle cx="24" cy="26" r="2.5" fill="#FF5A6E"/>`,
+      sanentenet: `<path d="M14 36a9 9 0 0 1-1-18 12 12 0 0 1 23-3 8 8 0 0 1 2 15.7V36z" fill="#B8DFF7" ${S}/><path d="M24 22v16M18 32l6 6 6-6" fill="none" stroke="#14213D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`,
+      koute: `<polygon points="20 10 11 18 5 18 5 30 11 30 20 38 20 10" fill="#4D7CFE" ${S}/><path d="M28 18a8 8 0 0 1 0 12M33 12a16 16 0 0 1 0 24" fill="none" stroke="#14213D" stroke-width="3" stroke-linecap="round"/>`,
+      lang: `<path d="M22 20h18a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4h-2v5l-6-5H22a4 4 0 0 1-4-4V24a4 4 0 0 1 4-4z" fill="#FFD43B" ${S}/><path d="M8 6h20a4 4 0 0 1 4 4v12a4 4 0 0 1-4 4H16l-7 6v-6H8a4 4 0 0 1-4-4V10a4 4 0 0 1 4-4z" fill="#4D7CFE" ${S}/><text x="18" y="21" text-anchor="middle" font-family="Baloo 2, sans-serif" font-size="14" font-weight="800" fill="#FFFFFF">Ab</text>`,
+      bon: `<circle cx="24" cy="24" r="18" fill="#51CF66" ${S}/><polyline points="14 24 21 31 34 17" fill="none" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>`,
+      pabon: `<circle cx="24" cy="24" r="18" fill="#FF5A6E" ${S}/><path d="M16 16l16 16M32 16L16 32" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round"/>`,
+      retounen: `<circle cx="24" cy="24" r="18" fill="#FFFFFF" ${S}/><path d="M30 24H17M23 17l-7 7 7 7" fill="none" stroke="#14213D" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>`,
+      femen: `<circle cx="24" cy="24" r="18" fill="#FFFFFF" ${S}/><path d="M17 17l14 14M31 17L17 31" stroke="#14213D" stroke-width="3.5" stroke-linecap="round"/>`,
+      jwe: `<circle cx="24" cy="24" r="18" fill="#2F9E44" ${S}/><polygon points="19 15 33 24 19 33" fill="#FFFFFF" stroke="#14213D" stroke-width="2" stroke-linejoin="round"/>`,
+      pwochen: `<circle cx="24" cy="24" r="18" fill="#4D7CFE" ${S}/><path d="M17 24h13M24 17l7 7-7 7" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`,
+      femen_kle: `<path d="M16 21v-6a8 8 0 0 1 16 0v6" fill="none" stroke="#14213D" stroke-width="3" stroke-linecap="round"/><rect x="10" y="20" width="28" height="22" rx="6" fill="#DCE1EE" ${S}/><circle cx="24" cy="30" r="3" fill="#8A93A8"/>`,
+      jem: `<path d="M12 18l6-8h12l6 8-12 20z" fill="#51CF66" ${S}/><path d="M12 18h24M18 10l6 8 6-8M24 18v20" fill="none" stroke="#14213D" stroke-width="2"/>`,
+      zetwal_gri: `<path d="M24 5l5.6 11.4 12.6 1.8-9.1 8.9 2.1 12.5L24 33.7l-11.2 5.9 2.1-12.5-9.1-8.9 12.6-1.8z" fill="#DCE1EE" stroke="#A7B0C4" stroke-width="3" stroke-linejoin="round"/>`,
+      kouwòn: `<path d="M8 36V16l9 8 7-14 7 14 9-8v20z" fill="#FFD43B" ${S}/><rect x="8" y="34" width="32" height="6" rx="2" fill="#FF9F43" ${S}/><circle cx="24" cy="26" r="3" fill="#FF5A6E" stroke="#14213D" stroke-width="1.5"/>`,
+      monte: `<circle cx="24" cy="24" r="18" fill="#D3F9D8" ${S}/><path d="M24 32V16M16 24l8-8 8 8" fill="none" stroke="#2F9E44" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`,
+      desann: `<circle cx="24" cy="24" r="18" fill="#FFE3E8" ${S}/><path d="M24 16v16M16 24l8 8 8-8" fill="none" stroke="#D21034" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`,
+      avanse: `<rect x="4" y="12" width="40" height="24" rx="8" fill="#4D7CFE" ${S}/><path d="M16 24h16M26 17l7 7-7 7" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>`,
+      vire: `<rect x="4" y="12" width="40" height="24" rx="8" fill="#14213D" ${S}/><path d="M14 30v-6a6 6 0 0 1 6-6h14M28 12l6 6-6 6" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>`,
+      repete: `<rect x="4" y="12" width="40" height="24" rx="8" fill="#FF5A6E" ${S}/><path d="M30 16l4 4-4 4M18 32l-4-4 4-4" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 28v-2a6 6 0 0 1 6-6h14M34 20v2a6 6 0 0 1-6 6H14" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>`,
+      simi: `<rect x="4" y="12" width="40" height="24" rx="8" fill="#FF9F43" ${S}/><path d="M11 24h12M18 19l5 5-5 5" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="28" y="16" width="10" height="16" rx="1.5" fill="#E8B07A" stroke="#14213D" stroke-width="2"/><path d="M28 21h10M28 26h10M33 16v5M33 26v6" stroke="#14213D" stroke-width="1.5"/>`,
+      whatsapp: `<circle cx="24" cy="24" r="18" fill="#25D366" ${S}/><path d="M12 36l3-7a12 12 0 1 1 5 4z" fill="#FFFFFF" stroke="#14213D" stroke-width="2" stroke-linejoin="round"/><path d="M19 19c0 6 4 10 10 10l2-3-4-2-2 2c-2-1-3-2-4-4l2-2-2-4z" fill="#25D366"/>`,
+      pataje: `<circle cx="36" cy="10" r="5" fill="#4D7CFE" ${S}/><circle cx="12" cy="24" r="5" fill="#FFD43B" ${S}/><circle cx="36" cy="38" r="5" fill="#FF5A6E" ${S}/><path d="M17 21l14-8M17 27l14 8" stroke="#14213D" stroke-width="3" stroke-linecap="round"/>`,
+      chache: `<circle cx="21" cy="21" r="13" fill="#FFFFFF" ${S}/><circle cx="21" cy="21" r="6" fill="none" stroke="#4D7CFE" stroke-width="3"/><path d="M31 31l10 10" stroke="#14213D" stroke-width="5" stroke-linecap="round"/>`,
+      chanje: `<circle cx="24" cy="24" r="18" fill="#FFFFFF" ${S}/><path d="M32 18a10 10 0 1 0 2 9" fill="none" stroke="#14213D" stroke-width="3.5" stroke-linecap="round"/><path d="M34 12v7h-7" fill="none" stroke="#14213D" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>`,
+      plis: `<circle cx="24" cy="24" r="18" fill="#FFFFFF" ${S}/><path d="M24 15v18M15 24h18" stroke="#14213D" stroke-width="4" stroke-linecap="round"/>`,
+      mwens: `<circle cx="24" cy="24" r="18" fill="#FFFFFF" ${S}/><path d="M15 24h18" stroke="#14213D" stroke-width="4" stroke-linecap="round"/>`,
+      kalandriye: `<rect x="6" y="10" width="36" height="32" rx="6" fill="#FFFFFF" ${S}/><path d="M6 18h36" stroke="#14213D" stroke-width="2.5"/><path d="M14 6v8M34 6v8" stroke="#14213D" stroke-width="3" stroke-linecap="round"/><rect x="12" y="24" width="6" height="6" rx="1.5" fill="#51CF66"/><rect x="21" y="24" width="6" height="6" rx="1.5" fill="#51CF66"/><rect x="30" y="24" width="6" height="6" rx="1.5" fill="#FFD43B"/><rect x="12" y="33" width="6" height="6" rx="1.5" fill="#E3E7F1"/>`,
+      solèy: `<circle cx="24" cy="24" r="9" fill="#FFD43B" ${S}/><path d="M24 4v6M24 38v6M4 24h6M38 24h6M9.9 9.9l4.2 4.2M33.9 33.9l4.2 4.2M9.9 38.1l4.2-4.2M33.9 14.1l4.2-4.2" stroke="#14213D" stroke-width="3" stroke-linecap="round"/>`,
+      lalin: `<path d="M30 6a18 18 0 1 0 12 24 14 14 0 0 1-12-24z" fill="#FFD43B" ${S}/><circle cx="36" cy="12" r="2" fill="#14213D"/>`,
+      reyaksyon: `<path d="M8 8h32a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H20l-9 8v-8H8a4 4 0 0 1-4-4V12a4 4 0 0 1 4-4z" fill="#FFFFFF" ${S}/><circle cx="17" cy="21" r="2.5" fill="#14213D"/><circle cx="31" cy="21" r="2.5" fill="#14213D"/><path d="M18 27q6 5 12 0" fill="none" stroke="#14213D" stroke-width="2.5" stroke-linecap="round"/>`,
+      kè: `<path d="M24 42s-16-9.6-16-20.4C8 15.4 12.4 11 17.6 11c3.2 0 5.6 1.8 6.4 3.4.8-1.6 3.2-3.4 6.4-3.4 5.2 0 9.6 4.4 9.6 10.6C40 32.4 24 42 24 42z" fill="#FF5A6E" ${S}/>`,
+      je: `<path d="M4 24s8-13 20-13 20 13 20 13-8 13-20 13S4 24 4 24z" fill="#FFFFFF" ${S}/><circle cx="24" cy="24" r="7" fill="#4D7CFE" stroke="#14213D" stroke-width="2.5"/><circle cx="24" cy="24" r="3" fill="#14213D"/>`,
+      tanbou: `<ellipse cx="24" cy="12" rx="14" ry="5" fill="#FFF1DB" ${S}/><path d="M10 12v22c0 3 6 5 14 5s14-2 14-5V12" fill="#E8B07A" ${S}/><path d="M10 20c4 2 10 3 14 3s10-1 14-3M10 28c4 2 10 3 14 3s10-1 14-3" fill="none" stroke="#14213D" stroke-width="2"/>`,
+      wifi: `<path d="M4 18c11-10 29-10 40 0" fill="none" stroke="#14213D" stroke-width="3.5" stroke-linecap="round"/><path d="M11 26c7-7 19-7 26 0" fill="none" stroke="#4D7CFE" stroke-width="3.5" stroke-linecap="round"/><path d="M18 33c3-3 9-3 12 0" fill="none" stroke="#14213D" stroke-width="3.5" stroke-linecap="round"/><circle cx="24" cy="40" r="3" fill="#14213D"/>`,
+      kat_bank: `<rect x="4" y="10" width="40" height="28" rx="5" fill="#4D7CFE" ${S}/><path d="M4 18h40v6H4z" fill="#14213D"/><rect x="10" y="29" width="12" height="4" rx="1" fill="#FFD43B"/>`,
+      endis: `<circle cx="24" cy="24" r="18" fill="#FFF4D1" ${S}/><text x="24" y="32" text-anchor="middle" font-family="Baloo 2, sans-serif" font-size="24" font-weight="800" fill="#8A6500">?</text>`,
+    };
+    const T = (deg) => `transform: rotate(${deg}deg);`;
+    const groups = [
+      { title: 'Navigasyon ak seksyon', items: [['lakay', 'Lakay', -3], ['defi', 'Defi', -6], ['kou', 'Kou', 4], ['robo', 'Enfòmatik', -4], ['kesyon', 'Kesyon', -5], ['vwayaj', 'Vwayaj Ayiti', 3], ['ewo', 'Kat Ewo', 0], ['fanmi', 'Defi Fanmi', -3], ['kalkil', 'Kalkil Mantal', -4]] },
+      { title: 'Kategori', items: [['drapo', 'Drapo', -6], ['fom', 'Fòm peyi', 5], ['jewo', 'Jewografi', 5], ['syans', 'Syans', 6], ['istwa', 'Istwa', -4], ['kilti', 'Kilti', -5], ['espo', 'Espò', -8], ['lang', 'Lang', 4], ['endis', 'Endis', 0]] },
+      { title: 'Pwogrè ak rekonpans', items: [['seri', 'Seri jou', 0], ['pwen', 'Pwen', 0], ['kob', 'Kòb', 0], ['twofe', 'Twofe', 0], ['badj', 'Badj', -3], ['kof', 'Kòf', 0], ['kado', 'Kado', -4], ['avata', 'Avata', 3], ['bon', 'Bon', 0]] },
+      { title: 'Paran, sekirite, sistèm', items: [['klas', 'Klas', 0], ['paran', 'Paran', 0], ['pwoteje', 'Pwoteje', 0], ['siyale', 'Siyale', 0], ['ore', 'Orè', -4], ['sanentenet', 'San entènèt', 0], ['koute', 'Koute', 0], ['pabon', 'Pa bon', 0], ['retounen', 'Retounen', 0]] },
+    ].map((g) => ({ title: g.title, items: g.items.map(([id, name, deg]) => ({ id, name, svg: I[id], tilt: deg ? T(deg) : '' })) }));
+    groups[3].items.push({ id: 'femen', name: 'Fèmen', svg: I.femen, tilt: '' });
+    const more = [
+      { title: 'Aksyon', items: [['jwe', 'Jwe', 0], ['pwochen', 'Pwochen', 0], ['chanje', 'Chanje', 0], ['plis', 'Plis', 0], ['mwens', 'Mwens', 0], ['chache', 'Chache', 0], ['pataje', 'Pataje', 0], ['whatsapp', 'WhatsApp', 0], ['kat_bank', 'Peman', -4]] },
+      { title: 'Jwèt ak pwogrè (anplis)', items: [['femen_kle', 'Fèmen (nivo)', 0], ['zetwal_gri', 'Zetwal vid', 0], ['jem', 'Jèm', 0], ['kouwòn', 'Lig / kouwòn', -4], ['monte', 'Monte', 0], ['desann', 'Desann', 0], ['kalandriye', 'Semèn', 0], ['reyaksyon', 'Reyaksyon', 0], ['kè', 'Fanmi / kè', 0]] },
+      { title: 'Enfòmatik (blòk) ak divès', items: [['avanse', 'Avanse', 0], ['vire', 'Vire', 0], ['repete', 'Repete', 0], ['simi', 'Si gen mi', 0], ['solèy', 'Maten', 0], ['lalin', 'Lannwit', 0], ['je', 'Paran wè', 0], ['tanbou', 'Tanbou', -5], ['wifi', 'WiFi', 0]] },
+    ].map((g) => ({ title: g.title, items: g.items.map(([id, name, deg]) => ({ id, name, svg: I[id], tilt: deg ? T(deg) : '' })) }));
+    groups.push(...more);
+    return { groups, demoActive: I.lakay, demoTile: I.kesyon };
+  }
+}
+</script>
+</body>
+</html>

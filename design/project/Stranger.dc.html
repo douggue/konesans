@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ht">
+<head>
+<meta charset="utf-8">
+<title>Defi Sekirize</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&amp;family=Nunito:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F47B5;text-decoration:none}
+button{font-family:inherit}
+@keyframes sRadar{0%{transform:scale(.4);opacity:.8}100%{transform:scale(2.2);opacity:0}}
+@keyframes sPop{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.1);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes sUp{0%{transform:translateY(105%)}100%{transform:translateY(0)}}
+@keyframes sScrim{0%{opacity:0}100%{opacity:1}}
+@keyframes sBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important}}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; background: #F6F7FB; font-family: 'Nunito', system-ui, sans-serif; color: #14213D; display: flex; flex-direction: column; padding: 20px 20px 26px; gap: 14px; overflow: hidden">
+
+<div style="display: flex; align-items: center; gap: 12px">
+<a href="Main.dc.html" aria-label="Retounen" style="width: 44px; height: 44px; border-radius: 14px; background: #FFFFFF; border: 2px solid #E3E7F1; display: flex; align-items: center; justify-content: center; color: #14213D; box-sizing: border-box; flex-shrink: 0">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg>
+</a>
+<div style="flex-grow: 1; display: flex; flex-direction: column">
+<h1 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 24px; line-height: 1.1; font-weight: 800">Defi ak yon lòt timoun</h1>
+<span style="font-size: 13px; color: #5A6480; font-weight: 700">Istwa Ayiti · 9–11 an</span>
+</div>
+<span style="display: flex; align-items: center; gap: 4px; background: #E3F4EA; color: #12632F; border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 800">
+<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"></path></svg>
+Pwoteje
+</span>
+</div>
+
+<sc-if value="{{searching}}" hint-placeholder-val="{{ true }}">
+<div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; text-align: center">
+<div style="position: relative; width: 200px; height: 200px; display: flex; align-items: center; justify-content: center">
+<span aria-hidden="true" style="position: absolute; inset: 40px; border-radius: 999px; border: 3px solid #1F47B5; animation: sRadar 1.8s ease-out infinite"></span>
+<span aria-hidden="true" style="position: absolute; inset: 40px; border-radius: 999px; border: 3px solid #1F47B5; animation: sRadar 1.8s ease-out .6s infinite"></span>
+<span aria-hidden="true" style="position: absolute; inset: 40px; border-radius: 999px; border: 3px solid #1F47B5; animation: sRadar 1.8s ease-out 1.2s infinite"></span>
+<svg aria-hidden="true" width="120" height="126" viewBox="-20 -10 200 210" style="position: relative; animation: sBob 2s ease-in-out infinite">
+<path d="M36 92 C8 100 4 136 22 150 C30 134 38 122 44 110 Z" fill="#14307D"></path>
+<ellipse cx="80" cy="112" rx="50" ry="62" fill="#1F47B5"></ellipse><ellipse cx="80" cy="132" rx="32" ry="38" fill="#E6ECFB"></ellipse>
+<circle cx="62" cy="90" r="13" fill="#FFFFFF"></circle><circle cx="68" cy="86" r="6" fill="#14213D"></circle><path d="M86 92 Q98 86 110 92" stroke="#14213D" stroke-width="5" fill="none" stroke-linecap="round"></path>
+<path d="M72 104 L90 102 L82 118 Z" fill="#F5B700" stroke="#C99400" stroke-width="2"></path>
+<path d="M122 102 C134 114 120 132 96 126 C104 118 110 110 114 102 Z" fill="#14307D"></path>
+<path d="M50 52 L80 38 L110 52 L80 66 Z" fill="#14213D"></path><path d="M60 56 L60 68 Q80 78 100 68 L100 56 L80 66 Z" fill="#14213D"></path><path d="M110 52 L114 74" stroke="#D21034" stroke-width="3" stroke-linecap="round"></path><circle cx="114" cy="78" r="5" fill="#D21034"></circle>
+</svg>
+</div>
+<h2 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 26px; font-weight: 800">N ap chèche yon jwè…</h2>
+<p style="margin: 0; font-size: 15px; font-weight: 700; color: #5A6480">Menm laj, menm nivo. {{secs}} s</p>
+<div style="width: 100%; background: #FFFFFF; border: 2px solid #E3E7F1; border-radius: 18px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; text-align: left; box-sizing: border-box">
+<span style="font-size: 12px; font-weight: 800; letter-spacing: .06em; color: #5A6480">KIJAN NOU PWOTEJE W</span>
+<span style="font-size: 14px; font-weight: 700; display: flex; gap: 8px"><span style="color: #2F9E44">✓</span>Lòt timoun lan wè sèlman non jwè w ak avata w</span>
+<span style="font-size: 14px; font-weight: 700; display: flex; gap: 8px"><span style="color: #2F9E44">✓</span>Pa gen chat. Reyaksyon prepare sèlman</span>
+<span style="font-size: 14px; font-weight: 700; display: flex; gap: 8px"><span style="color: #2F9E44">✓</span>Apre match la, nou pa konekte nou ankò</span>
+</div>
+<button type="button" onClick="{{found}}" style="min-height: 48px; padding: 0 20px; border-radius: 14px; background: #FFFFFF; color: #14213D; border: 2px solid #D9DEEA; font-size: 14px; font-weight: 800; cursor: pointer">(Mockup: simile «jwenn»)</button>
+</div>
+</sc-if>
+
+<sc-if value="{{matched}}" hint-placeholder-val="{{ false }}">
+<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 14px; animation: sPop .45s cubic-bezier(.34,1.56,.64,1) both">
+<div style="display: flex; align-items: center; justify-content: center; gap: 14px; padding: 10px 0">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px">
+<div style="width: 84px; height: 84px; border-radius: 42px; background: #1F47B5; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: 'Baloo 2', sans-serif; font-size: 36px; font-weight: 800; border: 3px solid #14213D">M</div>
+<span style="font-weight: 800; font-size: 14px">Toti 27</span>
+<span style="font-size: 12px; font-weight: 700; color: #5A6480">Ou · Nivo 7</span>
+</div>
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 30px; font-weight: 800; color: #D21034">VS</span>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px">
+<div style="width: 84px; height: 84px; border-radius: 42px; background: #0E7C86; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: 'Baloo 2', sans-serif; font-size: 36px; font-weight: 800; border: 3px solid #14213D">K</div>
+<span style="font-weight: 800; font-size: 14px">Kayiman 19</span>
+<span style="font-size: 12px; font-weight: 700; color: #5A6480">Nò · Nivo 7</span>
+</div>
+</div>
+<div style="background: #E3F4EA; border: 2px solid #51CF66; border-radius: 18px; padding: 12px 14px; display: flex; gap: 10px; align-items: center">
+<svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="#2F9E44" stroke="#14213D" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"></path><polyline points="8 12 11 15 16 9" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"></polyline></svg>
+<span style="font-size: 14px; font-weight: 700; color: #12632F; line-height: 1.35">Kayiman 19 se yon timoun 9–11 an tou. Kont li verifye pa yon paran, e paran w te pèmèt defi sa yo.</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-weight: 800; font-size: 14px; color: #5A6480">Voye yon salitasyon (opsyonèl)</span>
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<button type="button" style="min-height: 44px; padding: 0 14px; border-radius: 999px; background: #FFFFFF; border: 2px solid #D9DEEA; font-weight: 800; font-size: 14px; cursor: pointer">Bòn chans!</button>
+<button type="button" style="min-height: 44px; padding: 0 14px; border-radius: 999px; background: #FFFFFF; border: 2px solid #D9DEEA; font-weight: 800; font-size: 14px; cursor: pointer">Ann jwe!</button>
+<button type="button" style="min-height: 44px; padding: 0 14px; border-radius: 999px; background: #FFFFFF; border: 2px solid #D9DEEA; font-weight: 800; font-size: 14px; cursor: pointer">Mwen pare</button>
+</div>
+</div>
+<a href="Duel.dc.html" style="margin-top: auto; min-height: 58px; border-radius: 18px; background: #D21034; color: #FFFFFF; border: 3px solid #14213D; box-shadow: 0 5px 0 #14213D; display: flex; align-items: center; justify-content: center; font-family: 'Baloo 2', sans-serif; font-size: 22px; font-weight: 800; box-sizing: border-box">KÒMANSE DEFI A</a>
+<button type="button" onClick="{{openReport}}" style="min-height: 44px; border-radius: 14px; background: transparent; color: #8F0A22; border: 2px solid #F5BFC9; font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px">
+<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 22V4"></path><path d="M4 4h13l-2 4 2 4H4"></path></svg>
+Siyale oswa bloke jwè sa a
+</button>
+</div>
+</sc-if>
+
+<sc-if value="{{report}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; justify-content: flex-end">
+<button type="button" onClick="{{closeReport}}" aria-label="Fèmen" style="position: absolute; inset: 0; width: 100%; height: 100%; border: none; padding: 0; background: rgba(20,33,61,.45); cursor: pointer; animation: sScrim .25s both"></button>
+<div role="dialog" aria-label="Siyale" style="position: relative; background: #FFFFFF; border-radius: 28px 28px 0 0; border-top: 3px solid #14213D; padding: 22px 20px 30px; display: flex; flex-direction: column; gap: 10px; animation: sUp .45s cubic-bezier(.32,.72,0,1) both">
+<span style="font-family: 'Baloo 2', sans-serif; font-size: 22px; font-weight: 800">Sa k pase ak Kayiman 19?</span>
+<sc-for list="{{reasons}}" as="r" hint-placeholder-count="3">
+<button type="button" onClick="{{r.pick}}" style="{{r.style}}">{{r.label}}</button>
+</sc-for>
+<div style="background: #E6ECFB; border-radius: 14px; padding: 10px 12px; font-size: 13px; font-weight: 700; color: #14307D; line-height: 1.4">Nou bloke jwè a tousuit. Paran w ap resevwa yon kopi. Ekip Konesans ap verifye nan 24 è.</div>
+<button type="button" onClick="{{sendReport}}" style="min-height: 52px; border-radius: 16px; background: #D21034; color: #FFFFFF; border: 3px solid #14213D; box-shadow: 0 4px 0 #14213D; font-size: 16px; font-weight: 800; cursor: pointer">{{sendLabel}}</button>
+</div>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { phase: 'search', secs: 0, report: false, reason: null, sent: false };
+  }
+  componentDidMount() { this.t = setInterval(() => { if (this.state.phase === 'search') this.setState({ secs: this.state.secs + 1 }); }, 1000); }
+  componentWillUnmount() { if (this.t) clearInterval(this.t); }
+  renderVals() {
+    const s = this.state;
+    const reasons = ['Non li pa apwopriye', 'Li kite match la anpil fwa', 'Lòt bagay'].map((label, i) => ({
+      label,
+      style: 'min-height: 50px; text-align: left; padding: 0 14px; border-radius: 14px; font-size: 15px; font-weight: 800; cursor: pointer; ' + (s.reason === i ? 'background: #FDE7EC; border: 2px solid #D21034; color: #8F0A22;' : 'background: #FFFFFF; border: 2px solid #D9DEEA; color: #14213D;'),
+      pick: () => this.setState({ reason: i })
+    }));
+    return {
+      searching: s.phase === 'search', matched: s.phase === 'matched', secs: s.secs,
+      found: () => this.setState({ phase: 'matched' }),
+      report: s.report, reasons,
+      openReport: () => this.setState({ report: true, sent: false }),
+      closeReport: () => this.setState({ report: false }),
+      sendLabel: s.sent ? 'Voye · jwè a bloke' : 'Siyale epi bloke',
+      sendReport: () => this.setState({ sent: true })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ht">
+<head>
+<meta charset="utf-8">
+<title>Pakè san entènèt</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&amp;family=Nunito:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F47B5;text-decoration:none}
+button{font-family:inherit}
+@keyframes oSpin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F6F7FB; font-family: 'Nunito', system-ui, sans-serif; color: #14213D; display: flex; flex-direction: column; padding: 20px 20px 26px; gap: 12px; overflow: hidden">
+
+<div style="display: flex; align-items: center; gap: 12px">
+<a href="Main.dc.html" aria-label="Retounen" style="width: 44px; height: 44px; border-radius: 14px; background: #FFFFFF; border: 2px solid #E3E7F1; display: flex; align-items: center; justify-content: center; color: #14213D; box-sizing: border-box; flex-shrink: 0">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg>
+</a>
+<div style="flex-grow: 1; display: flex; flex-direction: column">
+<h1 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 24px; line-height: 1.1; font-weight: 800">Jwe san entènèt</h1>
+<span style="font-size: 13px; color: #5A6480; font-weight: 700">Telechaje sou WiFi, jwe nenpòt kote</span>
+</div>
+</div>
+
+<div style="{{statusStyle}}">
+<span style="{{dot}}"></span>
+<span style="flex-grow: 1; display: flex; flex-direction: column"><span style="font-weight: 800; font-size: 15px">{{statusTitle}}</span><span style="font-size: 12px; font-weight: 700; opacity: .85">{{statusSub}}</span></span>
+<button type="button" onClick="{{toggleNet}}" style="min-height: 40px; padding: 0 12px; border-radius: 12px; background: rgba(255,255,255,.9); color: #14213D; border: 2px solid #14213D; font-size: 12px; font-weight: 800; cursor: pointer">{{netBtn}}</button>
+</div>
+
+<div style="background: #FFFFFF; border: 2px solid #E3E7F1; border-bottom-width: 5px; border-radius: 18px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 800"><span>Espas sou telefòn nan</span><span style="color: #5A6480">{{used}} MB sou 64 MB</span></div>
+<div style="height: 12px; border-radius: 6px; background: #E3E7F1; overflow: hidden; display: flex"><div style="height: 12px; background: #1F47B5; transition: width .4s; {{usedW}}"></div></div>
+<span style="font-size: 12px; font-weight: 700; color: #5A6480">App la li menm: 18 MB. Yon pakè = 1–6 MB. Pa gen videyo.</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px; flex-grow: 1; min-height: 0; overflow-y: auto">
+<sc-for list="{{packs}}" as="p" hint-placeholder-count="7">
+<div style="background: #FFFFFF; border: 2px solid #E3E7F1; border-bottom-width: 5px; border-radius: 18px; padding: 10px 12px; display: flex; align-items: center; gap: 12px">
+<span style="{{p.icon}}">{{p.glyph}}</span>
+<span style="flex-grow: 1; display: flex; flex-direction: column; min-width: 0">
+<span style="font-weight: 800; font-size: 15px">{{p.name}}</span>
+<span style="font-size: 12px; font-weight: 700; color: #5A6480">{{p.meta}}</span>
+<sc-if value="{{p.loading}}" hint-placeholder-val="{{ false }}"><span style="margin-top: 4px; height: 6px; border-radius: 3px; background: #E3E7F1; overflow: hidden; display: block"><span style="display: block; height: 6px; background: #1F47B5; transition: width .3s; {{p.barW}}"></span></span></sc-if>
+</span>
+<button type="button" onClick="{{p.act}}" aria-label="{{p.aria}}" style="{{p.btn}}">
+<sc-if value="{{p.done}}" hint-placeholder-val="{{ false }}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></sc-if>
+<sc-if value="{{p.loading}}" hint-placeholder-val="{{ false }}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1F47B5" stroke-width="3" stroke-linecap="round" style="animation: oSpin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.2-8.6"></path></svg></sc-if>
+<sc-if value="{{p.idle}}" hint-placeholder-val="{{ true }}"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#14213D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M6 11l6 6 6-6"></path><path d="M4 20h16"></path></svg></sc-if>
+</button>
+</div>
+</sc-for>
+</div>
+
+<div style="background: #FFFFFF; border: 2px solid #E3E7F1; border-radius: 18px; padding: 10px 14px; display: flex; align-items: center; gap: 10px">
+<span style="flex-grow: 1; display: flex; flex-direction: column"><span style="font-weight: 800; font-size: 14px">Telechaje otomatik sou WiFi sèlman</span><span style="font-size: 12px; font-weight: 700; color: #5A6480">Pa janm itilize done mobil san pèmisyon</span></span>
+<button type="button" role="switch" aria-checked="{{wifiOn}}" aria-label="WiFi sèlman" onClick="{{flipWifi}}" style="{{wifiTrack}}"><span style="width: 26px; height: 26px; border-radius: 13px; background: #FFFFFF; display: block; box-shadow: 0 1px 3px rgba(20,33,61,.3)"></span></button>
+</div>
+<p style="margin: 0; font-size: 12px; font-weight: 700; color: #5A6480; text-align: center">Pwogrè w sove sou telefòn nan. L ap voye lè w jwenn entènèt. Defi 1 kont 1 bezwen entènèt.</p>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { online: true, wifi: true, st: { istwa: 100, angle1: 100, drapo: 0, kalkil: 100, syans: 0, jewo: 0, enfo: 0 } };
+  }
+  componentWillUnmount() { if (this.t) clearInterval(this.t); }
+  renderVals() {
+    const s = this.state;
+    const defs = [
+      { id: 'istwa', name: 'Istwa Ayiti', q: '320 kesyon', mb: 4, glyph: '🏰', bg: '#FFF0E0' },
+      { id: 'angle1', name: 'Angle · Inite 1–3', q: '18 leson + odyo', mb: 6, glyph: 'Ab', bg: '#E6ECFB' },
+      { id: 'kalkil', name: 'Kalkil Mantal', q: 'Tout nivo', mb: 1, glyph: '7×8', bg: '#FFE8DC' },
+      { id: 'drapo', name: 'Drapo & Kapital', q: '195 peyi', mb: 3, glyph: '🚩', bg: '#FFF4D1' },
+      { id: 'syans', name: 'Syans', q: '210 kesyon', mb: 2, glyph: '🧪', bg: '#EDE7FF' },
+      { id: 'jewo', name: 'Jewografi', q: '180 kesyon + kat', mb: 5, glyph: '🌎', bg: '#E7F5FF' },
+      { id: 'enfo', name: 'Enfòmatik · Nivo 1', q: '12 kous labirent', mb: 3, glyph: '🤖', bg: '#E3F4EA' }
+    ];
+    const used = 18 + defs.reduce((a, d) => a + (s.st[d.id] === 100 ? d.mb : 0), 0);
+    const packs = defs.map((d) => {
+      const v = s.st[d.id], done = v === 100, loading = v > 0 && v < 100;
+      return {
+        name: d.name, glyph: d.glyph, done, loading, idle: v === 0,
+        meta: done ? d.q + ' · sou telefòn nan' : loading ? 'Ap telechaje… ' + v + '%' : d.q + ' · ' + d.mb + ' MB',
+        barW: 'width: ' + v + '%;',
+        aria: done ? 'Efase ' + d.name : 'Telechaje ' + d.name,
+        icon: 'width: 46px; height: 46px; border-radius: 14px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: \'Baloo 2\', sans-serif; font-weight: 800; font-size: 15px; border: 2px solid #14213D; background: ' + d.bg + ';',
+        btn: 'width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; ' + (done ? 'background: #2F9E44; border: 2px solid #14213D;' : 'background: #FFFFFF; border: 2px solid #D9DEEA; border-bottom-width: 4px;'),
+        act: () => {
+          if (done) { this.setState({ st: { ...this.state.st, [d.id]: 0 } }); return; }
+          if (loading || !this.state.online) return;
+          const tick = () => {
+            const cur = this.state.st[d.id];
+            if (cur >= 100) return;
+            this.setState({ st: { ...this.state.st, [d.id]: Math.min(100, cur + 20) } });
+            if (cur + 20 < 100) setTimeout(tick, 250);
+          };
+          this.setState({ st: { ...this.state.st, [d.id]: 10 } });
+          setTimeout(tick, 250);
+        }
+      };
+    });
+    return {
+      packs, used, usedW: 'width: ' + (used / 64 * 100) + '%;',
+      statusStyle: 'border-radius: 16px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; border: 2px solid #14213D; ' + (s.online ? 'background: #D3F9D8; color: #12632F;' : 'background: #FFE3E8; color: #8F0A22;'),
+      dot: 'width: 12px; height: 12px; border-radius: 6px; flex-shrink: 0; background: ' + (s.online ? '#2F9E44' : '#D21034') + ';',
+      statusTitle: s.online ? 'Konekte · WiFi' : 'Pa gen entènèt',
+      statusSub: s.online ? 'Dènye senkwonizasyon: kounye a' : '3 pakè disponib · pwogrè w ap tann pou l voye',
+      netBtn: s.online ? 'Simile: koupe' : 'Simile: konekte',
+      toggleNet: () => this.setState({ online: !s.online }),
+      wifiOn: s.wifi ? 'true' : 'false',
+      wifiTrack: 'width: 52px; height: 32px; border-radius: 16px; border: none; padding: 3px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; background: ' + (s.wifi ? '#2F9E44' : '#B9C2D6') + '; justify-content: ' + (s.wifi ? 'flex-end' : 'flex-start') + ';',
+      flipWifi: () => this.setState({ wifi: !s.wifi })
+    };
+  }
+}
+</script>
+</body>
+</html>

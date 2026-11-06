@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ht">
+<head>
+<meta charset="utf-8">
+<title>Ikòn (konpozan)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: {{px}}; height: {{px}}; border-radius: {{radius}}; overflow: hidden; display: block">
+
+<sc-if value="{{isA}}" hint-placeholder-val="{{ true }}">
+<svg role="img" aria-label="Ikòn A: tèt Ti Zwazo" width="{{size}}" height="{{size}}" viewBox="0 0 192 192">
+<rect width="192" height="192" fill="#1F47B5"></rect>
+<circle cx="96" cy="200" r="120" fill="#3A63D6"></circle>
+<path d="M96 42 C50 42 34 80 34 112 C34 150 62 170 96 170 C130 170 158 150 158 112 C158 80 142 42 96 42 Z" fill="#1F47B5" stroke="#FFFFFF" stroke-width="8"></path>
+<ellipse cx="96" cy="138" rx="34" ry="30" fill="#E6ECFB"></ellipse>
+<circle cx="72" cy="96" r="18" fill="#FFFFFF"></circle><circle cx="120" cy="96" r="18" fill="#FFFFFF"></circle>
+<circle cx="76" cy="98" r="9" fill="#14213D"></circle><circle cx="116" cy="98" r="9" fill="#14213D"></circle>
+<circle cx="79" cy="94" r="3" fill="#FFFFFF"></circle><circle cx="119" cy="94" r="3" fill="#FFFFFF"></circle>
+<path d="M82 116 L110 116 L96 134 Z" fill="#F5B700" stroke="#C99400" stroke-width="3" stroke-linejoin="round"></path>
+<path d="M54 56 L96 36 L138 56 L96 76 Z" fill="#14213D"></path><path d="M66 62 L66 78 Q96 92 126 78 L126 62 L96 76 Z" fill="#14213D"></path>
+<path d="M138 56 L144 86" stroke="#D21034" stroke-width="5" stroke-linecap="round"></path><circle cx="144" cy="91" r="7" fill="#D21034"></circle>
+</svg>
+</sc-if>
+
+<sc-if value="{{isB}}" hint-placeholder-val="{{ false }}">
+<svg role="img" aria-label="Ikòn B: Sitadèl ak zetwal" width="{{size}}" height="{{size}}" viewBox="0 0 192 192">
+<rect width="192" height="96" fill="#1F47B5"></rect><rect y="96" width="192" height="96" fill="#D21034"></rect>
+<path d="M0 192 L0 140 L40 118 L70 126 L70 96 L86 96 L86 84 L96 72 L106 84 L106 96 L122 96 L122 126 L152 118 L192 140 L192 192 Z" fill="#14213D"></path>
+<path d="M70 126 L122 126 L122 160 L70 160 Z" fill="#14213D"></path>
+<path d="M96 22 L104 42 L126 44 L109 58 L114 80 L96 68 L78 80 L83 58 L66 44 L88 42 Z" fill="#FFD43B" stroke="#14213D" stroke-width="4" stroke-linejoin="round"></path>
+</svg>
+</sc-if>
+
+<sc-if value="{{isC}}" hint-placeholder-val="{{ false }}">
+<svg role="img" aria-label="Ikòn C: lèt K ak zèl" width="{{size}}" height="{{size}}" viewBox="0 0 192 192">
+<rect width="192" height="192" fill="#FFD43B"></rect>
+<text x="54" y="150" font-family="Baloo 2, sans-serif" font-size="150" font-weight="800" fill="#14213D">K</text>
+<path d="M112 70 C140 50 168 52 180 44 C166 72 150 84 124 92 C140 96 158 108 166 124 C140 118 118 108 106 96 Z" fill="#1F47B5" stroke="#14213D" stroke-width="5" stroke-linejoin="round"></path>
+<path d="M118 76 L150 60 M118 86 L144 80" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" opacity=".8"></path>
+<circle cx="172" cy="38" r="6" fill="#D21034" stroke="#14213D" stroke-width="3"></circle>
+</svg>
+</sc-if>
+
+<sc-if value="{{isD}}" hint-placeholder-val="{{ false }}">
+<svg role="img" aria-label="Ikòn D: Ti Zwazo ap gade" width="{{size}}" height="{{size}}" viewBox="0 0 192 192">
+<rect width="192" height="192" fill="#1F47B5"></rect>
+<rect x="0" y="0" width="192" height="14" fill="#D21034"></rect>
+<rect x="0" y="178" width="192" height="14" fill="#D21034"></rect>
+<path d="M28 192 C28 120 50 86 96 86 C142 86 164 120 164 192 Z" fill="#3A63D6" stroke="#FFFFFF" stroke-width="8"></path>
+<path d="M20 160 C0 150 0 110 24 102 C22 122 22 142 28 160 Z M172 160 C192 150 192 110 168 102 C170 122 170 142 164 160 Z" fill="#14307D"></path>
+<ellipse cx="96" cy="166" rx="34" ry="28" fill="#E6ECFB"></ellipse>
+<circle cx="74" cy="122" r="17" fill="#FFFFFF"></circle><circle cx="118" cy="122" r="17" fill="#FFFFFF"></circle>
+<circle cx="78" cy="124" r="8" fill="#14213D"></circle><circle cx="114" cy="124" r="8" fill="#14213D"></circle>
+<circle cx="81" cy="120" r="3" fill="#FFFFFF"></circle><circle cx="117" cy="120" r="3" fill="#FFFFFF"></circle>
+<path d="M84 142 L108 142 L96 158 Z" fill="#F5B700" stroke="#C99400" stroke-width="3" stroke-linejoin="round"></path>
+<path d="M56 90 L96 68 L136 90 L96 112 Z" fill="#14213D"></path><path d="M68 96 L68 112 Q96 126 124 112 L124 96 L96 112 Z" fill="#14213D"></path>
+<path d="M136 90 L142 116" stroke="#D21034" stroke-width="5" stroke-linecap="round"></path><circle cx="142" cy="121" r="7" fill="#D21034"></circle>
+</svg>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","options":["a","b","c","d"],"default":"a"},"size":{"editor":"int","default":192,"min":24,"max":512},"$preview":{"width":192,"height":192}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const v = this.props.variant ?? 'a';
+    const size = Number(this.props.size ?? 192);
+    return { isA: v === 'a', isB: v === 'b', isC: v === 'c', isD: v === 'd', size, px: size + 'px', radius: Math.round(size * 0.22) + 'px' };
+  }
+}
+</script>
+</body>
+</html>

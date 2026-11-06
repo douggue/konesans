@@ -1,0 +1,8 @@
+{
+  "name": "@konesans/nakama",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": { "build": "rollup -c" },
+  "dependencies": { "@konesans/core": "*" },
+  "devDependencies": { "nakama-runtime": "github:heroiclabs/nakama-common", "rollup": "^4.0.0", "@rollup/plugin-typescript": "^12.0.0", "@rollup/plugin-node-resolve": "^15.0.0", "@rollup/plugin-commonjs": "^26.0.0", "typescript": "^5.5.0", "tslib": "^2.6.0" }
+}

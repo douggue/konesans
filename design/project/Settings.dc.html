@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ht">
+<head>
+<meta charset="utf-8">
+<title>Paramèt</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&amp;family=Nunito:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F47B5;text-decoration:none}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F6F7FB; font-family: 'Nunito', system-ui, sans-serif; color: #14213D; display: flex; flex-direction: column; padding: 20px 20px 26px; gap: 14px; overflow-y: auto">
+
+<div style="display: flex; align-items: center; gap: 12px">
+<a href="Profile.dc.html" aria-label="Retounen" style="width: 44px; height: 44px; border-radius: 14px; background: #FFFFFF; border: 2px solid #E3E7F1; display: flex; align-items: center; justify-content: center; color: #14213D; box-sizing: border-box; flex-shrink: 0">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg>
+</a>
+<h1 style="margin: 0; font-family: 'Baloo 2', sans-serif; font-size: 24px; line-height: 1.1; font-weight: 800">Paramèt</h1>
+</div>
+
+<span style="font-weight: 800; font-size: 14px; color: #5A6480">Son</span>
+<div style="background: #FFFFFF; border: 2px solid #E3E7F1; border-bottom-width: 5px; border-radius: 18px; padding: 4px 14px; display: flex; flex-direction: column">
+<sc-for list="{{sound}}" as="t" hint-placeholder-count="3">
+<div style="{{t.row}}">
+<span style="flex-grow: 1; display: flex; flex-direction: column"><span style="font-weight: 800; font-size: 15px">{{t.label}}</span><span style="font-size: 12px; font-weight: 700; color: #5A6480">{{t.hint}}</span></span>
+<button type="button" role="switch" aria-checked="{{t.on}}" aria-label="{{t.label}}" onClick="{{t.flip}}" style="{{t.track}}"><span style="width: 26px; height: 26px; border-radius: 13px; background: #FFFFFF; display: block; box-shadow: 0 1px 3px rgba(20,33,61,.3)"></span></button>
+</div>
+</sc-for>
+</div>
+
+<span style="font-weight: 800; font-size: 14px; color: #5A6480">Lang app la</span>
+<div role="radiogroup" aria-label="Lang" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{langs}}" as="l" hint-placeholder-count="2">
+<button type="button" role="radio" aria-checked="{{l.on}}" onClick="{{l.pick}}" style="{{l.style}}"><span style="font-family: 'Baloo 2', sans-serif; font-size: 18px; font-weight: 800">{{l.code}}</span><span style="font-size: 12px; font-weight: 700">{{l.label}}</span></button>
+</sc-for>
+</div>
+
+<span style="font-weight: 800; font-size: 14px; color: #5A6480">Gwosè tèks</span>
+<div role="radiogroup" aria-label="Gwosè tèks" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{sizes}}" as="z" hint-placeholder-count="3">
+<button type="button" role="radio" aria-checked="{{z.on}}" onClick="{{z.pick}}" style="{{z.style}}"><span style="{{z.sample}}">Aa</span><span style="font-size: 12px; font-weight: 700">{{z.label}}</span></button>
+</sc-for>
+</div>
+<div style="background: #FFFFFF; border: 2px solid #E3E7F1; border-radius: 16px; padding: 12px 14px"><span style="{{preview}}">Ki ane Ayiti te vin yon peyi endepandan?</span></div>
+
+<span style="font-weight: 800; font-size: 14px; color: #5A6480">Kont</span>
+<div style="background: #FFFFFF; border: 2px solid #E3E7F1; border-bottom-width: 5px; border-radius: 18px; padding: 4px 14px; display: flex; flex-direction: column">
+<a href="Offline.dc.html" style="min-height: 52px; display: flex; align-items: center; gap: 10px; color: #14213D; border-bottom: 1px solid #EEF1F7"><span style="flex-grow: 1; font-weight: 800; font-size: 15px">Pakè san entènèt</span><span style="font-size: 12px; font-weight: 700; color: #5A6480">32 MB</span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14213D" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg></a>
+<a href="Parent.dc.html" style="min-height: 52px; display: flex; align-items: center; gap: 10px; color: #14213D; border-bottom: 1px solid #EEF1F7"><span style="flex-grow: 1; font-weight: 800; font-size: 15px">Chanje laj, notifikasyon, seri</span><span style="font-size: 12px; font-weight: 800; color: #8A4B00; background: #FFF4D1; border-radius: 999px; padding: 2px 8px">Paran</span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14213D" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg></a>
+<a href="Parent.dc.html" style="min-height: 52px; display: flex; align-items: center; gap: 10px; color: #8F0A22"><span style="flex-grow: 1; font-weight: 800; font-size: 15px">Efase kont lan ak tout done yo</span><span style="font-size: 12px; font-weight: 800; color: #8A4B00; background: #FFF4D1; border-radius: 999px; padding: 2px 8px">Paran</span></a>
+</div>
+
+<span style="flex-shrink: 0; font-size: 12px; font-weight: 700; color: #5A6480; text-align: center">Konesans 1.0 · Règ konfidansyalite · Kontakte nou</span>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sw: { fx: true, music: true, voice: true, haptic: true }, lang: 'ht', size: 1 };
+  }
+  renderVals() {
+    const s = this.state;
+    const defs = [
+      { id: 'fx', label: 'Son efè', hint: 'Bon repons, pwen, konfeti' },
+      { id: 'music', label: 'Mizik', hint: 'Nan lakay ak nan leson' },
+      { id: 'voice', label: 'Li kesyon yo awotvwa', hint: 'Toujou ouvri pou 6–8 an' },
+      { id: 'haptic', label: 'Vibrasyon', hint: 'Lè w tape yon repons' },
+    ];
+    const sound = defs.map((d, i) => {
+      const on = s.sw[d.id];
+      return { label: d.label, hint: d.hint, on: on ? 'true' : 'false',
+        row: 'min-height: 58px; display: flex; align-items: center; gap: 10px;' + (i < defs.length - 1 ? ' border-bottom: 1px solid #EEF1F7;' : ''),
+        track: 'width: 52px; height: 32px; border-radius: 16px; border: none; padding: 3px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; background: ' + (on ? '#2F9E44' : '#B9C2D6') + '; justify-content: ' + (on ? 'flex-end' : 'flex-start') + ';',
+        flip: () => this.setState({ sw: { ...s.sw, [d.id]: !on } }) };
+    });
+    const pill = (on) => 'min-height: 64px; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; background: #FFFFFF; color: #14213D; ' + (on ? 'border: 3px solid #1F47B5; box-shadow: 0 3px 0 #1F47B5;' : 'border: 2px solid #D9DEEA; border-bottom-width: 5px;');
+    const langs = [['ht', 'KR', 'Kreyòl ayisyen'], ['fr', 'FR', 'Français']].map(([id, code, label]) => ({ code, label, on: s.lang === id ? 'true' : 'false', style: pill(s.lang === id), pick: () => this.setState({ lang: id }) }));
+    const px = [15, 17, 20];
+    const sizes = [['Piti', 14], ['Nòmal', 18], ['Gwo', 24]].map(([label, fs], i) => ({ label, on: s.size === i ? 'true' : 'false', style: pill(s.size === i), sample: 'font-family: \'Baloo 2\', sans-serif; font-weight: 800; font-size: ' + fs + 'px; line-height: 1;', pick: () => this.setState({ size: i }) }));
+    return { sound, langs, sizes, preview: 'font-weight: 700; line-height: 1.35; font-size: ' + px[s.size] + 'px;' };
+  }
+}
+</script>
+</body>
+</html>
