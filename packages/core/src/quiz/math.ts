@@ -20,6 +20,9 @@ export interface MathProblem {
   text: string;
   /** small line under it when the question isn't obvious (e.g. "x = ?", "rès = ?") */
   ask?: string;
+  /** French versions of `text` and `ask` (the app shows them when the kid plays in French) */
+  textFr: string;
+  askFr?: string;
   answer: number;
   points: 1 | 2;
   /** legacy fields, kept for the four basic operations */
@@ -33,7 +36,7 @@ const fmt = (n: number) => (n < 0 ? `(${n})` : String(n));
 
 // ─── generators ──────────────────────────────────────────────────────────────
 
-const G: Record<MathKind, (age: AgeBand, rand: Rand) => MathProblem> = {
+const G: Record<MathKind, (age: AgeBand, rand: Rand) => Omit<MathProblem, 'textFr' | 'askFr'>> = {
   add(age, rand) {
     const max = age === '6-8' ? 20 : age === '9-11' ? 100 : 500;
     const a = ri(rand, 2, max), b = ri(rand, 2, max);
@@ -198,7 +201,24 @@ export function makeProblem(age: AgeBand, rand: Rand, kind?: MathKind): MathProb
     kind ??= MIX[age][0][0];
   }
   const p = G[kind](age, rand);
-  return { ...p, text: p.text.replace(/-(\d)/g, '−$1') }; // typographic minus for negatives
+  const text = p.text.replace(/-(\d)/g, '−$1'); // typographic minus for negatives
+  return { ...p, text, textFr: mathTextFr(text), ...(p.ask !== undefined ? { askFr: ASK_FR[p.ask] ?? p.ask } : {}) };
+}
+
+/** The few Kreyòl words that appear in problems, in French. */
+const ASK_FR: Record<string, string> = {
+  'Doub li': 'Son double', 'Mwatye li': 'Sa moitié', 'Ki nimewo ki vini apre?': 'Quel nombre vient ensuite ?',
+  'Rès la = ?': 'Le reste = ?', 'Mwayèn nan = ?': 'La moyenne = ?', 'Ki diferans ant yo?': 'Quelle est la différence ?',
+  '? = ': '? = ', 'x = ?': 'x = ?',
+};
+export function mathTextFr(text: string): string {
+  return text
+    .replace(/ nan /g, ' de ')
+    .replace(/ ak /g, ' et ')
+    .replace(/(\d) è\b/g, '$1 h').replace(/\? è$/, '? h')
+    .replace(/\bminit\b/g, 'min')
+    .replace(/\bsegonn\b/g, 's')
+    .replace(/(\d) jou\b/g, (_m, d) => `${d} ${d === '1' ? 'jour' : 'jours'}`);
 }
 
 /** True when an answer can be negative for this band (the number pad shows a − key). */
