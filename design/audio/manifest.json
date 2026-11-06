@@ -1,0 +1,198 @@
+[
+ {
+  "file": "menu.m4a",
+  "kind": "music",
+  "name": "menu",
+  "descr": "Home loop \u2014 calm, bouncy, mallets + bell melody (96 BPM)",
+  "seconds": 40.008,
+  "decoded_samples": 1764352,
+  "master_samples": 1764352,
+  "bytes": 495096,
+  "lufs": -18.0,
+  "true_peak": -1.6,
+  "rel_err": 0.144
+ },
+ {
+  "file": "duel_search.m4a",
+  "kind": "music",
+  "name": "duel_search",
+  "descr": "Matchmaking radar \u2014 soft pulse, sweeping pings (100 BPM)",
+  "seconds": 19.203,
+  "decoded_samples": 846848,
+  "master_samples": 846848,
+  "bytes": 241352,
+  "lufs": -18.0,
+  "true_peak": -4.1,
+  "rel_err": 0.134
+ },
+ {
+  "file": "duel_battle.m4a",
+  "kind": "music",
+  "name": "duel_battle",
+  "descr": "Duel \u2014 punchy casual-game pop, pulse-lead hook (128 BPM)",
+  "seconds": 30.0,
+  "decoded_samples": 1323008,
+  "master_samples": 1323008,
+  "bytes": 384567,
+  "lufs": -18.1,
+  "true_peak": -5.3,
+  "rel_err": 0.123
+ },
+ {
+  "file": "duel_hurry.m4a",
+  "kind": "music",
+  "name": "duel_hurry",
+  "descr": "Last seconds \u2014 same key/tempo as battle: 16th pulse, climbing riff, snare build",
+  "seconds": 7.5,
+  "decoded_samples": 330752,
+  "master_samples": 330752,
+  "bytes": 96722,
+  "lufs": -18.1,
+  "true_peak": -5.5,
+  "rel_err": 0.149
+ },
+ {
+  "file": "sfx_badge.mp3",
+  "kind": "sfx",
+  "name": "badge",
+  "descr": "Trophy unlocked",
+  "seconds": 1.9,
+  "bytes": 23510,
+  "true_peak": -7.6
+ },
+ {
+  "file": "sfx_coin.mp3",
+  "kind": "sfx",
+  "name": "coin",
+  "descr": "XP / coin gain",
+  "seconds": 0.55,
+  "bytes": 7523,
+  "true_peak": -12.0
+ },
+ {
+  "file": "sfx_combo.mp3",
+  "kind": "sfx",
+  "name": "combo",
+  "descr": "Streak / combo",
+  "seconds": 1.05,
+  "bytes": 13479,
+  "true_peak": -11.1
+ },
+ {
+  "file": "sfx_correct.mp3",
+  "kind": "sfx",
+  "name": "correct",
+  "descr": "Right answer",
+  "seconds": 0.85,
+  "bytes": 10971,
+  "true_peak": -9.3
+ },
+ {
+  "file": "sfx_draw.mp3",
+  "kind": "sfx",
+  "name": "draw",
+  "descr": "Draw",
+  "seconds": 1.3,
+  "bytes": 16300,
+  "true_peak": -8.5
+ },
+ {
+  "file": "sfx_found.mp3",
+  "kind": "sfx",
+  "name": "found",
+  "descr": "Opponent found",
+  "seconds": 1.15,
+  "bytes": 14733,
+  "true_peak": -5.6
+ },
+ {
+  "file": "sfx_level.mp3",
+  "kind": "sfx",
+  "name": "level",
+  "descr": "Lesson / quiz complete",
+  "seconds": 1.8,
+  "bytes": 22256,
+  "true_peak": -4.1
+ },
+ {
+  "file": "sfx_lose.mp3",
+  "kind": "sfx",
+  "name": "lose",
+  "descr": "Lose \u2014 gentle, encouraging",
+  "seconds": 2.2,
+  "bytes": 27271,
+  "true_peak": -9.1
+ },
+ {
+  "file": "sfx_ping.mp3",
+  "kind": "sfx",
+  "name": "ping",
+  "descr": "Opponent answered (subtle)",
+  "seconds": 0.45,
+  "bytes": 6269,
+  "true_peak": -16.0
+ },
+ {
+  "file": "sfx_pop.mp3",
+  "kind": "sfx",
+  "name": "pop",
+  "descr": "Reaction pop",
+  "seconds": 0.11,
+  "bytes": 2194,
+  "true_peak": -8.1
+ },
+ {
+  "file": "sfx_tap.mp3",
+  "kind": "sfx",
+  "name": "tap",
+  "descr": "Button tap",
+  "seconds": 0.07,
+  "bytes": 1567,
+  "true_peak": -12.1
+ },
+ {
+  "file": "sfx_tick.mp3",
+  "kind": "sfx",
+  "name": "tick",
+  "descr": "Countdown tick (last seconds)",
+  "seconds": 0.132,
+  "bytes": 2507,
+  "true_peak": -7.5
+ },
+ {
+  "file": "sfx_timeup.mp3",
+  "kind": "sfx",
+  "name": "timeup",
+  "descr": "Time up (soft buzzer)",
+  "seconds": 0.8,
+  "bytes": 10344,
+  "true_peak": -11.6
+ },
+ {
+  "file": "sfx_vs.mp3",
+  "kind": "sfx",
+  "name": "vs",
+  "descr": "VS slam (matchmaking)",
+  "seconds": 1.6,
+  "bytes": 20062,
+  "true_peak": -3.8
+ },
+ {
+  "file": "sfx_win.mp3",
+  "kind": "sfx",
+  "name": "win",
+  "descr": "Win fanfare",
+  "seconds": 2.6,
+  "bytes": 31973,
+  "true_peak": -3.9
+ },
+ {
+  "file": "sfx_wrong.mp3",
+  "kind": "sfx",
+  "name": "wrong",
+  "descr": "Wrong answer (soft)",
+  "seconds": 0.643,
+  "bytes": 8463,
+  "true_peak": -17.1
+ }
+]

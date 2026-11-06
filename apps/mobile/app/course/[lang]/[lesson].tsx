@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { startLesson, answerLesson, finishLesson, currentExercise, lessonProgressPct, UNITS, type CourseId, type Exercise, type LessonSession, type Response, type Grade } from '@konesans/core';
@@ -7,7 +7,7 @@ import { Illustration, hasIllustration } from '@/ui/Illustration';
 import { colors, radius } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT, useL } from '@/lib/i18n';
-import { speak, tap } from '@/lib/audio';
+import { speak, tap, sfx, answerSfx } from '@/lib/audio';
 
 const TITLE: Record<Exercise['kind'], 'ex_pick_meaning' | 'ex_pick_word' | 'ex_listen' | 'ex_match' | 'ex_translate' | 'ex_build' | 'ex_fill'> = {
   pick_meaning: 'ex_pick_meaning', pick_word: 'ex_pick_word', listen_pick: 'ex_listen', match_pairs: 'ex_match', translate_pick: 'ex_translate', build_sentence: 'ex_build', fill_blank: 'ex_fill',
@@ -24,6 +24,7 @@ export default function Lesson() {
   const [grade, setGrade] = useState<Grade | null>(null);
   const [done, setDone] = useState(false);
   const [quitting, setQuitting] = useState(false);
+  const results = useRef<boolean[]>([]);
   // while feedback is showing, the session has already advanced: keep the exercise that was just answered on screen
   const ex = grade ? s.queue[s.i - 1] : currentExercise(s);
 
@@ -35,6 +36,8 @@ export default function Lesson() {
     if (!ex || resp === null) return;
     const r = answerLesson(s, resp);
     tap(r.grade.correct ? 'success' : 'error');
+    results.current.push(r.grade.correct);
+    sfx(answerSfx(results.current));
     setGrade(r.grade); setS(r.session); if (r.done) setDone(true);
   }
   function next() { setGrade(null); setResp(null); }
@@ -205,6 +208,7 @@ function BuildSentence({ ex, resp, setResp, reveal }: { ex: Extract<Exercise, { 
 
 function LessonResult({ r, onDone }: { r: ReturnType<typeof finishLesson>; onDone: () => void }) {
   const t = useT();
+  useEffect(() => { sfx('level'); const k = setTimeout(() => sfx('coin'), 1200); return () => clearTimeout(k); }, []);
   return (
     <Screen scroll={false}>
       {r.stars >= 2 && <Confetti />}

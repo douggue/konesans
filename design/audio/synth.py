@@ -125,15 +125,15 @@ def fm(freq, n: int, ratio=1.0, index=1.0, index_env=None, fb_phase=0.0) -> np.n
 
 
 # ─── instruments (mono, return np.ndarray) ───────────────────────────────────
-def lead(m: float, dur: float, vel=1.0, duty=0.25, bright=4200, vib=True) -> np.ndarray:
+def lead(m: float, dur: float, vel=1.0, duty=0.25, bright=4200, vib=True, r=0.09) -> np.ndarray:
     """Chiptune-meets-modern pulse lead (soft-edged, vibrato)."""
-    n = ns(dur + 0.12)
+    n = ns(dur + max(0.12, r * 1.3))
     f0 = hz(m)
     f = vibrato(f0, n, depth_cents=14) if vib and dur > 0.25 else np.full(n, f0)
     cut = bright * (0.75 + 0.25 * np.exp(-secs(n) / 0.15))
     x = additive(f, n, 'pulse', cutoff=cut, duty=duty, kmax=40) * 0.9
     x += 0.35 * additive(f * 0.5, n, 'tri', kmax=9)
-    return x * adsr(n, 0.004, 0.18, 0.72, 0.09, gate=dur) * vel
+    return x * adsr(n, 0.004, 0.18, 0.72, r, gate=dur) * vel
 
 
 def pluck(m: float, dur: float, vel=1.0, shape='saw', bright=3200, decay=0.18, kmax=36, detune=0.0) -> np.ndarray:
@@ -206,26 +206,26 @@ def pad(m: float, dur: float, vel=1.0, cutoff=1800, seed=0):
     return supersaw(m, dur, vel, voices=4, cents=10, cutoff=cutoff, a=0.35, d=1.0, s=0.8, r=0.6, kmax=14, seed=seed)
 
 
-def brass(m: float, dur: float, vel=1.0, bright=3800) -> np.ndarray:
+def brass(m: float, dur: float, vel=1.0, bright=3800, r=0.1) -> np.ndarray:
     """Synth brass stab: filter swells open quickly then settles."""
-    n = ns(dur + 0.15)
+    n = ns(dur + max(0.15, r * 1.3))
     t = secs(n)
     f0 = hz(m)
     cut = f0 + bright * (1 - np.exp(-t / 0.025)) * (0.55 + 0.45 * np.exp(-t / 0.2))
     f = vibrato(f0, n, rate=5.2, depth_cents=8, delay=0.2) if dur > 0.35 else np.full(n, f0)
     x = additive(f, n, 'saw', cutoff=cut, kmax=40) + 0.6 * additive(f * 1.004, n, 'saw', cutoff=cut, kmax=40)
-    return x * 0.6 * adsr(n, 0.012, 0.25, 0.7, 0.1, gate=dur) * vel
+    return x * 0.6 * adsr(n, 0.012, 0.25, 0.7, r, gate=dur) * vel
 
 
 def chip(m: float, dur: float, vel=1.0, shape='square', duty=0.5) -> np.ndarray:
     """Pure-ish 8-bit voice (softened: limited harmonics)."""
-    n = ns(dur + 0.03)
+    n = ns(dur + 0.06)
     x = additive(hz(m), n, shape, kmax=18, duty=duty, cutoff=7000)
-    return x * adsr(n, 0.002, 0.08, 0.6, 0.03, gate=dur) * vel
+    return x * adsr(n, 0.002, 0.08, 0.6, 0.05, gate=dur) * vel
 
 
 # ─── drums ───────────────────────────────────────────────────────────────────
-def kick(vel=1.0, f_hi=150.0, f_lo=47.0, decay=0.32, click=0.5, seed=1) -> np.ndarray:
+def kick(vel=1.0, f_hi=160.0, f_lo=52.0, decay=0.24, click=0.6, seed=1) -> np.ndarray:
     n = ns(decay * 2.2)
     t = secs(n)
     f = f_lo + (f_hi - f_lo) * np.exp(-t / 0.035)

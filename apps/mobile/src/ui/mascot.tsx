@@ -47,7 +47,8 @@ export type RigValues = {
   /** head tilt in degrees (around the neck) and head bob in viewBox units */
   tilt?: Num;
   headY?: Num;
-  /** extra wing angle in degrees; positive = raise outward, for both wings */
+  /** extra wing angle in degrees, same sense for both wings: positive swings a hanging wing outward/up;
+   *  for a raised wing (cheer, wave) positive carries on over the head, so wave/flap those with negative values */
   wingL?: Num;
   wingR?: Num;
   /** effects layer (sparkles, Zzz, hearts…): 0→1 loop phase */
@@ -169,8 +170,8 @@ function useIdle(mood: MascotMood) {
       case 'cheer':
         run(loop(Animated.sequence([
           t(v.squash, 0.88, 120, Easing.out(Easing.quad)),
-          Animated.parallel([t(v.lift, -16, 300, Easing.out(Easing.quad)), t(v.squash, 1.08, 160), t(v.wingL, 22, 150), t(v.wingR, 22, 150)]),
-          Animated.parallel([t(v.lift, 0, 280, Easing.in(Easing.quad)), t(v.squash, 1, 200), t(v.wingL, -6, 200), t(v.wingR, -6, 200)]),
+          Animated.parallel([t(v.lift, -16, 300, Easing.out(Easing.quad)), t(v.squash, 1.08, 160), t(v.wingL, -24, 150), t(v.wingR, -24, 150)]), // raised wings: negative = outward
+          Animated.parallel([t(v.lift, 0, 280, Easing.in(Easing.quad)), t(v.squash, 1, 200), t(v.wingL, 6, 200), t(v.wingR, 6, 200)]),
           Animated.parallel([t(v.squash, 0.9, 80, Easing.out(Easing.quad)), t(v.wingL, 0, 80), t(v.wingR, 0, 80)]),
           t(v.squash, 1, 160),
           Animated.delay(140),
@@ -178,7 +179,7 @@ function useIdle(mood: MascotMood) {
         fxPulse(900);
         break;
       case 'wave':
-        run(loop(Animated.sequence([t(v.wingR, 22, 220), t(v.wingR, -14, 260), t(v.wingR, 22, 260), t(v.wingR, -14, 260), t(v.wingR, 0, 220), Animated.delay(900)])));
+        run(loop(Animated.sequence([t(v.wingR, -26, 220), t(v.wingR, 6, 260), t(v.wingR, -26, 260), t(v.wingR, 6, 260), t(v.wingR, 0, 220), Animated.delay(900)]))); // raised wing: negative = outward
         run(loop(Animated.sequence([t(v.tilt, -4, 1100), t(v.tilt, 2, 1100)])));
         break;
       case 'wow':

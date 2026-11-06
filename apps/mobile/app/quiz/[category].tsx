@@ -9,7 +9,7 @@ import { useStore } from '@/lib/store';
 import { useT, useL } from '@/lib/i18n';
 import { buildQuestions, categoryInfo, type CatId } from '@/lib/content';
 import { useDailyCount } from '@/lib/remote';
-import { speak, tap } from '@/lib/audio';
+import { speak, tap, sfx, answerSfx } from '@/lib/audio';
 
 export default function Quiz() {
   const { category, count: countParam, trial, mode, level, region } = useLocalSearchParams<{ category: string; count?: string; trial?: string; mode?: string; level?: string; region?: string }>();
@@ -57,6 +57,7 @@ export default function Quiz() {
     setChosen(i); setReveal(true);
     const next = answerSolo(s, i, Date.now());
     tap(next.answers[next.answers.length - 1].correct ? 'success' : 'error');
+    sfx(answerSfx(next.answers.map((x) => x.correct), i === null));
     setS(next);
   }
   function go() {
@@ -64,6 +65,8 @@ export default function Quiz() {
   }
   function finish() {
     const sum = soloSummary(s);
+    sfx(sum.total && sum.correct / sum.total >= 0.5 ? 'level' : 'lose');
+    if (!trial) setTimeout(() => sfx('coin'), 1150); // when the points pill pops
     if (!trial) recordQuiz({ category: cat, correct: sum.correct, total: sum.total, score: sum.score, wrongIds: sum.wrongIds, ids: s.questions.map((x) => x.id) });
   }
   useEffect(() => { if (s.finished && !reveal) finish(); }, [s.finished, reveal]);

@@ -1,0 +1,4 @@
+duel_battle {'seconds': 30.00018140589569, 'bpm': 127.999, 'lufs': np.float64(-18.0), 'tp': np.float64(-5.25), 'seam': 0.05490507915116718}
+duel_hurry {'seconds': 7.500045351473923, 'bpm': 127.999, 'lufs': np.float64(-18.0), 'tp': np.float64(-6.04), 'seam': 0.0030439383004085482}
+duel_search {'seconds': 19.202902494331067, 'bpm': 99.985, 'lufs': np.float64(-18.0), 'tp': np.float64(-4.94), 'seam': 0.010430307717748052}
+menu {'seconds': 40.00798185941043, 'bpm': 95.981, 'lufs': np.float64(-18.0), 'tp': np.float64(-1.41), 'seam': 0.0015398717393076706}

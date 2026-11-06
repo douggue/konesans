@@ -55,9 +55,11 @@ class Song:
     def t(self, bar, eighth=0.0):
         return bar * self.bar + eighth * self.beat / 2
 
-    def mix(self, fx: dict, gains: dict, sc_depth: dict, tilt_hp=35):
-        total = np.zeros((self.n, 2))
+    def mix(self, fx: dict, levels: dict, sc_depth: dict, tilt_hp=35):
+        """Mix buses. `levels` = loudness of each stem relative to the others (dB, measured
+        K-weighted above ~120 Hz so the balance holds on phone speakers too)."""
         sc = sidechain(self.n, self.kicks, depth=1.0, release=0.14) if self.kicks else np.ones(self.n)
+        self.stems = {}
         for name, b in self.buses.items():
             x = b.buf
             if name in fx:
@@ -65,8 +67,11 @@ class Song:
             d = sc_depth.get(name, 0)
             if d:
                 x = x * (1 - d * (1 - sc))[:, None]
-            total += x * gains.get(name, 1.0)
-        total = circular(lambda y: filt(y, 'hp', tilt_hp), total)
+            ref = lufs(np.concatenate([x, x]) if len(x) < SR else filt(x, 'hp', 120))
+            self.stems[name] = x * db(levels.get(name, -12) - ref)
+        total = sum(self.stems.values())
+        # high-pass + gentle low shelf (≈ −4 dB under 90 Hz): phones can't play sub-bass, so don't spend loudness on it
+        total = circular(lambda y: (lambda h: h - 0.4 * filt(h, 'lp', 90))(filt(y, 'hp', tilt_hp)), total)
         return total
 
 
@@ -75,7 +80,7 @@ def master(x: np.ndarray, target=MUSIC_LUFS) -> np.ndarray:
     x = x / (np.abs(x).max() + 1e-9) * 0.7
     for _ in range(3):
         g = db(target - lufs(np.concatenate([x, x])))
-        x = circular(lambda y: limiter(y * g, -1.5), x)
+        x = circular(lambda y: limiter(y * g, -2.5), x)
     return x
 
 
@@ -174,7 +179,7 @@ def battle():
         'drums': lambda y: reverb(y, 0.8, 0.07),
         'fx': lambda y: reverb(y, 1.8, 0.3),
     }
-    gains = {'drums': 1.0, 'bass': 0.55, 'stab': 0.32, 'pad': 0.16, 'arp': 0.14, 'lead': 0.42, 'fx': 0.3}
+    gains = {'drums': -4, 'bass': -7, 'lead': -5, 'stab': -10, 'arp': -12, 'pad': -15, 'fx': -17}
     sc = {'bass': 0.45, 'stab': 0.35, 'pad': 0.55, 'arp': 0.25}
     return s, s.mix(fx, gains, sc)
 
@@ -220,7 +225,7 @@ def hurry():
         'fx': lambda y: reverb(y, 1.5, 0.3),
         'tick': lambda y: reverb(y, 0.6, 0.1),
     }
-    gains = {'drums': 1.0, 'bass': 0.5, 'stab': 0.26, 'arp': 0.34, 'fx': 0.32, 'tick': 0.22}
+    gains = {'drums': -4, 'bass': -7, 'arp': -5, 'stab': -9, 'tick': -13, 'fx': -14}
     sc = {'bass': 0.45, 'stab': 0.35, 'arp': 0.15}
     return s, s.mix(fx, gains, sc)
 
@@ -264,7 +269,7 @@ def search():
         'drums': lambda y: reverb(y, 0.9, 0.08),
         'fx': lambda y: reverb(y, 2.0, 0.3),
     }
-    gains = {'drums': 0.85, 'bass': 0.5, 'pad': 0.3, 'bell': 0.22, 'ping': 0.2, 'fx': 0.2}
+    gains = {'drums': -6, 'bass': -8, 'pad': -7, 'bell': -9, 'ping': -10, 'fx': -17}
     sc = {'bass': 0.5, 'pad': 0.35}
     return s, s.mix(fx, gains, sc)
 
@@ -324,7 +329,7 @@ def menu():
         'pad': lambda y: reverb(filt(y, 'hp', 200), 2.5, 0.35),
         'drums': lambda y: reverb(y, 1.0, 0.1),
     }
-    gains = {'drums': 0.8, 'bass': 0.6, 'comp': 0.3, 'pad': 0.12, 'lead': 0.4}
+    gains = {'drums': -7, 'bass': -7, 'comp': -8, 'lead': -4, 'pad': -15}
     sc = {'pad': 0.3, 'bass': 0.2}
     return s, s.mix(fx, gains, sc)
 

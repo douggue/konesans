@@ -9,7 +9,7 @@ import { ICONS, type IconName } from './icons';
 import { useFeatures } from '@/lib/remote';
 import { useT } from '@/lib/i18n';
 import { useStore } from '@/lib/store';
-import { tap } from '@/lib/audio';
+import { tap, sfx } from '@/lib/audio';
 import { PressScale, Shake, Bounce, Burst, Pulse, Pop, Bob, Hop, AnimatedBar, useBlink, useCountUp, reduceMotion } from './motion';
 import { FLAG_SVG } from './flags';
 export * from './motion';
@@ -75,7 +75,7 @@ export function Button({ title, onPress, variant = 'primary', color = colors.blu
   const bg = primary ? color : variant === 'secondary' ? colors.card : 'transparent';
   const fg = primary ? '#FFFFFF' : color;
   return (
-    <PressScale role="button" disabled={disabled} scaleTo={0.96} onPress={() => { tap(); onPress(); }} style={({ pressed }) => [
+    <PressScale role="button" disabled={disabled} scaleTo={0.96} onPress={() => { tap(); sfx('tap'); onPress(); }} style={({ pressed }) => [
       { minHeight: small ? 44 : 54, borderRadius: radius.md, paddingHorizontal: 20, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, backgroundColor: bg },
       primary && { borderBottomWidth: 4, borderBottomColor: 'rgba(0,0,0,0.25)' },
       variant === 'secondary' && { borderWidth: 2, borderColor: colors.line, borderBottomWidth: 5 },
@@ -102,7 +102,7 @@ export function OptionButton({ label, state, onPress, letter, big, media, celebr
   return (
     <Shake trigger={state === 'wrong' ? 'wrong' : null}>
       <Bounce trigger={state === 'right' ? 'right' : null} amount={0.05}>
-        <PressScale role="button" disabled={!onPress} scaleTo={0.97} onPress={() => { tap(); onPress?.(); }} style={({ pressed }) => [
+        <PressScale role="button" disabled={!onPress} scaleTo={0.97} onPress={() => { tap(); sfx('tap'); onPress?.(); }} style={({ pressed }) => [
           { minHeight: big ? 72 : 60, borderRadius: radius.md, borderWidth: 2, borderColor: map.edge, borderBottomWidth: 5, backgroundColor: map.bg, paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 12 },
           pressed && { transform: [{ translateY: 2 }], borderBottomWidth: 3 },
           state === 'dim' && { opacity: 0.5 },

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Konesans Audio Review</title>
+<style>
+:root { --bg:#F6F7FB; --card:#fff; --ink:#1B1E2E; --muted:#5B6075; --line:#E1E4EE; --blue:#1F47B5; --gold:#E8A400; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#11131C; --card:#1A1D2A; --ink:#EEF0F7; --muted:#A3A8BC; --line:#2A2E40; } }
+:root[data-theme="dark"] { --bg:#11131C; --card:#1A1D2A; --ink:#EEF0F7; --muted:#A3A8BC; --line:#2A2E40; }
+* { box-sizing:border-box } body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif }
+main { max-width:980px; margin:0 auto; padding:24px 16px 64px }
+h1 { font-size:26px; margin:0 0 4px } h2 { font-size:17px; margin:32px 0 10px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em }
+.intro { color:var(--muted); margin:0 0 8px; max-width:70ch }
+.row { display:grid; grid-template-columns:240px 1fr; gap:16px; align-items:center; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin:8px 0 }
+.row.loop { border-left:4px solid var(--blue) } .row:not(.loop) { border-left:4px solid var(--gold) }
+.meta h3 { margin:0; font-size:16px } .meta p { margin:2px 0; color:var(--muted); font-size:13px } .num { font-variant-numeric:tabular-nums }
+.media { display:grid; gap:6px; min-width:0 } .media img { width:100%; height:56px; object-fit:fill; display:block } audio { width:100% }
+@media (max-width:640px) { .row { grid-template-columns:1fr } }
+</style></head><body><main>
+<h1>Konesans audio</h1>
+<p class="intro">Original music loops and sound effects, synthesised from scratch in <code>design/audio/</code> (no samples, no soundfonts).
+Music loops seamlessly (press play — the players loop); level ≈ −18 LUFS. SFX peaks ≤ −3 dBFS. Open this file from the repo so the relative links to
+<code>apps/mobile/assets/audio/</code> resolve.</p>
+<h2>Music loops</h2>
+    <section class="row loop">
+      <div class="meta"><h3>menu</h3><p>Home loop — calm, bouncy, mallets + bell melody (96 BPM)</p><p class="num">40.01 s · 483.5 KB · peak -1.6 dBTP · -18.0 LUFS</p></div>
+      <div class="media"><img src="review/menu.png" alt="waveform of menu" loading="lazy">
+      <audio controls preload="none" loop src="../../apps/mobile/assets/audio/menu.m4a"></audio></div>
+    </section>
+    <section class="row loop">
+      <div class="meta"><h3>duel_search</h3><p>Matchmaking radar — soft pulse, sweeping pings (100 BPM)</p><p class="num">19.20 s · 235.7 KB · peak -4.1 dBTP · -18.0 LUFS</p></div>
+      <div class="media"><img src="review/duel_search.png" alt="waveform of duel_search" loading="lazy">
+      <audio controls preload="none" loop src="../../apps/mobile/assets/audio/duel_search.m4a"></audio></div>
+    </section>
+    <section class="row loop">
+      <div class="meta"><h3>duel_battle</h3><p>Duel — punchy casual-game pop, pulse-lead hook (128 BPM)</p><p class="num">30.00 s · 375.6 KB · peak -5.3 dBTP · -18.1 LUFS</p></div>
+      <div class="media"><img src="review/duel_battle.png" alt="waveform of duel_battle" loading="lazy">
+      <audio controls preload="none" loop src="../../apps/mobile/assets/audio/duel_battle.m4a"></audio></div>
+    </section>
+    <section class="row loop">
+      <div class="meta"><h3>duel_hurry</h3><p>Last seconds — same key/tempo as battle: 16th pulse, climbing riff, snare build</p><p class="num">7.50 s · 94.5 KB · peak -5.5 dBTP · -18.1 LUFS</p></div>
+      <div class="media"><img src="review/duel_hurry.png" alt="waveform of duel_hurry" loading="lazy">
+      <audio controls preload="none" loop src="../../apps/mobile/assets/audio/duel_hurry.m4a"></audio></div>
+    </section>
+<h2>Sound effects</h2>
+    <section class="row">
+      <div class="meta"><h3>badge</h3><p>Trophy unlocked</p><p class="num">1.90 s · 23.0 KB · peak -7.6 dBTP</p></div>
+      <div class="media"><img src="review/sfx_badge.png" alt="waveform of badge" loading="lazy">
+      <audio controls preload="none"  src="../../apps/mobile/assets/audio/sfx_badge.mp3"></audio></div>
+    </section>
+    <section class="row">
+      <div class="meta"><h3>coin</h3><p>XP / coin gain</p><p class="num">0.55 s · 7.3 KB · peak -12.0 dBTP</p></div>
+      <div class="media"><img src="review/sfx_coin.png" alt="waveform of coin" loading="lazy">
+      <audio controls preload="none"  src="../../apps/mobile/assets/audio/sfx_coin.mp3"></audio></div>
+    </section>
+    <section class="row">
+      <div class="meta"><h3>combo</h3><p>Streak / combo</p><p class="num">1.05 s · 13.2 KB · peak -11.1 dBTP</p></div>
+      <div class="media"><img src="review/sfx_combo.png" alt="waveform of combo" loading="lazy">
+      <audio controls preload="none"  src="../../apps/mobile/assets/audio/sfx_combo.mp3"></audio></div>
+    </section>
+    <section class="row">
+      <div class="meta"><h3>correct</h3><p>Right answer</p><p class="num">0.85 s · 10.7 KB · peak -9.3 dBTP</p></div>
+      <div class="media"><img src="review/sfx_correct.png" alt="waveform of correct" loading="lazy">
+      <audio controls preload="none"  src="../../apps/mobile/assets/audio/sfx_correct.mp3"></audio></div>
+    </section>
+    <section class="row">
+      <div class="meta"><h3>draw</h3><p>Draw</p><p class="num">1.30 s · 15.9 KB · peak -8.5 dBTP</p></div>
+      <div class="media"><img src="review/sfx_draw.png" alt="waveform of draw" loading="lazy">
+      <audio controls preload="none"  src="../../apps/mobile/assets/audio/sfx_draw.mp3"></audio></div>
+    </section>
+    <section class="row">
+      <div class="meta"><h3>found</h3><p>Opponent found</p><p class="num">1.15 s · 14.4 KB · peak -5.6 dBTP</p></div>
+      <div class="media"><img src="review/sfx_found.png" alt="waveform of found" loading="lazy">
+      <audio controls preload="none"  src="../../apps/mobile/assets/audio/sfx_found.mp3"></audio></div>
+    </section>
+    <section class="row">
+      <div class="meta"><h3>level</h3><p>Lesson / quiz complete</p><p class="num">1.80 s · 21.7 KB · peak -4.1 dBTP</p></div>
+      <div class="media"><img src="review/sfx_level.png" alt="waveform of level" loading="lazy">
+      <audio controls preload="none"  src="../../apps/mobile/assets/audio/sfx_level.mp3"></audio></div>
+    </section>
+    <section class="row">
+      <div class="meta"><h3>lose</h3><p>Lose — gentle, encouraging</p><p class="num">2.20 s · 26.6 KB · peak -9.1 dBTP</p></div>
+      <div class="media"><img src="review/sfx_lose.png" alt="waveform of lose" loading="lazy">
+      <audio controls preload="none"  src="../../apps/mobile/assets/audio/sfx_lose.mp3"></audio></div>
+    </section>
+    <section class="row">
+      <div class="meta"><h3>ping</h3><p>Opponent answered (subtle)</p><p class="num">0.45 s · 6.1 KB · peak -16.0 dBTP</p></div>
+      <div class="media"><img src="review/sfx_ping.png" alt="waveform of ping" loading="lazy">
+      <audio controls preload="none"  src="../../apps/mobile/assets/audio/sfx_ping.mp3"></audio></div>
+    </section>
+    <section class="row">
+      <div class="meta"><h3>pop</h3><p>Reaction pop</p><p class="num">0.11 s · 2.1 KB · peak -8.1 dBTP</p></div>
+      <div class="media"><img src="review/sfx_pop.png" alt="waveform of pop" loading="lazy">
+      <audio controls preload="none"  src="../../apps/mobile/assets/audio/sfx_pop.mp3"></audio></div>
+    </section>
+    <section class="row">
+      <div class="meta"><h3>tap</h3><p>Button tap</p><p class="num">0.07 s · 1.5 KB · peak -12.1 dBTP</p></div>
+      <div class="media"><img src="review/sfx_tap.png" alt="waveform of tap" loading="lazy">
+      <audio controls preload="none"  src="../../apps/mobile/assets/audio/sfx_tap.mp3"></audio></div>
+    </section>
+    <section class="row">
+      <div class="meta"><h3>tick</h3><p>Countdown tick (last seconds)</p><p class="num">0.13 s · 2.4 KB · peak -7.5 dBTP</p></div>
+      <div class="media"><img src="review/sfx_tick.png" alt="waveform of tick" loading="lazy">
+      <audio controls preload="none"  src="../../apps/mobile/assets/audio/sfx_tick.mp3"></audio></div>
+    </section>
+    <section class="row">
+      <div class="meta"><h3>timeup</h3><p>Time up (soft buzzer)</p><p class="num">0.80 s · 10.1 KB · peak -11.6 dBTP</p></div>
+      <div class="media"><img src="review/sfx_timeup.png" alt="waveform of timeup" loading="lazy">
+      <audio controls preload="none"  src="../../apps/mobile/assets/audio/sfx_timeup.mp3"></audio></div>
+    </section>
+    <section class="row">
+      <div class="meta"><h3>vs</h3><p>VS slam (matchmaking)</p><p class="num">1.60 s · 19.6 KB · peak -3.8 dBTP</p></div>
+      <div class="media"><img src="review/sfx_vs.png" alt="waveform of vs" loading="lazy">
+      <audio controls preload="none"  src="../../apps/mobile/assets/audio/sfx_vs.mp3"></audio></div>
+    </section>
+    <section class="row">
+      <div class="meta"><h3>win</h3><p>Win fanfare</p><p class="num">2.60 s · 31.2 KB · peak -3.9 dBTP</p></div>
+      <div class="media"><img src="review/sfx_win.png" alt="waveform of win" loading="lazy">
+      <audio controls preload="none"  src="../../apps/mobile/assets/audio/sfx_win.mp3"></audio></div>
+    </section>
+    <section class="row">
+      <div class="meta"><h3>wrong</h3><p>Wrong answer (soft)</p><p class="num">0.64 s · 8.3 KB · peak -17.1 dBTP</p></div>
+      <div class="media"><img src="review/sfx_wrong.png" alt="waveform of wrong" loading="lazy">
+      <audio controls preload="none"  src="../../apps/mobile/assets/audio/sfx_wrong.mp3"></audio></div>
+    </section>
+</main></body></html>
