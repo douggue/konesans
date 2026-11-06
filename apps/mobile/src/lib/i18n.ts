@@ -60,6 +60,43 @@ const S = {
   av_random: ['Owaza', 'Au hasard'], av_save: ['Sove avata m', 'Enregistrer mon avatar'], av_edit: ['Chanje avata m', 'Modifier mon avatar'],
   hair_afro: ['Afwo', 'Afro'], hair_braids: ['Très', 'Tresses'], hair_short: ['Kout', 'Courts'], hair_puffs: ['Pouf', 'Couettes'],
   ex_none: ['Anyen', 'Rien'], ex_glasses: ['Linèt', 'Lunettes'], ex_cap: ['Kaskèt', 'Casquette'], ex_mask: ['Mask Kanaval', 'Masque de carnaval'], ex_uniform: ['Inifòm lekòl', "Uniforme d'école"],
+  // ages & school years
+  age_6_8: ['6–8 an', '6–8 ans'], age_9_11: ['9–11 an', '9–11 ans'], age_12_14: ['12–14 an', '12–14 ans'],
+  grade_6_8: ['1ye–3yèm AF', '1re–3e AF'], grade_9_11: ['4yèm–6yèm AF', '4e–6e AF'], grade_12_14: ['7yèm–9yèm AF', '7e–9e AF'],
+  years: ['an', 'ans'],
+  // Kalkil Mantal
+  math_title: ['Kalkil Mantal', 'Calcul mental'], math_60s: ['60 segonn', '60 secondes'], math_60s_dot: ['60 segonn.', '60 secondes.'],
+  math_how_many: ['Konbyen w ka fè?', 'Combien peux-tu en faire ?'], math_record: ['rekò: {n} pwen', 'record : {n} points'],
+  math_intro_12: ['Ekwasyon, pousantaj, pisans, nimewo negatif… Kesyon difisil yo vo 2 pwen.', 'Équations, pourcentages, puissances, nombres négatifs… Les questions difficiles valent 2 points.'],
+  math_intro_9: ['Tab miltiplikasyon, nimewo ki manke, pousantaj… Kesyon difisil yo vo 2 pwen.', 'Tables de multiplication, nombres manquants, pourcentages… Les questions difficiles valent 2 points.'],
+  math_intro_6: ['Adisyon, soustraksyon, doub, sekans. Chak bon repons = 1 pwen.', 'Additions, soustractions, doubles, suites. Chaque bonne réponse = 1 point.'],
+  math_combo: ['Yon seri 5 bon repons = pwen yo doub.', 'Une série de 5 bonnes réponses = points doublés.'],
+  math_go: ['ALE!', 'PARTEZ !'], math_summary: ['{good} bon repons · {miss} erè · pi gwo seri {best}', '{good} bonnes réponses · {miss} erreurs · meilleure série {best}'],
+  math_practice: ['Pratike: {x}', 'À travailler : {x}'], math_live: ['{good} bon · {x2}seri {combo}', '{good} justes · {x2}série {combo}'],
+  two_points: ['2 pwen', '2 points'], skip: ['Sote →', 'Passer →'], score_points: ['{n} pwen!', '{n} points !'],
+  // home & profile
+  chest_open: ['Kòf la louvri! +100 XP', 'Le coffre est ouvert ! +100 XP'],
+  league: ['Lig', 'Ligue'], profile_stats: ['{xp} XP · {c} bon repons · {l} leson · {w} mo', '{xp} XP · {c} bonnes réponses · {l} leçons · {w} mots'],
+  // duel
+  robot: ['🤖 Robo', '🤖 Robot'], already_answered: ['{name} reponn deja!', '{name} a déjà répondu !'], seconds_short: ['{n} s', '{n} s'],
+  // Peyi options
+  peyi_title: ['Peyi', 'Pays'], peyi_sub: ['Drapo · Kapital · Fòm', 'Drapeaux · Capitales · Formes'], mode: ['MÒD', 'MODE'], level_caps: ['NIVO', 'NIVEAU'], region_caps: ['REJYON', 'RÉGION'],
+  peyi_mode_drapo: ['Drapo', 'Drapeaux'], peyi_mode_kapital: ['Kapital', 'Capitales'], peyi_mode_fom: ['Fòm', 'Formes'],
+  peyi_lv1: ['Fasil', 'Facile'], peyi_lv2: ['Mwayen', 'Moyen'], peyi_lv3: ['Difisil', 'Difficile'],
+  peyi_lv1_sub: ['Peyi tout moun konnen', 'Les pays que tout le monde connaît'], peyi_lv2_sub: ['Peyi nan liv lekòl', "Les pays du livre d'école"], peyi_lv3_sub: ['Tout peyi, kesyon alanvè', 'Tous les pays, questions inversées'],
+  peyi_pool: ['{n} peyi nan jwèt sa a', '{n} pays dans ce jeu'],
+  // settings
+  sample_question: ['Ki ane Ayiti te vin yon peyi endepandan?', 'En quelle année Haïti est-elle devenue indépendante ?'],
+  app_version: ['Konesans {v} · Kreyòl ayisyen · Français', 'Konesans {v} · créole haïtien · français'],
+  parent_gate: ['Konbyen 7 × 6 fè? (Pou paran sèlman)', 'Combien font 7 × 6 ? (Réservé aux parents)'],
+  // coding
+  your_program: ['Pwogram ou', 'Ton programme'], tap_blocks: ['Tape blòk yo anba a.', 'Touche les blocs ci-dessous.'], here: ['◀ isit', '◀ ici'], else_: ['sinon', 'sinon'],
+  back_to_program: ['↩ Retounen anba pwogram nan', '↩ Revenir au programme'], par: ['par {n}', 'par {n}'],
+  prog_too_long: ['Pwogram nan twò long (maks 40 blòk).', 'Le programme est trop long (40 blocs max).'], prog_invalid: ['Gen yon blòk ki pa mache isit la.', 'Un bloc ne fonctionne pas ici.'],
+  // courses
+  listen: ['Koute', 'Écouter'], in_my_lang: ['Kreyòl', 'Français'], xp_coins: ['+{xp} XP · +{c} kòb', '+{xp} XP · +{c} pièces'],
+  // trophies
+  tier_bronz: ['Bwonz', 'Bronze'], tier_ajan: ['Ajan', 'Argent'], tier_lo: ['Lò', 'Or'],
   // matchmaking
   found: ['Nou jwenn yon jwè!', 'Joueur trouvé !'], tap_skip: ['Tape pou kòmanse', 'Touche pour commencer'], get_ready: ['Pare? Ale!', 'Prêt ? Partez !'],
 } as const;

@@ -125,10 +125,12 @@ export function scoreRun(result: RunResult, level: Level): number {
 export interface Level {
   id: number;
   title: string;            // Kreyòl
+  titleFr: string;
   concept: 'avanse' | 'vire' | 'repete' | 'si_mi' | 'jiska';
   allowed: Block['type'][]; // blocks available in the palette
   par: number;              // blocks for a 3-star solution
   hint: string;
+  hintFr: string;
   maze: Maze;
   stopOnBump: boolean;
 }
@@ -136,29 +138,29 @@ export interface Level {
 const M = (rows: number, cols: number, walls: string[], start: Cell, startDir: Dir, star: Cell, gems?: Cell[]): Maze => ({ rows, cols, walls, start, startDir, star, gems });
 
 export const LEVELS: Level[] = [
-  { id: 1, title: 'Premye pa', concept: 'avanse', allowed: ['avanse'], par: 3, hint: 'Mete 3 blòk «Avanse».', stopOnBump: false,
+  { id: 1, title: 'Premye pa', titleFr: 'Premiers pas', concept: 'avanse', allowed: ['avanse'], par: 3, hint: 'Mete 3 blòk «Avanse».', hintFr: 'Mets 3 blocs « Avancer ».', stopOnBump: false,
     maze: M(1, 4, [], { r: 0, c: 0 }, 'E', { r: 0, c: 3 }) },
-  { id: 2, title: 'Vire adwat', concept: 'vire', allowed: ['avanse', 'vire_dwat', 'vire_goch'], par: 5, hint: 'Avanse, vire, epi avanse ankò.', stopOnBump: false,
+  { id: 2, title: 'Vire adwat', titleFr: 'Tourne à droite', concept: 'vire', allowed: ['avanse', 'vire_dwat', 'vire_goch'], par: 5, hint: 'Avanse, vire, epi avanse ankò.', hintFr: 'Avance, tourne, puis avance encore.', stopOnBump: false,
     maze: M(3, 3, ['0,1', '0,2', '1,1', '1,2'], { r: 0, c: 0 }, 'S', { r: 2, c: 2 }) },
-  { id: 3, title: 'Eskalye', concept: 'vire', allowed: ['avanse', 'vire_dwat', 'vire_goch'], par: 8, hint: 'Monte eskalye a: avanse, vire goch, avanse, vire dwat…', stopOnBump: true,
+  { id: 3, title: 'Eskalye', titleFr: 'Escalier', concept: 'vire', allowed: ['avanse', 'vire_dwat', 'vire_goch'], par: 8, hint: 'Monte eskalye a: avanse, vire goch, avanse, vire dwat…', hintFr: 'Monte l’escalier : avance, tourne à gauche, avance, tourne à droite…', stopOnBump: true,
     maze: M(3, 3, ['0,0', '0,1', '1,0', '2,2'], { r: 2, c: 0 }, 'E', { r: 0, c: 2 }, [{ r: 1, c: 1 }]) },
-  { id: 4, title: 'Repete!', concept: 'repete', allowed: ['avanse', 'repete'], par: 2, hint: 'Olye 6 blòk «Avanse», sèvi ak «Repete 6 fwa».', stopOnBump: false,
+  { id: 4, title: 'Repete!', titleFr: 'Répète !', concept: 'repete', allowed: ['avanse', 'repete'], par: 2, hint: 'Olye 6 blòk «Avanse», sèvi ak «Repete 6 fwa».', hintFr: 'Au lieu de 6 blocs « Avancer », utilise « Répéter 6 fois ».', stopOnBump: false,
     maze: M(1, 7, [], { r: 0, c: 0 }, 'E', { r: 0, c: 6 }) },
-  { id: 5, title: 'Kare a', concept: 'repete', allowed: ['avanse', 'vire_dwat', 'repete'], par: 4, hint: 'Repete 3 fwa: avanse 2, vire dwat.', stopOnBump: true,
+  { id: 5, title: 'Kare a', titleFr: 'Le carré', concept: 'repete', allowed: ['avanse', 'vire_dwat', 'repete'], par: 4, hint: 'Repete 3 fwa: avanse 2, vire dwat.', hintFr: 'Répète 3 fois : avance de 2, tourne à droite.', stopOnBump: true,
     maze: M(3, 3, ['1,1'], { r: 0, c: 0 }, 'E', { r: 2, c: 0 }, [{ r: 0, c: 2 }, { r: 2, c: 2 }]) },
-  { id: 6, title: 'Zigzag', concept: 'repete', allowed: ['avanse', 'vire_dwat', 'vire_goch', 'repete'], par: 6, hint: 'Gade sa k repete: avanse, dwat, avanse, goch.', stopOnBump: true,
+  { id: 6, title: 'Zigzag', titleFr: 'Zigzag', concept: 'repete', allowed: ['avanse', 'vire_dwat', 'vire_goch', 'repete'], par: 6, hint: 'Gade sa k repete: avanse, dwat, avanse, goch.', hintFr: 'Regarde ce qui se répète : avance, droite, avance, gauche.', stopOnBump: true,
     maze: M(4, 4, ['0,1', '0,2', '0,3', '1,2', '1,3', '2,0', '2,3', '3,0', '3,1'], { r: 0, c: 0 }, 'S', { r: 3, c: 3 }) },
-  { id: 7, title: 'Si gen mi', concept: 'si_mi', allowed: ['avanse', 'vire_dwat', 'repete', 'si_mi'], par: 4, hint: 'Repete: si gen mi devan, vire dwat; sinon, avanse.', stopOnBump: true,
+  { id: 7, title: 'Si gen mi', titleFr: 'S’il y a un mur', concept: 'si_mi', allowed: ['avanse', 'vire_dwat', 'repete', 'si_mi'], par: 4, hint: 'Repete: si gen mi devan, vire dwat; sinon, avanse.', hintFr: 'Répète : s’il y a un mur devant, tourne à droite ; sinon, avance.', stopOnBump: true,
     maze: M(3, 4, ['0,3', '1,0', '1,1', '1,3', '2,0', '2,1', '2,3'], { r: 0, c: 0 }, 'E', { r: 2, c: 2 }) },
-  { id: 8, title: 'Jiska zetwal la', concept: 'jiska', allowed: ['avanse', 'vire_dwat', 'vire_goch', 'si_mi', 'jiska_zetwal'], par: 4, hint: '«Jiska zetwal»: si gen mi, vire dwat; sinon avanse.', stopOnBump: true,
+  { id: 8, title: 'Jiska zetwal la', titleFr: 'Jusqu’à l’étoile', concept: 'jiska', allowed: ['avanse', 'vire_dwat', 'vire_goch', 'si_mi', 'jiska_zetwal'], par: 4, hint: '«Jiska zetwal»: si gen mi, vire dwat; sinon avanse.', hintFr: '« Jusqu’à l’étoile » : s’il y a un mur, tourne à droite ; sinon avance.', stopOnBump: true,
     maze: M(4, 4, ['0,3', '1,0', '1,1', '1,3', '2,0', '2,1', '2,3', '3,3'], { r: 0, c: 0 }, 'E', { r: 3, c: 0 }, [{ r: 2, c: 2 }]) },
-  { id: 9, title: 'Koulwa long', concept: 'jiska', allowed: ['avanse', 'vire_dwat', 'vire_goch', 'si_mi', 'jiska_zetwal', 'repete'], par: 4, hint: 'Menm lide ak nivo 8, men koulwa a pi long. Pwogram ou pa bezwen pi long!', stopOnBump: true,
+  { id: 9, title: 'Koulwa long', titleFr: 'Long couloir', concept: 'jiska', allowed: ['avanse', 'vire_dwat', 'vire_goch', 'si_mi', 'jiska_zetwal', 'repete'], par: 4, hint: 'Menm lide ak nivo 8, men koulwa a pi long. Pwogram ou pa bezwen pi long!', hintFr: 'Même idée qu’au niveau 8, mais le couloir est plus long. Ton programme n’a pas besoin d’être plus long !', stopOnBump: true,
     maze: M(5, 5, ['1,0', '1,1', '1,2', '1,3', '2,3', '3,1', '3,2', '3,3'], { r: 0, c: 0 }, 'E', { r: 2, c: 2 }, [{ r: 1, c: 4 }, { r: 4, c: 0 }]) },
-  { id: 10, title: 'Vire goch tou', concept: 'si_mi', allowed: ['avanse', 'vire_dwat', 'vire_goch', 'si_mi', 'jiska_zetwal'], par: 4, hint: 'Fwa sa a mi yo fè w vire agoch.', stopOnBump: true,
+  { id: 10, title: 'Vire goch tou', titleFr: 'Tourne aussi à gauche', concept: 'si_mi', allowed: ['avanse', 'vire_dwat', 'vire_goch', 'si_mi', 'jiska_zetwal'], par: 4, hint: 'Fwa sa a mi yo fè w vire agoch.', hintFr: 'Cette fois, les murs te font tourner à gauche.', stopOnBump: true,
     maze: M(4, 4, ['0,0', '0,1', '1,0', '1,1', '2,3', '3,3', '1,3'], { r: 3, c: 0 }, 'E', { r: 0, c: 2 }) },
-  { id: 11, title: 'Ranmase tout jèm yo', concept: 'repete', allowed: ['avanse', 'vire_dwat', 'vire_goch', 'repete'], par: 6, hint: 'Fè tou kare a pou w pran 4 jèm yo anvan w rive sou zetwal la.', stopOnBump: true,
+  { id: 11, title: 'Ranmase tout jèm yo', titleFr: 'Ramasse toutes les gemmes', concept: 'repete', allowed: ['avanse', 'vire_dwat', 'vire_goch', 'repete'], par: 6, hint: 'Fè tou kare a pou w pran 4 jèm yo anvan w rive sou zetwal la.', hintFr: 'Fais le tour du carré pour prendre les 4 gemmes avant d’arriver à l’étoile.', stopOnBump: true,
     maze: M(3, 3, ['1,1'], { r: 0, c: 0 }, 'E', { r: 1, c: 0 }, [{ r: 0, c: 2 }, { r: 2, c: 2 }, { r: 2, c: 0 }, { r: 0, c: 1 }]) },
-  { id: 12, title: 'Gwo labirent', concept: 'jiska', allowed: ['avanse', 'vire_dwat', 'vire_goch', 'si_mi', 'jiska_zetwal', 'repete'], par: 7, hint: 'Règ «men dwat»: toujou eseye vire dwat, sinon avanse, sinon vire goch.', stopOnBump: true,
+  { id: 12, title: 'Gwo labirent', titleFr: 'Grand labyrinthe', concept: 'jiska', allowed: ['avanse', 'vire_dwat', 'vire_goch', 'si_mi', 'jiska_zetwal', 'repete'], par: 7, hint: 'Règ «men dwat»: toujou eseye vire dwat, sinon avanse, sinon vire goch.', hintFr: 'Règle de la « main droite » : essaie toujours de tourner à droite, sinon avance, sinon tourne à gauche.', stopOnBump: true,
     maze: M(5, 5, ['1,0', '2,0', '2,2', '2,4', '3,2', '3,4', '4,2'], { r: 0, c: 0 }, 'S', { r: 4, c: 4 }, [{ r: 3, c: 0 }]) },
 ];
 
