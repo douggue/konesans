@@ -1,4 +1,4 @@
-import type { DuelState } from './match.js';
+import type { DuelState, PlayerId, ReactionId } from './match.js';
 import type { AgeBand } from '../types.js';
 
 /**
@@ -33,4 +33,27 @@ export function adaptBot(profile: BotProfile, kidWinRate: number): BotProfile {
   const target = 0.55;
   const adj = (kidWinRate - target) * 0.3; // kid winning too much → bot gets better
   return { ...profile, accuracy: Math.min(0.9, Math.max(0.3, profile.accuracy + adj)) };
+}
+
+/**
+ * Robo's friendly reactions (same stickers as the kids'): a "good luck" at the start, and now and then one after a
+ * reveal — cheering the kid's right answer, encouraging after a miss. Never mocking. `null` = stay quiet this time.
+ * `delayMs` = how long after the moment Robo "taps" it (so it feels human).
+ */
+export function planBotReaction(moment: 'start' | 'reveal', s: DuelState, botId: PlayerId, rand: () => number): { reaction: ReactionId; delayMs: number } | null {
+  const pick = (xs: ReactionId[]) => xs[Math.floor(rand() * xs.length) % xs.length];
+  const delayMs = Math.round(500 + rand() * 900);
+  if (moment === 'start') return rand() < 0.7 ? { reaction: pick(['bon_chans', 'mwen_pare']), delayMs } : null;
+  const q = s.questions[s.index];
+  const bot = s.players.find((p) => p.id === botId);
+  const kid = s.players.find((p) => p.id !== botId);
+  if (!q || !bot || !kid) return null;
+  const botRight = bot.answer?.chosen === q.answer;
+  const kidRight = kid.answer?.chosen === q.answer;
+  const [chance, choices]: [number, ReactionId[]] =
+    kidRight && !botRight ? [0.6, ['bravo', 'byen_jwe', 'wow']]
+      : kidRight && botRight ? [0.4, ['byen_jwe', 'ke', 'dife']]
+        : botRight ? [0.35, ['bon_chans', 'anko']]
+          : [0.3, ['ri', 'anko']];
+  return rand() < chance ? { reaction: pick(choices), delayMs } : null;
 }

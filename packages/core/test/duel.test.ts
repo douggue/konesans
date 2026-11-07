@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { SAMPLE_QUESTIONS, selectQuestions, createDuel, reduce, publicView, planBotAnswer, BOT_PROFILES, ratingDelta, rng, type DuelState } from '../src/index.js';
+import { SAMPLE_QUESTIONS, selectQuestions, createDuel, reduce, publicView, planBotAnswer, planBotReaction, BOT_PROFILES, PRESET_REACTIONS, REACT_COOLDOWN_MS, ratingDelta, rng, type DuelState } from '../src/index.js';
 
 const qs = () => selectQuestions(SAMPLE_QUESTIONS, { age: '9-11', category: 'mix', count: 3, seed: 11 });
 const join = (s: DuelState, id: string, now: number, isBot = false) => reduce(s, { type: 'join', player: { id, username: id, isBot } }, now);
@@ -74,6 +74,28 @@ describe('duel state machine', () => {
     expect(reduce(s, { type: 'react', playerId: 'a', reaction: 'you suck' }, 2)).toBe(s);
   });
 
+  it('keeps the old reaction ids valid and accepts the new stickers', () => {
+    for (const id of ['bravo', 'wow', 'byen_jwe', 'anko', 'bon_chans', 'mwen_pare']) expect(PRESET_REACTIONS).toContain(id);
+    let s = join(join(createDuel('m5b', qs(), 0), 'a', 0), 'b', 0);
+    for (const [i, id] of (['ri', 'ke', 'dife'] as const).entries()) {
+      s = reduce(s, { type: 'react', playerId: 'b', reaction: id }, 10_000 * (i + 1));
+      expect(s.reactions.b).toBe(id);
+    }
+    expect(s.reactSeq?.b).toBe(3);
+  });
+
+  it('drops reactions sent faster than the cooldown, and counts each accepted one', () => {
+    let s = join(join(createDuel('m5c', qs(), 0), 'a', 0), 'b', 0);
+    s = reduce(s, { type: 'react', playerId: 'a', reaction: 'wow' }, 1000);
+    expect(reduce(s, { type: 'react', playerId: 'a', reaction: 'bravo' }, 1000 + REACT_COOLDOWN_MS - 1)).toBe(s);
+    // the other player has their own cooldown
+    expect(reduce(s, { type: 'react', playerId: 'b', reaction: 'bravo' }, 1001).reactions.b).toBe('bravo');
+    // same sticker again after the cooldown: still a new reaction (seq goes up)
+    s = reduce(s, { type: 'react', playerId: 'a', reaction: 'wow' }, 1000 + REACT_COOLDOWN_MS);
+    expect(s.reactSeq?.a).toBe(2);
+    expect(publicView(s, 'b').reactSeq).toEqual({ a: 2 });
+  });
+
   it('public view hides the answer key and the opponent choice until reveal', () => {
     let s = join(join(createDuel('m6', qs(), 0), 'a', 0), 'b', 0);
     s = reduce(s, { type: 'answer', playerId: 'a', chosen: 0 }, 100);
@@ -98,6 +120,30 @@ describe('bot', () => {
       if (plan.chosen === s.questions[0].answer) right++;
     }
     expect(right / 400).toBeGreaterThan(0.55); expect(right / 400).toBeLessThan(0.75);
+  });
+
+  it('reacts now and then with friendly preset stickers only, and the reducer accepts them', () => {
+    let s = join(join(createDuel('m8', qs(), 0), 'kid', 0), 'bot', 0, true);
+    const q = s.questions[0];
+    s = reduce(s, { type: 'answer', playerId: 'kid', chosen: q.answer }, 1000);
+    s = reduce(s, { type: 'answer', playerId: 'bot', chosen: (q.answer + 1) % q.options.length }, 2000);
+    expect(s.phase).toBe('reveal');
+    const rand = rng(7);
+    const seen = new Set<string>();
+    let some = 0;
+    for (let i = 0; i < 300; i++) {
+      for (const moment of ['start', 'reveal'] as const) {
+        const r = planBotReaction(moment, s, 'bot', rand);
+        if (!r) continue;
+        some++; seen.add(r.reaction);
+        expect(PRESET_REACTIONS).toContain(r.reaction);
+        expect(r.delayMs).toBeGreaterThanOrEqual(500); expect(r.delayMs).toBeLessThanOrEqual(1400);
+        expect(reduce(s, { type: 'react', playerId: 'bot', reaction: r.reaction }, 9000).reactions.bot).toBe(r.reaction);
+      }
+    }
+    expect(some).toBeGreaterThan(200); expect(some).toBeLessThan(500);
+    // kid right, Robo wrong → Robo cheers the kid
+    for (const id of seen) expect(['bon_chans', 'mwen_pare', 'bravo', 'byen_jwe', 'wow']).toContain(id);
   });
 });
 
