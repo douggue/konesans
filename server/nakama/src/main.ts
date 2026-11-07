@@ -16,6 +16,7 @@ import {
 } from '@konesans/core';
 import * as A from './admin';
 import * as R from './requests';
+import * as K from './account';
 
 const TICK_RATE = 5; // 5 ticks/s is plenty for a quiz
 const OP = { STATE: 1, ANSWER: 2, REACT: 3 } as const;
@@ -282,6 +283,11 @@ function rpc_admin_change_requests_list(ctx: nkruntime.Context, logger: nkruntim
 function rpc_admin_change_request_resolve(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return R.adminChangeRequestResolve(ctx, logger, nk, payload); }
 function rpc_content_manifest(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.contentManifest(ctx, logger, nk, payload); }
 function rpc_content_pack(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.contentPack(ctx, logger, nk, payload); }
+// kid accounts: cloud save + recovery code (account.ts)
+function rpc_save_put(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return K.savePut(ctx, logger, nk, payload); }
+function rpc_save_get(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return K.saveGet(ctx, logger, nk, payload); }
+function rpc_account_info(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return K.accountInfo(ctx, logger, nk, payload); }
+function rpc_account_recover(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return K.accountRecover(ctx, logger, nk, payload); }
 
 // ---------- module entry ----------
 
@@ -320,6 +326,11 @@ const InitModule: nkruntime.InitModule = (ctx, logger, nk, initializer) => {
   initializer.registerRpc('admin_change_request_resolve', rpc_admin_change_request_resolve);
   initializer.registerRpc('content_manifest', rpc_content_manifest);
   initializer.registerRpc('content_pack', rpc_content_pack);
+  // kid accounts: cloud save + recovery code — see account.ts
+  initializer.registerRpc('save_put', rpc_save_put);
+  initializer.registerRpc('save_get', rpc_save_get);
+  initializer.registerRpc('account_info', rpc_account_info);
+  initializer.registerRpc('account_recover', rpc_account_recover);
   A.bootstrapAdmins(ctx, logger, nk);
   logger.info('Konesans module loaded. Reactions allowed: %s', PRESET_REACTIONS.join(','));
 };

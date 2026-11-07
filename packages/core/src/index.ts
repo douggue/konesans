@@ -17,6 +17,7 @@ export * from './safety/username.js';
 export * from './safety/consent.js';
 export * from './safety/moderation.js';
 export * from './sync/events.js';
+export * from './sync/save.js';
 export * from './modules/index.js';
 export * from './coding/blocks.js';
 export * from './coding/basics.js';
