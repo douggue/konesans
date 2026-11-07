@@ -84,7 +84,7 @@ export default function Editor() {
       upsert(r.question); setOrig(r.question); setQ(r.question);
       bump();
       haptic('ok');
-      toast(status === 'approved' ? 'Apwouve' : status === 'draft' ? 'Make kòm pwoblèm' : status === 'review' ? 'Remete pou relekti' : 'Sove');
+      toast(status === 'approved' ? 'Apwouve' : status === 'draft' ? 'Make kòm pwoblèm' : status === 'review' ? 'Remete pou relekti' : 'Anrejistre');
       if (status === 'approved' || fresh) router.canGoBack() ? router.back() : router.replace('/questions' as never);
     } catch (e) {
       toast(errText(e), 'err');
@@ -111,7 +111,7 @@ export default function Editor() {
         <View style={{ padding: 12, gap: 8, borderTopWidth: 2, borderTopColor: colors.line }}>
           <Row gap={8}>
             <Button title="Apwouve" icon="bon" kind="good" busy={busy === 'approved'} onPress={() => save('approved')} style={{ flex: 1 }} />
-            <Button title={dirty ? 'Sove' : 'Sove'} kind={dirty ? 'primary' : 'plain'} busy={busy === 'save'} onPress={() => save()} style={{ flex: 1 }} />
+            <Button title={dirty ? 'Anrejistre' : 'Anrejistre'} kind={dirty ? 'primary' : 'plain'} busy={busy === 'save'} onPress={() => save()} style={{ flex: 1 }} />
           </Row>
           <Row gap={8}>
             <Button title="Pwoblèm" kind="bad" busy={busy === 'draft'} onPress={() => save('draft')} style={{ flex: 1 }} />
@@ -169,9 +169,9 @@ export default function Editor() {
         <Button title="Wi, efase l" kind="danger" busy={busy === 'delete'} onPress={del} />
         <Button title="Anile" kind="ghost" onPress={() => setConfirmDelete(false)} />
       </Sheet>
-      <Sheet open={confirmLeave} onClose={() => setConfirmLeave(false)} title="Ou pa sove chanjman yo">
-        <Button title="Sove epi soti" onPress={() => { setConfirmLeave(false); save(); }} />
-        <Button title="Soti san sove" kind="bad" onPress={() => { setConfirmLeave(false); leave(); }} />
+      <Sheet open={confirmLeave} onClose={() => setConfirmLeave(false)} title="Ou pa anrejistre chanjman yo">
+        <Button title="Anrejistre epi soti" onPress={() => { setConfirmLeave(false); save(); }} />
+        <Button title="Soti san anrejistre" kind="bad" onPress={() => { setConfirmLeave(false); leave(); }} />
         <Button title="Rete" kind="ghost" onPress={() => setConfirmLeave(false)} />
       </Sheet>
     </Screen>

@@ -40,7 +40,7 @@ export default function Categories() {
       const r = await api.saveCategories(list.map((c, i) => ({ ...c, order: i })));
       const sorted = sortCats(r.categories);
       load.setData(sorted); setList(sorted); setCategories(r.categories); bump();
-      haptic('ok'); toast('Sove ✓ · Timoun yo pa wè l toutotan ou pa pibliye', 'info', { label: 'Pibliye', run: publishNow(toast, bump) });
+      haptic('ok'); toast('Anrejistre ✓ · Timoun yo pa wè l toutotan ou pa pibliye', 'info', { label: 'Pibliye', run: publishNow(toast, bump) });
     } catch (e) { toast(errText(e), 'err'); } finally { setSaving(false); }
   };
   const add = () => {
@@ -60,7 +60,7 @@ export default function Categories() {
       bottom={dirty ? (
         <Row gap={8} style={{ padding: 12, borderTopWidth: 2, borderTopColor: colors.line }}>
           <Button title="Anile chanjman yo" kind="ghost" onPress={() => setList(load.data ?? [])} />
-          <Button title="Sove" busy={saving} onPress={save} style={{ flex: 1 }} />
+          <Button title="Anrejistre" busy={saving} onPress={save} style={{ flex: 1 }} />
         </Row>
       ) : undefined}
     >

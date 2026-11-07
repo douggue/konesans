@@ -11,7 +11,7 @@ export const FIX_UX_STRINGS = {
   // quit sheet
   quit_paused: ['Tan an kanpe pandan w ap reflechi.', 'Le temps est en pause pendant que tu réfléchis.'],
   quit_online: ['Atansyon: nan yon batay sou entènèt, tan an kontinye kouri.', 'Attention\u00a0: dans un duel en ligne, le temps continue.'],
-  quit_lesson_saved: ['Sa w fè deja sove. W ap ka kontinye pita.', 'Ce que tu as fait est enregistré. Tu pourras continuer plus tard.'],
+  quit_lesson_saved: ['Sa w fè deja anrejistre. W ap ka kontinye pita.', 'Ce que tu as fait est enregistré. Tu pourras continuer plus tard.'],
   lesson_resume: ['Kontinye kote w te rive', 'Reprendre où tu étais'],
   close: ['Fèmen', 'Fermer'],
   // 6–8

@@ -40,7 +40,7 @@ export default function Settings() {
     try {
       const r = await api.saveConfig({ ...c, minAppVersion: c.minAppVersion.trim() });
       load.setData(r.config); setC(r.config); bump();
-      haptic('ok'); toast('Sove ✓ · Timoun yo pa wè l toutotan ou pa pibliye', 'info', { label: 'Pibliye', run: publishNow(toast, bump) });
+      haptic('ok'); toast('Anrejistre ✓ · Timoun yo pa wè l toutotan ou pa pibliye', 'info', { label: 'Pibliye', run: publishNow(toast, bump) });
     } catch (e) { toast(errText(e), 'err'); } finally { setSaving(false); }
   };
 
@@ -53,7 +53,7 @@ export default function Settings() {
       bottom={dirty ? (
         <Row gap={8} style={{ padding: 12, borderTopWidth: 2, borderTopColor: colors.line }}>
           <Button title="Anile" kind="ghost" onPress={() => setC(load.data)} />
-          <Button title="Sove" busy={saving} onPress={save} style={{ flex: 1 }} />
+          <Button title="Anrejistre" busy={saving} onPress={save} style={{ flex: 1 }} />
         </Row>
       ) : undefined}
     >

@@ -357,7 +357,7 @@ async function loadCats() {
 let lastHash = location.hash;
 async function route() {
   if (editing && isDirty() && location.hash !== lastHash) {
-    const go = await confirmBox('Kite san sove?', 'Ou gen chanjman ki poko sove sou kesyon sa a.', 'Kite', 'bad');
+    const go = await confirmBox('Kite san anrejistre?', 'Ou gen chanjman ki poko anrejistre sou kesyon sa a.', 'Kite', 'bad');
     if (!go) { history.replaceState(null, '', lastHash || '#tablo'); return; }
   }
   editing = null; editOrig = null; lastHash = location.hash;
@@ -409,7 +409,7 @@ async function importBank() {
   toast(`${added} kesyon enpòte`); await loadStats(); await loadCats(); viewDash();
 }
 /** After any save: changes reach kids' phones only after Publish, so offer it right there. */
-function savedToast() { toast('Sove ✓ · Timoun yo pa wè l toutotan ou pa pibliye', false, { label: 'Pibliye kounye a', run: publish }); loadStats(); }
+function savedToast() { toast('Anrejistre ✓ · Timoun yo pa wè l toutotan ou pa pibliye', false, { label: 'Pibliye kounye a', run: publish }); loadStats(); }
 async function publish() {
   await loadStats();
   const n = S.stats.draftChanges;
@@ -492,8 +492,8 @@ function cardEdit(m) {
       <div class="field"><label for="nt-${id}">Nòt</label><textarea class="inp" id="nt-${id}" data-f="note" rows="1" placeholder="Egz. « mo sa a pa bon an Kreyòl », « verifye dat la »…">${esc(m.note || '')}</textarea></div>
       <div class="warn" data-lint ${probs.length ? '' : 'hidden'}>⚠️ ${probs.map(esc).join(' · ')}</div>
       <div class="actions">
-        <button type="button" class="btn good" data-act="save" data-st="approved">✓ Sove epi apwouve</button>
-        <button type="button" class="btn" data-act="save" data-st="${m.status}">Sove</button>
+        <button type="button" class="btn good" data-act="save" data-st="approved">✓ Anrejistre epi apwouve</button>
+        <button type="button" class="btn" data-act="save" data-st="${m.status}">Anrejistre</button>
         <button type="button" class="btn bad" data-act="save" data-st="draft">⚑ Pwoblèm</button>
         ${m.status !== 'review' ? '<button type="button" class="btn" data-act="save" data-st="review">↺ Pou relekti</button>' : ''}
         <div class="right"><button type="button" class="btn ghost" data-act="cancel">Anile</button>${m._new ? '' : '<button type="button" class="btn ghost" data-act="delete">Efase</button>'}</div>
@@ -527,8 +527,8 @@ async function addQuestion() {
   editOrig = JSON.stringify(editing);
   S.open = id; S.st = 'all'; S.q = ''; renderQs(); $('#ht-' + CSS.escape(id))?.focus();
 }
-async function openQ(id) { if (isDirty() && !(await confirmBox('Kite san sove?', 'Ou gen chanjman ki poko sove sou lòt kesyon an.', 'Kite', 'bad'))) return; const m = (S.bank[S.cat] || []).find((x) => x.id === id); if (!m) return; editing = JSON.parse(JSON.stringify(m)); editOrig = JSON.stringify(editing); S.open = id; renderQs(); $(`[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'nearest' }); }
-async function closeQ() { if (isDirty() && !(await confirmBox('Kite san sove?', 'Chanjman ou fè yo ap pèdi.', 'Kite', 'bad'))) return; editing = null; editOrig = null; S.open = null; renderQs(); }
+async function openQ(id) { if (isDirty() && !(await confirmBox('Kite san anrejistre?', 'Ou gen chanjman ki poko anrejistre sou lòt kesyon an.', 'Kite', 'bad'))) return; const m = (S.bank[S.cat] || []).find((x) => x.id === id); if (!m) return; editing = JSON.parse(JSON.stringify(m)); editOrig = JSON.stringify(editing); S.open = id; renderQs(); $(`[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'nearest' }); }
+async function closeQ() { if (isDirty() && !(await confirmBox('Kite san anrejistre?', 'Chanjman ou fè yo ap pèdi.', 'Kite', 'bad'))) return; editing = null; editOrig = null; S.open = null; renderQs(); }
 function upsertLocal(q) { const list = S.bank[q.category] || (S.bank[q.category] = []); const i = list.findIndex((x) => x.id === q.id); if (i >= 0) list[i] = q; else { list.push(q); list.sort((a, b) => a.id.localeCompare(b.id)); } }
 $('#content').addEventListener('click', async (e) => {
   if (S.view !== 'kesyon') return;
@@ -545,7 +545,7 @@ $('#content').addEventListener('click', async (e) => {
       const st = b.dataset.st;
       if (st === 'approved' && lint(editing).length) { toast('Korije pwoblèm yo anvan ou apwouve', true); return; }
       await busy(b, async () => {
-        try { const { _new, ...q } = editing; const r = await rpc('admin_question_save', { question: { ...q, status: st } }); upsertLocal(r.question); editing = null; editOrig = null; S.open = null; toast(st === 'approved' ? '✓ Sove epi apwouve' : st === 'draft' ? '⚑ Make kòm pwoblèm' : st === 'review' && q.status !== 'review' ? '↺ Remete pou relekti' : 'Sove'); loadStats(); loadCats(); renderQs(); }
+        try { const { _new, ...q } = editing; const r = await rpc('admin_question_save', { question: { ...q, status: st } }); upsertLocal(r.question); editing = null; editOrig = null; S.open = null; toast(st === 'approved' ? '✓ Anrejistre epi apwouve' : st === 'draft' ? '⚑ Make kòm pwoblèm' : st === 'review' && q.status !== 'review' ? '↺ Remete pou relekti' : 'Anrejistre'); loadStats(); loadCats(); renderQs(); }
         catch (er) { toast(er.message, true); }
       }); break;
     }
@@ -570,7 +570,7 @@ $('#content').addEventListener('input', (e) => {
 // ---------- categories ----------
 function viewCategories() {
   S.catsDraft = JSON.parse(JSON.stringify(S.cats));
-  $('#toolbar').innerHTML = `<h1>Kategori</h1><span class="grow" style="flex:1"></span><button class="btn" id="c-add" type="button">+ Nouvo kategori</button><button class="btn primary" id="c-save" type="button">Sove</button>`;
+  $('#toolbar').innerHTML = `<h1>Kategori</h1><span class="grow" style="flex:1"></span><button class="btn" id="c-add" type="button">+ Nouvo kategori</button><button class="btn primary" id="c-save" type="button">Anrejistre</button>`;
   $('#c-add').onclick = () => { const n = S.catsDraft.length + 1; S.catsDraft.push({ id: 'nouvo-' + n, name: { ht: 'Nouvo kategori', fr: 'Nouvelle catégorie' }, icon: 'kesyon', color: '#1F47B5', order: n, enabled: false, isNew: true, ages: AGES.slice(), _fresh: true }); renderCats(); };
   $('#c-save').onclick = (e) => busy(e.currentTarget, async () => {
     try { const r = await rpc('admin_categories_save', { categories: S.catsDraft.map(({ _fresh, _icons, ...c }) => c) }); S.cats = r.categories; await loadStats(); await loadCats(); savedToast(); viewCategories(); } catch (er) { toast(er.message, true); }
@@ -620,7 +620,7 @@ $('#content').addEventListener('input', (e) => {
 
 // ---------- settings ----------
 async function viewSettings() {
-  $('#toolbar').innerHTML = `<h1>Paramèt app la</h1><span style="flex:1"></span><button class="btn primary" id="s-save" type="button">Sove</button>`;
+  $('#toolbar').innerHTML = `<h1>Paramèt app la</h1><span style="flex:1"></span><button class="btn primary" id="s-save" type="button">Anrejistre</button>`;
   $('#content').innerHTML = '<div class="empty"><b>N ap chaje…</b></div>';
   try { S.config = (await rpc('admin_config')).config; } catch (e) { toast(e.message, true); return; }
   const c = S.config; const F = [['duels', 'Defi 1 kont 1', 'Duel ak Robo ak lòt jwè'], ['courses', 'Kou lang', 'Angle ak Panyòl'], ['coding', 'Enfòmatik', 'Jwèt robo ak blòk'], ['math', 'Kalkil Mantal', '60 segonn kalkil'], ['peyi', 'Peyi', 'Drapo, kapital, fòm']];
@@ -688,7 +688,7 @@ const textErrorKeys = () => Object.keys(S.stringsDirty).filter((k) => S.strings.
 const STR_GROUPS = [['all', 'Tout'], ['rank_', 'Ran'], ['req_', 'Demann'], ['changed', 'Chanje']];
 const groupChip = (k) => k.startsWith('rank_') ? '<span class="chip blue" style="margin-right:6px">Ran</span>' : k.startsWith('req_') ? '<span class="chip" style="margin-right:6px">Demann</span>' : '';
 async function viewStrings() {
-  $('#toolbar').innerHTML = `<h1>Tèks app la</h1><label class="search"><span aria-hidden="true">🔎</span><input id="t-search" type="search" placeholder="Chèche yon tèks…"></label><div class="seg" role="group" aria-label="Gwoup">${STR_GROUPS.map(([k, l]) => `<button type="button" data-sg="${k}" aria-pressed="${S.strGroup === k}">${l}</button>`).join('')}</div><button class="btn primary" id="t-save" type="button">Sove</button>`;
+  $('#toolbar').innerHTML = `<h1>Tèks app la</h1><label class="search"><span aria-hidden="true">🔎</span><input id="t-search" type="search" placeholder="Chèche yon tèks…"></label><div class="seg" role="group" aria-label="Gwoup">${STR_GROUPS.map(([k, l]) => `<button type="button" data-sg="${k}" aria-pressed="${S.strGroup === k}">${l}</button>`).join('')}</div><button class="btn primary" id="t-save" type="button">Anrejistre</button>`;
   $('#content').innerHTML = '<div class="empty"><b>N ap chaje…</b></div>';
   try { S.strings = await rpc('admin_strings'); } catch (e) { toast(e.message, true); return; }
   S.stringsDirty = JSON.parse(JSON.stringify(S.strings.overrides));
@@ -701,7 +701,7 @@ async function viewStrings() {
   render();
   for (const b of document.querySelectorAll('[data-sg]')) b.onclick = () => { S.strGroup = b.dataset.sg; for (const x of document.querySelectorAll('[data-sg]')) x.setAttribute('aria-pressed', String(x === b)); render($('#t-search').value); };
   let t; $('#t-search').oninput = (e) => { clearTimeout(t); t = setTimeout(() => render(e.target.value), 150); };
-  $('#t-save').onclick = (e) => busy(e.currentTarget, async () => { const bad = textErrorKeys(); if (bad.length) { toast(`Korije ${bad.length} tèks anvan ou sove: ${bad.slice(0, 3).join(', ')}${bad.length > 3 ? '…' : ''}`, true); S.strGroup = 'changed'; for (const x of document.querySelectorAll('[data-sg]')) x.setAttribute('aria-pressed', String(x.dataset.sg === 'changed')); render($('#t-search').value); return; } try { S.strings.overrides = (await rpc('admin_strings_save', { overrides: S.stringsDirty })).overrides; S.stringsDirty = JSON.parse(JSON.stringify(S.strings.overrides)); savedToast(); loadStats(); render($('#t-search').value); } catch (er) { toast(er.message, true); } });
+  $('#t-save').onclick = (e) => busy(e.currentTarget, async () => { const bad = textErrorKeys(); if (bad.length) { toast(`Korije ${bad.length} tèks anvan ou anrejistre: ${bad.slice(0, 3).join(', ')}${bad.length > 3 ? '…' : ''}`, true); S.strGroup = 'changed'; for (const x of document.querySelectorAll('[data-sg]')) x.setAttribute('aria-pressed', String(x.dataset.sg === 'changed')); render($('#t-search').value); return; } try { S.strings.overrides = (await rpc('admin_strings_save', { overrides: S.stringsDirty })).overrides; S.stringsDirty = JSON.parse(JSON.stringify(S.strings.overrides)); savedToast(); loadStats(); render($('#t-search').value); } catch (er) { toast(er.message, true); } });
 }
 $('#content').addEventListener('input', (e) => {
   if (S.view !== 'teks') return;
@@ -765,7 +765,7 @@ async function viewAudit() {
   $('#toolbar').innerHTML = `<h1>Istorik</h1>`;
   let entries = [];
   try { entries = (await rpc('admin_audit')).entries; } catch (e) { toast(e.message, true); }
-  const L = { save: 'Sove', delete: 'Efase', import: 'Enpòte', publish: 'Pibliye', categories: 'Kategori', config: 'Paramèt', strings: 'Tèks', 'resolve-report': 'Rapò regle', 'request:approve': 'Demann aksepte', 'request:refuse': 'Demann refize', password: 'Modpas chanje', 'status:approved': 'Apwouve', 'status:draft': 'Pwoblèm', 'status:review': 'Pou relekti' };
+  const L = { save: 'Anrejistre', delete: 'Efase', import: 'Enpòte', publish: 'Pibliye', categories: 'Kategori', config: 'Paramèt', strings: 'Tèks', 'resolve-report': 'Rapò regle', 'request:approve': 'Demann aksepte', 'request:refuse': 'Demann refize', password: 'Modpas chanje', 'status:approved': 'Apwouve', 'status:draft': 'Pwoblèm', 'status:review': 'Pou relekti' };
   $('#content').innerHTML = entries.length ? `<section class="panel scroll"><table class="tbl"><thead><tr><th>Lè</th><th>Ki moun</th><th>Aksyon</th><th>Sou</th></tr></thead><tbody>${entries.map((e) => `<tr><td>${new Date(e.at).toLocaleString('fr-HT')}</td><td>${esc(e.by)}</td><td>${esc(L[e.action] || e.action)}</td><td class="mono">${esc(e.target)}</td></tr>`).join('')}</tbody></table></section>` : `<div class="empty"><b>Pa gen anyen ankò</b></div>`;
 }
 async function viewAccount() {
