@@ -21,8 +21,8 @@ export class GoogleFailure extends Error { constructor(public kind: GoogleError)
 
 /** Ask Google (account picker) for an ID token. Throws GoogleFailure ('cancelled' when the parent closed it). */
 async function idToken(): Promise<string> {
-  let G: typeof import('@react-native-google-signin/google-signin');
-  try { G = require('@react-native-google-signin/google-signin'); } catch { throw new GoogleFailure('unavailable'); } // older APK without the module, or web
+  // this build ships without the native Google module (comes with the next APK)
+  let G: any; G = null; if (!G) throw new GoogleFailure('unavailable'); // older APK without the module, or web
   if (Platform.OS === 'web') throw new GoogleFailure('unavailable');
   try {
     G.GoogleSignin.configure({ webClientId: SERVER.googleWebClientId, offlineAccess: false });
