@@ -1,3 +1,4 @@
+import { RankUpListener } from '@/ui/RankUp';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -242,6 +243,7 @@ function LessonResult({ r, onDone }: { r: ReturnType<typeof finishLesson>; onDon
   useEffect(() => { sfx('level'); const k = setTimeout(() => sfx('coin'), 1200); return () => clearTimeout(k); }, []);
   return (
     <Screen scroll={false}>
+      <RankUpListener delayMs={2200} />
       {r.stars >= 2 && <Confetti />}
       <View style={{ alignItems: 'center', gap: 10, marginTop: 'auto' }}>
         <Drop><Mascot size={150} mood={r.perfect ? 'cheer' : 'happy'} /></Drop>

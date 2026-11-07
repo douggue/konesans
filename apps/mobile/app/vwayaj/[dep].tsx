@@ -1,3 +1,5 @@
+import { quizXp } from '@konesans/core';
+import { RankUpListener } from '@/ui/RankUp';
 import React, { useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -72,9 +74,10 @@ export default function VwayajRun() {
     const stars = runStars(sum.correct, sum.total);
     const mood: MascotMood = sum.correct === sum.total ? 'wow' : sum.correct >= 9 ? 'proud' : passed ? 'cheer' : sum.correct >= 5 ? 'think' : 'sad';
     const next = result?.unlocked ? DEPARTMENTS.find((d) => d.id === result.unlocked) : null;
-    const xp = Math.round((sum.score * mult) / 4);
+    const xp = quizXp(sum.score * mult); // same rule (and cap) as what the store pays
     return (
       <Screen scroll={false}>
+        <RankUpListener delayMs={2200} />
         {passed && <Confetti />}
         <View style={{ alignItems: 'center', gap: 10, marginTop: 'auto' }}>
           <Drop>{passed ? <Hop height={10} duration={1100}><Mascot size={150} mood={mood} /></Hop> : <Mascot size={150} mood={mood} />}</Drop>
