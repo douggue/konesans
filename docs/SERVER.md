@@ -32,6 +32,11 @@ Send the IP to Claude so the kids' app and the admin app point to your server.
 - **Paramèt app la**: turn features on/off, post an announcement, maintenance mode.
 - **Tèks app la**: change any text of the app (Kreyòl and French).
 
+## Kids' accounts (recovery codes)
+Nothing to set up. Each phone saves the kid's progress on your server by itself (when it has internet) and shows a code like
+**MANGO-4821** in Paramèt / Mwen → *Kòd pou rekipere pwogrè m*. On a new phone the kid taps **Mwen gen yon kòd** on the first
+screen and types it. Saves live in Postgres with everything else, so DigitalOcean backups cover them. Details: docs/API.md.
+
 ## If something goes wrong
 - Setup log on the server: `/var/log/konesans-setup.log`; deploy log: `/opt/konesans/deploys.log`.
 - DigitalOcean → your droplet → **Console** opens a terminal in the browser. Useful commands:

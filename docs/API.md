@@ -125,3 +125,42 @@ Kid RPCs use the phone's device session (`POST /v2/account/authenticate/device?c
 
 Errors from `change_request_submit`: 400 `bad age band` / `bad grade` / `nothing_to_change`; 409 `pending_exists` (one pending request per phone); 429 `rate_limited` (3 requests per phone per 24 h).
 On approval the server also updates the kid's `settings/kid` storage object (`age`, `grade`; the age `online_set` stores for duel matching). Requests are stored as `change_req/<id>` objects of the system user.
+
+## Accounts: cloud save + recovery code
+
+No sign-up. Each phone has an anonymous device account; its progress is saved on the server so a new phone can get it back
+with a short **recovery code** (`MANGO-4821`: a kid-friendly Kreyòl word + 4 digits from 2–9, unique per account, made
+on the first sync) or, once configured, a linked Google account (see `docs/GOOGLE-SIGNIN.md`).
+Server: `server/nakama/src/account.ts`; app: `apps/mobile/src/lib/cloud.ts`; merge rules: `packages/core/src/sync/save.ts`
+(tests: `packages/core/test/save.test.ts`); end-to-end: `server/test/account-smoke.mjs`.
+
+A save is split in **parts** (`profile, progress, courses, stats, missions, settings, kidSettings, coding, extra, cards,
+vwayaj, prefs`), each `{ at, data }` where `at` = when that part last changed on a phone (ms; the server clamps it to its own
+clock). Downloaded content is never saved. Merge, per part: the newest part wins, but earned things never go down — XP,
+stats counters, coding stars, course lessons (best stars/score), Vwayaj departments/best: max; trophies, hero cards,
+unlocked avatar items, full mission days, legend weeks, events played: union. Coins, streak (later day), review list,
+profile and settings: newest.
+
+```ts
+interface CloudSave { v: 1; profileId: string; updatedAt: number; parts: { [part: string]: { at: number; data: object } } }
+```
+
+Kid RPCs (device session, `Bearer`):
+
+| id | body | result |
+|---|---|---|
+| `save_put` | `{ profileId, parts: {<part>: {at, data}}, have?: {<part>: at}, force? }` — only changed parts | `{ ok, updatedAt, code, pull: {<part>: {at, data}} }` — `pull`: parts where the server knows more (merged data that differs from what was sent, or a stored part newer than `have[part]`) |
+| | same, but the account holds another `profileId` and no `force` | `{ conflict: true, profileId, updatedAt, code }` — nothing written; the phone should take the save (`save_get`) |
+| `save_get` | – | `{ save: CloudSave \| null, code }` |
+| `account_info` | – | `{ code, google: boolean, hasSave, updatedAt }` (makes the code on first call) |
+| `account_recover` | `{ code, preview: true }` | `{ preview: { username, avatar, xp, cards, badges, lessons, updatedAt } \| null, hasSave }` — nothing changes |
+| `account_recover` | `{ code, deviceId }` (a fresh `kns-` + 32 hex id made by the new phone) | `{ ok, save, code }` — the device id is linked to the code's account; the phone logs in with it from now on |
+
+`force: true` replaces the whole save (the phone was reset, or the kid chose this phone's progress over the code's).
+Limits: an upload is at most 240 KB (`too_big`, 400; real saves are ~10–60 KB), a stored save 900 KB. The `profile` part
+keeps only known fields and a generated username (core `isValidUsername`), so no personal data is stored.
+Codes are typed forgivingly (any case, accents, spaces, `0`/`1` inside the word = O/I).
+Errors from `account_recover`: 404 `bad_code` (counts as a wrong try), 429 `rate_limited` (5 wrong codes per hour per
+phone, 30 per network address, 600 for the whole server), 409 `same_account` (it is this phone's own code),
+400 `bad deviceId`. Storage: `cloud/save`, `account/code`, `account/tries` (user); `recovery/<CODE>` (system: the
+code index, written with version `*` so codes stay unique), `recovery_ip/<ip>` (system).
