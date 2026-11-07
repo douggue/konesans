@@ -61,7 +61,7 @@ const S = {
   profile: ['Mwen', 'Moi'], streak: ['jou seri', 'jours de série'], coins: ['kòb', 'pièces'], wins: ['viktwa', 'victoires'],
   settings: ['Paramèt', 'Paramètres'], sound: ['Son', 'Son'], sfx: ['Son efè', 'Effets sonores'], music: ['Mizik', 'Musique'], voice: ['Li kesyon yo awotvwa', 'Lire les questions à voix haute'],
   haptic: ['Vibrasyon', 'Vibration'], app_lang: ['Lang app la', "Langue de l'app"], text_size: ['Gwosè tèks', 'Taille du texte'], small: ['Piti', 'Petit'], normal: ['Nòmal', 'Normal'], big: ['Gwo', 'Grand'],
-  parent: ['Espas Paran', 'Espace Parents'], parent_only: ['Pou granmoun sèlman', 'Réservé aux adultes'], reset: ['Rekòmanse a zewo', 'Tout recommencer'],
+  parent: ['Espas Paran', 'Espace Parents'], parent_only: ['Pou granmoun sèlman', 'Réservé aux adultes'], reset: ['Rekòmanse a zewo', 'Tout réinitialiser'],
   trophies: ['Twofe m', 'Mes trophées'], my_class: ['Klas mwen', 'Ma classe'], family: ['Fanmi mwen', 'Ma famille'], soon: ['Byento', 'Bientôt'], new_badge: ['Nouvo', 'Nouveau'],
   streak_short: ['Seri', 'Série'], earned: ['Genyen', 'Gagné'], to_earn: ['Pou genyen', 'À gagner'], trophies_sub: ['Fè defi, aprann, jwe chak jou pou debloke yo', 'Relève des défis, apprends et joue chaque jour pour les débloquer'],
   maint_title: ['Ti poz!', 'Petite pause !'], maint_retry: ['Eseye ankò', 'Réessayer'],

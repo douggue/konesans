@@ -31,7 +31,8 @@ export function T({ v = 'body', color = colors.ink, style, children, center, ...
   const scale = useStore((s) => [0.9, 1, 1.18][s.settings.textSize]);
   const base = SIZES[v];
   // Android adds the font's own top/bottom padding (large for Baloo 2), which pushes text off-centre in buttons, pills and tiles.
-  return <Text {...rest} style={[base, { fontSize: base.fontSize! * scale, lineHeight: base.lineHeight! * scale, color, includeFontPadding: false, textAlignVertical: 'center' }, center && { textAlign: 'center' }, style]}>{children}</Text>;
+  // textBreakStrategy 'simple': Android's default ('highQuality') can mis-measure our fonts and drop the last word(s)
+  return <Text textBreakStrategy="simple" {...rest} style={[base, { fontSize: base.fontSize! * scale, lineHeight: base.lineHeight! * scale, color, includeFontPadding: false, textAlignVertical: 'center' }, center && { textAlign: 'center' }, style]}>{children}</Text>;
 }
 
 // ─── Layout ──────────────────────────────────────────────────────────────────
