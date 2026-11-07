@@ -36,7 +36,7 @@ export default function Home() {
       <FadeIn><Row gap={12}>
         <PressScale accessibilityLabel={t('profile')} scaleTo={0.9} onPress={() => { tap(); router.push('/profile'); }}><Avatar a={avatar} size={52} live /></PressScale>
         <View style={{ flex: 1 }}>
-          <T v="h1">{t('hello_name', { name: profile.username })}</T>
+          <T v="h1">{t('hello_name', { name: profile.username.replace(/ /g, '\u00a0') /* "Krab 70" never splits */ })}</T>
           <T v="small" color={colors.muted}>{t('what_learn')}</T>
         </View>
         <View style={{ alignItems: 'flex-end', gap: 4 }}>

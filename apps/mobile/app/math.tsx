@@ -42,7 +42,7 @@ export default function MathRapid() {
     if (pausedAt.current) { const d = Date.now() - pausedAt.current; pausedAt.current = 0; setRun((r) => (r ? { ...r, endsAt: r.endsAt + d } : r)); }
   }, [quitting]);
   const leave = useQuitGuard(!!run && !over, () => setQuitting(true));
-  useEffect(() => { if (over && !saved.current && run) { saved.current = true; recordMath(run.score, run.history.filter((h) => h.ok).length); // XP: core progress/xp.ts (capped) tap('success'); sfx('level'); setTimeout(() => sfx('coin'), 1200); } }, [over]);
+  useEffect(() => { if (over && !saved.current && run) { saved.current = true; recordMath(run.score, run.history.filter((h) => h.ok).length); /* XP: core progress/xp.ts (capped) */ tap('success'); sfx('level'); setTimeout(() => sfx('coin'), 1200); } }, [over]);
   useEffect(() => { music(null); }, []);
   const results = useRef<boolean[]>([]);
 

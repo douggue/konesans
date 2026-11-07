@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { levelById, run, scoreRun, countBlocks, validateProgram, isWall, type Block, type Robot, type RunResult, type Level } from '@konesans/core';
+import { levelById, run, countBlocks, validateProgram, isWall, type Block, type Robot, type RunResult, type Level } from '@konesans/core';
 import { Screen, T, Button, Card, Row, TopBar, Icon, Stars, Pill, Mascot, PressScale, Sheet, readableOn } from '@/ui';
 import { useQuitGuard } from '@/ui/activity';
 import { colors, radius } from '@/lib/theme';
 import { useStore } from '@/lib/store';
+import { RankUpListener } from '@/ui/RankUp';
 import { useT, type StrKey } from '@/lib/i18n';
 import { tap, sfx, music } from '@/lib/audio';
 
@@ -94,7 +95,7 @@ export default function CodingLevel() {
                   {star && !here && <T style={{ fontSize: cell * 0.6, lineHeight: cell * 0.7 }} color={colors.yellowDark}>★</T>}
                   {gem && <T style={{ fontSize: cell * 0.45, lineHeight: cell * 0.6 }}>💎</T>}
                   {here && (
-                    <View accessibilityLabel="Robo" style={{ width: cell * 0.9, height: cell * 0.9, borderRadius: cell * 0.28, backgroundColor: result?.ok ? colors.greenSoft : '#FFFFFF', borderWidth: 2, borderColor: result?.ok ? colors.green : colors.ink, alignItems: 'center', justifyContent: 'center' }}>
+                    <View accessibilityLabel="Robo" /* i18n-ok: the robot's name */ style={{ width: cell * 0.9, height: cell * 0.9, borderRadius: cell * 0.28, backgroundColor: result?.ok ? colors.greenSoft : '#FFFFFF', borderWidth: 2, borderColor: result?.ok ? colors.green : colors.ink, alignItems: 'center', justifyContent: 'center' }}>
                       <Icon name="robo" size={cell * 0.72} />
                       <View style={[{ position: 'absolute' }, ARROW_POS[robot.dir]]}><T color={colors.red} style={{ fontSize: cell * 0.26, lineHeight: cell * 0.3 }}>{ARROW[robot.dir]}</T></View>
                     </View>
@@ -138,6 +139,7 @@ export default function CodingLevel() {
         <Button title={t('stay')} onPress={() => setQuitting(false)} />
         <Button variant="secondary" color={colors.red} title={t('quit')} onPress={() => { setQuitting(false); leave(() => (router.canGoBack() ? router.back() : router.replace('/coding'))); }} />
       </Sheet>
+      <RankUpListener delayMs={1200} />
     </Screen>
   );
 }

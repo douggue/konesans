@@ -80,7 +80,7 @@ export function AvatarBuilder({ value, onChange, size = 170, shop = false, initi
 
   const sold = (kind: UnlockKind, v: string | number) => !!shopItemFor(kind, v);
   /** onboarding: shop items are not shown at all */
-  const shown = <X extends { kind?: UnlockKind; value?: string | number }>(list: X[]) => (shop ? list : list.filter((x) => !x.kind || !sold(x.kind, x.value!)));
+  const shown = (list: Item[]): Item[] => (shop ? list : list.filter((x) => !x.kind || !sold(x.kind, x.value!)));
   const shopItems: Item[] = SHOP_ITEMS.map((it) => {
     const on = it.kind === 'frame' ? (value.frame ?? 0) === it.value : (value as unknown as Record<string, unknown>)[it.kind] === it.value;
     const base = { key: it.id, kind: it.kind, value: it.value, label: itemName(it), on, pick: () => set(withItem(value, it)) };

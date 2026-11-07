@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { router, useLocalSearchParams, useNavigation } from 'expo-router';
+import React, { useRef, useState } from 'react';
+import { router, useLocalSearchParams, useNavigation, usePreventRemove } from 'expo-router';
 import { Screen, TopBar, Button, Sheet, T } from '@/ui';
 import { AvatarBuilder, type Tab } from '@/ui/AvatarBuilder';
 import { colors } from '@/lib/theme';
@@ -23,18 +23,19 @@ export default function AvatarScreen() {
   const navigation = useNavigation();
   const dirty = !same(a, current);
   const pending = useRef<null | (() => void)>(null);
-  const leaving = useRef(false);
-  const dirtyRef = useRef(dirty);
-  dirtyRef.current = dirty;
+  const [leaving, setLeaving] = useState(false);
 
   // any way of leaving (header ←, hardware back, browser back, gesture): ask when there are changes
-  useEffect(() => navigation.addListener('beforeRemove' as never, (e: { preventDefault: () => void; data: { action: unknown } }) => {
-    if (leaving.current || !dirtyRef.current) return;
-    e.preventDefault();
-    pending.current = () => navigation.dispatch(e.data.action as never);
+  usePreventRemove(dirty && !leaving, ({ data }) => {
+    pending.current = () => navigation.dispatch(data.action as never);
     setAsking(true);
-  }), [navigation]);
-  const exit = () => { leaving.current = true; if (pending.current) { const go = pending.current; pending.current = null; go(); } else if (router.canGoBack()) router.back(); else router.replace('/profile'); };
+  });
+  const exit = () => {
+    setLeaving(true);
+    const go = pending.current; pending.current = null;
+    // after the guard is lifted (next render)
+    setTimeout(() => { if (go) go(); else if (router.canGoBack()) router.back(); else router.replace('/profile'); }, 0);
+  };
   const save = () => { setAvatar(a); exit(); };
 
   return (

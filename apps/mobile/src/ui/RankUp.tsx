@@ -263,7 +263,7 @@ function BadgeMoment({ id, onClose }: { id: string | null; onClose: () => void }
           <Button title={t('ec_badge_see')} color={colors.green} icon="twofe" onPress={() => close(true)} />
           <Button title={t('next')} variant="secondary" color={INK} onPress={() => close()} />
         </FadeIn>
-        <View pointerEvents="none" style={{ position: 'absolute', left: 12, bottom: 150 }}><Hop height={10}><Mascot size={84} mood="cheer" /></Hop></View>
+        <View pointerEvents="none" style={{ position: 'absolute', right: 14, top: 104 }}><Hop height={10}><Mascot size={72} mood="cheer" /></Hop></View>
       </View>
     </Modal>
   );

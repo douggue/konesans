@@ -55,7 +55,7 @@ export default function Peyi() {
           <T v="label" color={colors.muted}>{t('level_caps')}</T>
           <T v="bold">{'★'.repeat(level)} {t(LEVELS.find((l) => l.id === level)!.key)} · <T v="small" color={colors.muted}>{t(LEVELS.find((l) => l.id === level)!.sub)}</T></T>
         </View>
-        <T v="bold" color={colors.blue}>{t('diff_change')} ›</T>
+        <T v="bold" color={colors.blue} style={{ flexShrink: 0 }}>{t('diff_change')}{'\u00a0'}›</T>
       </PressScale>
 
       <T v="label" color={colors.muted}>{t('region_caps')}</T>
