@@ -275,7 +275,9 @@ export function CardReveal({ drawKey, delay = 2000, kind = 'chest', note, onClos
   const tag = t('kt_new_card', { x: t(RARITY_TAG[card.rarity]) });
   return (
     <Modal visible transparent animationType="none" statusBarTranslucent onRequestClose={() => close()}>
-      <Animated.View style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: 'rgba(20,33,61,0.96)', opacity: backdrop }} />
+      {/* a dimmed layer from the first frame that also takes every touch, so nothing behind shows through or can be pressed */}
+      <Pressable accessible={false} onPress={() => {}} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: 'rgba(20,33,61,0.72)' }} />
+      <Animated.View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: '#14213D', opacity: backdrop }} />
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 14 }}>
         <Pop><Mascot size={96} mood={mood} /></Pop>
         <T v="h1" center color="#FFFFFF">{phase === 'shown' ? (win.isNew ? t('kt_bravo', { name: card.short }) : t('kt_duplicate', { name: card.short, n: win.coins })) : t('kt_won_title')}</T>

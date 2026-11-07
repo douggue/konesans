@@ -93,7 +93,8 @@ export default function Profile() {
           <FadeIn key={r.href} delay={180 + i * 50}><Card onPress={() => router.push(r.href as never)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, minHeight: 60, borderRadius: 18 }}>
             <IconTile name={r.icon} bg={r.bg} size={44} />
             <View style={{ flex: 1 }}>
-              <T v="h3">{r.label}</T>
+              {/* one line: a short last word ("Avata m", "Twofe m") never wraps alone */}
+              <T v="h3" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{r.label}</T>
               <T v="small" color={r.dot ? colors.red : colors.muted}>{r.sub}</T>
             </View>
             {r.dot && <Pulse><View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.red }} /></Pulse>}

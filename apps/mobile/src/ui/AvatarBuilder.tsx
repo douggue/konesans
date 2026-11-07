@@ -7,7 +7,7 @@
  * Without `shop` (onboarding) the shop items are hidden.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { View, ScrollView } from 'react-native';
+import { View } from 'react-native';
 import Svg, { Rect, Path, Circle } from 'react-native-svg';
 import { router } from 'expo-router';
 import { RANKS, SHOP_ITEMS, xpForLevel, unlockFor, isItemOpen, shopItemFor, type AvatarConfig, type UnlockDef, type UnlockKind, type ShopItem } from '@konesans/core';
@@ -135,19 +135,20 @@ export function AvatarBuilder({ value, onChange, size = 170, shop = false, initi
         <Burst trigger={justBought} count={14} radius={size * 0.7} />
         {shop && <View style={{ position: 'absolute', right: 0, top: 0 }}><CountPill value={coins} k="coins" icon="kob" color="#5C4600" bg={colors.yellowSoft} /></View>}
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingHorizontal: 2, paddingTop: 6 }}>
+      {/* tabs wrap onto a second line instead of scrolling off the edge (360 px, big text) */}
+      <View role="tablist" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 2, paddingTop: 6 }}>
         {tabs.map((x) => {
           const on = tab === x.id;
           return (
             <PressScale key={x.id} role="tab" accessibilityState={{ selected: on }} scaleTo={0.92} onPress={() => { tap(); visited.current.add(x.id); setTab(x.id); }}
-              style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 999, justifyContent: 'center', flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: on ? colors.ink : x.id === 'shop' ? colors.yellowSoft : colors.card, borderWidth: 2, borderColor: on ? colors.ink : x.id === 'shop' ? colors.yellowDark : colors.lineStrong }}>
+              style={{ minHeight: 40, paddingHorizontal: 12, borderRadius: 999, justifyContent: 'center', flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: on ? colors.ink : x.id === 'shop' ? colors.yellowSoft : colors.card, borderWidth: 2, borderColor: on ? colors.ink : x.id === 'shop' ? colors.yellowDark : colors.lineStrong }}>
               {x.id === 'shop' && <Icon name="kob" size={18} />}
               <T v="bold" color={on ? '#fff' : colors.ink}>{t(x.label)}</T>
               {tabHasNew(x.id) && <View style={{ position: 'absolute', right: -2, top: -4, width: 14, height: 14, borderRadius: 7, backgroundColor: colors.red, borderWidth: 2, borderColor: '#FFFFFF' }} />}
             </PressScale>
           );
         })}
-      </ScrollView>
+      </View>
       {tab === 'shop' && <View style={{ gap: 2 }}>
         <T v="h3">{t('ec_shop_sub')}</T>
         <T v="small" color={colors.muted}>{t('ec_shop_how')}</T>
