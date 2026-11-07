@@ -31,10 +31,20 @@ export interface Stats {
   questions: StatusCounts & { byCategory: Record<string, StatusCounts> };
   players: { total: number; last7d: number };
   reports: { open: number };
+  /** age / class change requests waiting for an admin */
+  requests?: { pending: number };
   published: { version: number; publishedAt: string | null };
   draftChanges: number;
 }
 export interface Report { reporterId: string; targetId: string; reason: string; matchId?: string; at: string; resolved?: boolean }
+export type ReqStatus = 'pending' | 'approved' | 'refused';
+export interface ChangeRequest {
+  id: string; userId: string; username: string;
+  current: { age: Age | null; grade: string | null };
+  requested: { age?: Age; grade?: string };
+  reason: string; status: ReqStatus; createdAt: string;
+  resolvedAt?: string; resolvedBy?: string; note?: string;
+}
 export interface AuditEntry { at: string; by: string; action: string; target: string }
 export interface PublishResult { version: number; publishedAt: string; packs: { category: string; count: number; hash: string }[] }
 
@@ -157,6 +167,8 @@ export const api = {
   strings: () => rpc<{ defaults: Record<string, [string, string]>; overrides: Record<string, [string, string]> }>('admin_strings'),
   saveStrings: (overrides: Record<string, [string, string]>) => rpc<{ overrides: Record<string, [string, string]> }>('admin_strings_save', { overrides }),
   audit: () => rpc<{ entries: AuditEntry[] }>('admin_audit'),
+  changeRequests: (status: ReqStatus | 'all') => rpc<{ requests: ChangeRequest[]; pending: number }>('admin_change_requests_list', { status }),
+  resolveChangeRequest: (id: string, approve: boolean, note?: string) => rpc<{ request: ChangeRequest }>('admin_change_request_resolve', { id, approve, note }),
   changePassword: (current: string, next: string) => rpc<{ ok: true }>('admin_change_password', { current, next }),
   importQuestions: (questions: AdminQuestion[]) => rpc<{ added: number; updated: number; skipped: number }>('admin_import', { questions }),
 };

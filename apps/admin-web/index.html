@@ -58,6 +58,11 @@ h1, h2, h3 { font-family: var(--display); font-weight: 800; margin: 0; letter-sp
 [data-icon] svg { width: 100%; height: 100%; display: block; }
 .catrow .ic { display: block; }
 .nav .n { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; }
+.nav .n.badge:not(:empty) { background: var(--red); color: #fff; border-radius: 999px; min-width: 22px; padding: 0 7px; text-align: center; font-weight: 800; }
+.req .who { font-family: var(--display); font-weight: 800; font-size: 18px; }
+.req .chg { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-weight: 800; }
+.req .chg .arrow { color: var(--muted); }
+.req .note-in { flex: 1 1 220px; width: auto; }
 .nav.sub { padding-left: 18px; font-size: 14px; }
 .rail .spacer { flex: 1; }
 .pubbox { border: 2px solid var(--line); border-radius: 16px; padding: 12px; display: grid; gap: 8px; margin-top: 10px; }
@@ -233,6 +238,7 @@ textarea.inp { resize: vertical; font-weight: 600; }
     <a class="nav" href="#paramet" data-nav="paramet"><span class="ic" data-icon="paramet"></span>Paramèt app la</a>
     <a class="nav" href="#teks" data-nav="teks"><span class="ic" data-icon="lang"></span>Tèks app la</a>
     <a class="nav" href="#rapo" data-nav="rapo"><span class="ic" data-icon="siyale"></span>Rapò<span class="n" id="nav-r"></span></a>
+    <a class="nav" href="#demann" data-nav="demann"><span class="ic" data-icon="fanmi"></span>Demann<span class="n badge" id="nav-dm"></span></a>
     <a class="nav" href="#istorik" data-nav="istorik"><span class="ic" data-icon="kalandriye"></span>Istorik</a>
     <a class="nav" href="#kont" data-nav="kont"><span class="ic" data-icon="femen_kle"></span>Kont mwen</a>
     <div class="spacer"></div>
@@ -297,7 +303,7 @@ async function rpc(id, body) {
 function logout() { session = null; store.del('session'); showLogin(); }
 
 // ---------- state ----------
-const S = { stats: null, cats: null, me: null, bank: {}, view: 'tablo', cat: null, st: 'all', age: '', q: '', open: null, limit: 30, config: null, strings: null, stringsDirty: {}, catsDraft: null };
+const S = { stats: null, cats: null, me: null, bank: {}, view: 'tablo', cat: null, st: 'all', age: '', q: '', open: null, limit: 30, config: null, strings: null, stringsDirty: {}, catsDraft: null, strGroup: 'all', reqFilter: 'pending' };
 
 // ---------- ui helpers ----------
 function toast(t, err, action) {
@@ -334,6 +340,7 @@ async function loadStats() {
     $('#pub-changes').style.color = n ? 'var(--yellow-ink)' : '';
     $('#nav-q').textContent = S.stats.questions.total;
     $('#nav-r').textContent = S.stats.reports.open || '';
+    $('#nav-dm').textContent = S.stats.requests?.pending || '';
   } catch (e) { toast(e.message, true); }
 }
 async function loadCats() {
@@ -351,7 +358,7 @@ async function route() {
   const [view, arg] = (location.hash.slice(1) || 'tablo').split('/');
   S.view = view; if (view === 'kesyon') { S.cat = arg || S.cat || S.cats?.find((c) => c.id !== 'peyi')?.id || 'istwa'; S.open = null; S.limit = 30; }
   for (const a of document.querySelectorAll('[data-nav]')) a.setAttribute('aria-current', a.dataset.nav === (view === 'kesyon' ? 'kesyon/' + S.cat : view) || (view === 'kesyon' && a.dataset.nav === 'kesyon' && false) ? 'page' : 'false');
-  const V = { tablo: viewDash, kesyon: viewQuestions, kategori: viewCategories, paramet: viewSettings, teks: viewStrings, rapo: viewReports, istorik: viewAudit, kont: viewAccount }[view] || viewDash;
+  const V = { tablo: viewDash, kesyon: viewQuestions, kategori: viewCategories, paramet: viewSettings, teks: viewStrings, rapo: viewReports, demann: viewRequests, istorik: viewAudit, kont: viewAccount }[view] || viewDash;
   window.scrollTo(0, 0);
   V();
 }
@@ -373,6 +380,7 @@ function viewDash() {
       <a class="tile" href="#kesyon" data-goto="draft" style="color:inherit;text-decoration:none"><span class="v">${q.draft}</span><span class="l">make kòm pwoblèm</span></a>
       <div class="tile"><span class="v">${st.players.total}</span><span class="l">jwè · ${st.players.last7d} sou 7 jou</span></div>
       <a class="tile ${st.reports.open ? 'warn' : ''}" href="#rapo" style="color:inherit;text-decoration:none"><span class="v">${st.reports.open}</span><span class="l">rapò pou gade</span></a>
+      <a class="tile ${st.requests?.pending ? 'warn' : ''}" href="#demann" style="color:inherit;text-decoration:none"><span class="v">${st.requests?.pending ?? 0}</span><span class="l">demann laj/klas ap tann</span></a>
     </div>
     <section class="panel"><div class="qhead"><h2>Relekti pa kategori</h2><span class="grow"></span><div class="legend"><span style="--c:var(--green)">Apwouve</span><span style="--c:var(--yellow)">Pou relekti</span><span style="--c:var(--red)">Pwoblèm</span></div></div>
       <div class="catrows">${S.cats.map((c) => { const b = q.byCategory[c.id] || { total: 0, approved: 0, review: 0, draft: 0 }; const w = (n) => b.total ? (100 * n / b.total).toFixed(1) + '%' : '0'; return `<a class="catrow" href="#kesyon/${c.id}" style="color:inherit;text-decoration:none"><span class="ic" data-icon="${esc(c.icon)}" style="width:26px;height:26px"></span><b>${esc(c.name.ht)}</b><div class="stack" aria-label="${b.approved} apwouve, ${b.review} pou relekti, ${b.draft} pwoblèm"><i class="ap" style="width:${w(b.approved)}"></i><i class="rv" style="width:${w(b.review)}"></i><i class="dr" style="width:${w(b.draft)}"></i></div><span class="muted" style="font-variant-numeric:tabular-nums">${b.approved}/${b.total}</span></a>`; }).join('')}</div>
@@ -639,17 +647,22 @@ $('#content').addEventListener('input', (e) => {
 });
 
 // ---------- UI strings ----------
+/** Quick filters by key prefix (same groups in the Android admin). */
+const STR_GROUPS = [['all', 'Tout'], ['rank_', 'Ran'], ['req_', 'Demann'], ['changed', 'Chanje']];
+const groupChip = (k) => k.startsWith('rank_') ? '<span class="chip blue" style="margin-right:6px">Ran</span>' : k.startsWith('req_') ? '<span class="chip" style="margin-right:6px">Demann</span>' : '';
 async function viewStrings() {
-  $('#toolbar').innerHTML = `<h1>Tèks app la</h1><label class="search"><span aria-hidden="true">🔎</span><input id="t-search" type="search" placeholder="Chèche yon tèks…"></label><button class="btn primary" id="t-save" type="button">Sove</button>`;
+  $('#toolbar').innerHTML = `<h1>Tèks app la</h1><label class="search"><span aria-hidden="true">🔎</span><input id="t-search" type="search" placeholder="Chèche yon tèks…"></label><div class="seg" role="group" aria-label="Gwoup">${STR_GROUPS.map(([k, l]) => `<button type="button" data-sg="${k}" aria-pressed="${S.strGroup === k}">${l}</button>`).join('')}</div><button class="btn primary" id="t-save" type="button">Sove</button>`;
   $('#content').innerHTML = '<div class="empty"><b>N ap chaje…</b></div>';
   try { S.strings = await rpc('admin_strings'); } catch (e) { toast(e.message, true); return; }
   S.stringsDirty = JSON.parse(JSON.stringify(S.strings.overrides));
   const render = (q = '') => {
     const ql = q.toLowerCase();
-    const keys = Object.keys(S.strings.defaults).filter((k) => !ql || k.includes(ql) || S.strings.defaults[k].join(' ').toLowerCase().includes(ql) || (S.stringsDirty[k] || []).join(' ').toLowerCase().includes(ql));
-    $('#content').innerHTML = `<section class="panel"><p class="muted" style="margin:0">Chanje nenpòt tèks nan app la. Kite yon kaz vid pou tounen nan tèks orijinal la.</p><div>${keys.map((k) => { const d = S.strings.defaults[k], o = S.stringsDirty[k]; return `<div class="strrow ${o ? 'changed' : ''}" data-k="${k}"><div class="key">${k}</div><div><input class="inp" data-l="0" value="${esc(o?.[0] ?? '')}" placeholder="${esc(d[0])}" aria-label="${k} Kreyòl"><div class="def">${esc(d[0])}</div></div><div><input class="inp" data-l="1" value="${esc(o?.[1] ?? '')}" placeholder="${esc(d[1])}" aria-label="${k} français"><div class="def">${esc(d[1])}</div></div></div>`; }).join('')}</div></section>`;
+    const g = S.strGroup;
+    const keys = Object.keys(S.strings.defaults).filter((k) => (g === 'all' || (g === 'changed' ? !!S.stringsDirty[k] : k.startsWith(g))) && (!ql || k.includes(ql) || S.strings.defaults[k].join(' ').toLowerCase().includes(ql) || (S.stringsDirty[k] || []).join(' ').toLowerCase().includes(ql)));
+    $('#content').innerHTML = `<section class="panel"><p class="muted" style="margin:0">Chanje nenpòt tèks nan app la. Kite yon kaz vid pou tounen nan tèks orijinal la.</p><div>${keys.map((k) => { const d = S.strings.defaults[k], o = S.stringsDirty[k]; return `<div class="strrow ${o ? 'changed' : ''}" data-k="${k}"><div class="key">${groupChip(k)}${k}</div><div><input class="inp" data-l="0" value="${esc(o?.[0] ?? '')}" placeholder="${esc(d[0])}" aria-label="${k} Kreyòl"><div class="def">${esc(d[0])}</div></div><div><input class="inp" data-l="1" value="${esc(o?.[1] ?? '')}" placeholder="${esc(d[1])}" aria-label="${k} français"><div class="def">${esc(d[1])}</div></div></div>`; }).join('')}</div></section>`;
   };
   render();
+  for (const b of document.querySelectorAll('[data-sg]')) b.onclick = () => { S.strGroup = b.dataset.sg; for (const x of document.querySelectorAll('[data-sg]')) x.setAttribute('aria-pressed', String(x === b)); render($('#t-search').value); };
   let t; $('#t-search').oninput = (e) => { clearTimeout(t); t = setTimeout(() => render(e.target.value), 150); };
   $('#t-save').onclick = (e) => busy(e.currentTarget, async () => { try { S.strings.overrides = (await rpc('admin_strings_save', { overrides: S.stringsDirty })).overrides; S.stringsDirty = JSON.parse(JSON.stringify(S.strings.overrides)); savedToast(); loadStats(); render($('#t-search').value); } catch (er) { toast(er.message, true); } });
 }
@@ -660,6 +673,44 @@ $('#content').addEventListener('input', (e) => {
   if (!v[0] && !v[1]) delete S.stringsDirty[k]; else S.stringsDirty[k] = v;
   row.classList.toggle('changed', !!S.stringsDirty[k]);
 });
+
+// ---------- age / class change requests ----------
+const AGE_TXT = { '6-8': '6–8 an', '9-11': '9–11 an', '12-14': '12–14 an' };
+const GRADE_TXT = { af1: '1ye ane AF', af2: '2yèm ane AF', af3: '3yèm ane AF', af4: '4yèm ane AF', af5: '5yèm ane AF', af6: '6yèm ane AF', af7: '7yèm ane AF', af8: '8yèm ane AF', af9: '9yèm ane AF', none: 'Pa lekòl', other: 'Lòt' };
+const REQ_ST = { pending: ['An tann', 'st-review'], approved: ['Aksepte', 'st-approved'], refused: ['Refize', 'st-draft'] };
+async function viewRequests() {
+  const f = S.reqFilter;
+  $('#toolbar').innerHTML = `<h1>Demann</h1><div class="seg" role="group" aria-label="Filtre">${[['pending', 'An tann'], ['all', 'Tout']].map(([k, l]) => `<button type="button" data-rf="${k}" aria-pressed="${f === k}">${l}${k === 'pending' ? '<span class="k" id="rq-n"></span>' : ''}</button>`).join('')}</div><span class="grow" style="flex:1"></span><button class="btn" id="rq-refresh" type="button">Rafrechi</button>`;
+  for (const b of document.querySelectorAll('[data-rf]')) b.onclick = () => { S.reqFilter = b.dataset.rf; viewRequests(); };
+  $('#rq-refresh').onclick = (e) => busy(e.currentTarget, async () => { await loadStats(); await viewRequests(); });
+  $('#content').innerHTML = '<div class="empty"><b>N ap chaje…</b></div>';
+  let res;
+  try { res = await rpc('admin_change_requests_list', { status: f }); } catch (e) { toast(e.message, true); $('#content').innerHTML = ''; return; }
+  if (S.view !== 'demann') return;
+  $('#rq-n').textContent = res.pending;
+  $('#nav-dm').textContent = res.pending || '';
+  const line = (from, to, txt) => `<span>${esc(from == null ? 'pa di' : txt[from] || from)}</span><span class="arrow">→</span><span style="color:var(--blue)">${esc(txt[to] || to)}</span>`;
+  $('#content').innerHTML = `<p class="muted" style="margin:0">Paran yo mande chanje laj oswa klas yon timoun nan Espas Paran. Laj la chwazi kesyon yo ak ki moun timoun nan jwe kont sou entènèt. Lè ou aksepte, telefòn nan chanje poukont li.</p>` + (res.requests.length ? res.requests.map((r) => `
+    <article class="q req" data-status="${r.status === 'approved' ? 'approved' : r.status === 'refused' ? 'draft' : 'review'}" data-id="${esc(r.id)}">
+      <div class="qhead"><span class="chip ${REQ_ST[r.status][1]}">${REQ_ST[r.status][0]}</span><span class="who">${esc(r.username)}</span><span class="grow"></span><span class="muted" style="font-size:13px">${new Date(r.createdAt).toLocaleString('fr-HT')}</span></div>
+      ${r.requested.age ? `<div class="chg"><span class="lbl">Laj</span>${line(r.current.age, r.requested.age, AGE_TXT)}</div>` : ''}
+      ${r.requested.grade ? `<div class="chg"><span class="lbl">Klas</span>${line(r.current.grade, r.requested.grade, GRADE_TXT)}</div>` : ''}
+      ${r.reason ? `<div class="ex">“${esc(r.reason)}”</div>` : '<div class="muted" style="font-size:14px">Pa gen rezon.</div>'}
+      ${r.status === 'pending'
+        ? '<div class="actions"><input class="inp note-in" data-note maxlength="140" placeholder="Nòt pou paran an (si ou vle)" aria-label="Nòt pou paran an"><div class="right"><button class="btn bad" type="button" data-act="0">Refize</button><button class="btn good" type="button" data-act="1">Aksepte</button></div></div>'
+        : `<div class="muted" style="font-size:13px">${REQ_ST[r.status][0]} pa ${esc(r.resolvedBy || '–')}${r.resolvedAt ? ' · ' + new Date(r.resolvedAt).toLocaleString('fr-HT') : ''}${r.note ? ' · Nòt: ' + esc(r.note) : ''}</div>`}
+      <div class="mono muted">Aparèy ${esc(r.userId).slice(0, 8)}</div>
+    </article>`).join('') : `<div class="empty"><b>${f === 'pending' ? 'Pa gen demann k ap tann' : 'Pa gen demann ankò'}</b>Lè yon paran mande chanje laj oswa klas yon timoun, li parèt isit la.</div>`);
+  $('#content').onclick = async (e) => {
+    const b = e.target.closest('[data-act]'); if (!b || S.view !== 'demann') return;
+    const card = b.closest('[data-id]'); const approve = b.dataset.act === '1';
+    try {
+      await busy(b, () => rpc('admin_change_request_resolve', { id: card.dataset.id, approve, note: card.querySelector('[data-note]').value.trim() }));
+      toast(approve ? 'Demann lan aksepte ✓ · Telefòn nan ap chanje poukont li' : 'Demann lan refize');
+      await loadStats(); viewRequests();
+    } catch (er) { toast(er.message, true); }
+  };
+}
 
 // ---------- reports + audit ----------
 async function viewReports() {
@@ -674,7 +725,7 @@ async function viewAudit() {
   $('#toolbar').innerHTML = `<h1>Istorik</h1>`;
   let entries = [];
   try { entries = (await rpc('admin_audit')).entries; } catch (e) { toast(e.message, true); }
-  const L = { save: 'Sove', delete: 'Efase', import: 'Enpòte', publish: 'Pibliye', categories: 'Kategori', config: 'Paramèt', strings: 'Tèks', 'resolve-report': 'Rapò regle', 'status:approved': 'Apwouve', 'status:draft': 'Pwoblèm', 'status:review': 'Pou relekti' };
+  const L = { save: 'Sove', delete: 'Efase', import: 'Enpòte', publish: 'Pibliye', categories: 'Kategori', config: 'Paramèt', strings: 'Tèks', 'resolve-report': 'Rapò regle', 'request:approve': 'Demann aksepte', 'request:refuse': 'Demann refize', password: 'Modpas chanje', 'status:approved': 'Apwouve', 'status:draft': 'Pwoblèm', 'status:review': 'Pou relekti' };
   $('#content').innerHTML = entries.length ? `<section class="panel scroll"><table class="tbl"><thead><tr><th>Lè</th><th>Ki moun</th><th>Aksyon</th><th>Sou</th></tr></thead><tbody>${entries.map((e) => `<tr><td>${new Date(e.at).toLocaleString('fr-HT')}</td><td>${esc(e.by)}</td><td>${esc(L[e.action] || e.action)}</td><td class="mono">${esc(e.target)}</td></tr>`).join('')}</tbody></table></section>` : `<div class="empty"><b>Pa gen anyen ankò</b></div>`;
 }
 async function viewAccount() {

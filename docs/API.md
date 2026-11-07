@@ -72,7 +72,7 @@ interface Manifest {
 | id | body | result |
 |---|---|---|
 | `admin_me` | – | `{ email, userId, admins: string[] }` |
-| `admin_stats` | – | `{ questions: {total, review, approved, draft, byCategory: Record<cat,{total,review,approved,draft}>}, players: {total, last7d}, reports: {open}, published: {version, publishedAt}, draftChanges: number }` |
+| `admin_stats` | – | `{ questions: {total, review, approved, draft, byCategory: Record<cat,{total,review,approved,draft}>}, players: {total, last7d}, reports: {open}, requests: {pending}, published: {version, publishedAt}, draftChanges: number }` |
 | `admin_questions` | `{category}` | `{ questions: AdminQuestion[] }` (all statuses) |
 | `admin_question_save` | `{question: AdminQuestion}` | `{ question }` (validated; new id allowed) |
 | `admin_question_delete` | `{id}` | `{ ok: true }` |
@@ -90,5 +90,38 @@ interface Manifest {
 | `admin_report_resolve` | `{index}` | `{ ok: true }` |
 | `admin_change_password` | `{current, next}` | `{ ok: true }` (next ≥ 8 chars; 403 if current is wrong) |
 | `admin_audit` | – | `{ entries: {at, by, action, target}[] }` (last 200) |
+| `admin_change_requests_list` | `{status?: 'pending'\|'approved'\|'refused'\|'all'}` | `{ requests: ChangeRequest[], pending: number }` (newest first, max 200; no/unknown status = all) |
+| `admin_change_request_resolve` | `{id, approve: boolean, note?}` | `{ request: ChangeRequest }` (400 if already resolved; writes an audit entry `request:approve` / `request:refuse`) |
 
 Edits are live in the admin immediately but reach kids' phones only after **Publish** (`admin_publish`). The app checks the manifest on start and when coming back online.
+
+## Age / class change requests
+
+The kid's age band decides which questions they get and who they meet in online duels, so it never changes freely:
+a parent asks in the app (Paramèt → Espas Paran, behind the parent question), an admin approves or refuses ("Demann" in both admin panels), and the phone applies an approved change by itself (it checks on start, when coming back to the app and when Paramèt opens).
+
+```ts
+type Grade = 'af1'|'af2'|'af3'|'af4'|'af5'|'af6'|'af7'|'af8'|'af9'|'none'|'other'; // 1ye–9yèm ane fondamantal, pa lekòl, lòt
+interface ChangeRequest {
+  id: string;                 // uuid
+  userId: string;             // the phone's anonymous device account (admin only)
+  username: string;           // kid's game name (admin only)
+  current: { age: Age | null; grade: Grade | null };
+  requested: { age?: Age; grade?: Grade };   // only what changes
+  reason: string;             // ≤ 140 chars, one line
+  status: 'pending' | 'approved' | 'refused';
+  createdAt: string; resolvedAt?: string;
+  resolvedBy?: string;        // admin email (admin only)
+  note?: string;              // admin's note for the parent, ≤ 140 chars
+}
+```
+
+Kid RPCs use the phone's device session (`POST /v2/account/authenticate/device?create=true` with the server key, then `Bearer`):
+
+| id | body | result |
+|---|---|---|
+| `change_request_submit` | `{age?, grade?, reason?, current: {age, grade}, name?}` | `{ request }` (kid view: no `userId`, `username`, `resolvedBy`) |
+| `change_request_status` | – | `{ request \| null }` (this phone's latest request) |
+
+Errors from `change_request_submit`: 400 `bad age band` / `bad grade` / `nothing_to_change`; 409 `pending_exists` (one pending request per phone); 429 `rate_limited` (3 requests per phone per 24 h).
+On approval the server also updates the kid's `settings/kid` storage object (`age`, `grade`; the age `online_set` stores for duel matching). Requests are stored as `change_req/<id>` objects of the system user.

@@ -8,6 +8,7 @@ import { colors } from '@/theme';
 const ITEMS: { href: string; icon: string; title: string; sub: string }[] = [
   { href: '/texts', icon: 'lang', title: 'Tèks app la', sub: 'Chanje nenpòt tèks nan app timoun yo (Kreyòl ak Fransè)' },
   { href: '/reports', icon: 'siyale', title: 'Rapò', sub: 'Timoun ki rapòte yon lòt jwè' },
+  { href: '/requests', icon: 'fanmi', title: 'Demann', sub: 'Paran ki mande chanje laj oswa klas yon timoun' },
   { href: '/history', icon: 'kalandriye', title: 'Istorik', sub: 'Tout chanjman administratè yo fè' },
   { href: '/account', icon: 'femen_kle', title: 'Kont mwen', sub: 'Chanje modpas, sèvè, dekonekte' },
 ];

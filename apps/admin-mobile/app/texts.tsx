@@ -4,7 +4,7 @@ import { api, errText } from '@/api';
 import { useLoad } from '@/lib';
 import { useSession } from '@/session';
 import { publishNow } from '@/lib';
-import { Screen, Header, T, Row, Button, Loading, ErrorBox, Card, Icon, Toggle, haptic } from '@/ui';
+import { Screen, Header, T, Row, Button, Loading, ErrorBox, Card, Icon, Toggle, Chip, haptic } from '@/ui';
 import { colors, fonts } from '@/theme';
 
 type Pair = [string, string];
@@ -17,7 +17,7 @@ export default function Texts() {
   const load = useLoad(() => api.strings());
   const [draft, setDraft] = useState<Record<string, Pair>>({});
   const [query, setQuery] = useState('');
-  const [onlyChanged, setOnlyChanged] = useState(false);
+  const [group, setGroup] = useState<'all' | 'rank_' | 'req_' | 'changed'>('all');
   const [saving, setSaving] = useState(false);
   useEffect(() => { if (load.data) setDraft(JSON.parse(JSON.stringify(load.data.overrides))); }, [load.data]);
   const dirty = !!load.data && JSON.stringify(draft) !== JSON.stringify(load.data.overrides);
@@ -25,9 +25,9 @@ export default function Texts() {
   const keys = useMemo(() => {
     if (!load.data) return [];
     const q = query.trim().toLowerCase();
-    return Object.keys(load.data.defaults).filter((k) => (!onlyChanged || draft[k])
+    return Object.keys(load.data.defaults).filter((k) => (group === 'all' || (group === 'changed' ? !!draft[k] : k.startsWith(group)))
       && (!q || k.includes(q) || load.data!.defaults[k].join(' ').toLowerCase().includes(q) || (draft[k] ?? []).join(' ').toLowerCase().includes(q)));
-  }, [load.data, query, draft, onlyChanged]);
+  }, [load.data, query, draft, group]);
 
   const setPart = (k: string, i: 0 | 1, v: string) => setDraft((d) => {
     const cur: Pair = d[k] ? [...d[k]] as Pair : ['', ''];
@@ -54,12 +54,13 @@ export default function Texts() {
             <Icon name="chache" size={20} />
             <TextInput value={query} onChangeText={setQuery} placeholder="Chèche yon tèks…" placeholderTextColor={colors.muted} style={{ flex: 1, minHeight: 42, fontFamily: fonts.bodyRegular, fontSize: 15, color: colors.ink }} autoCorrect={false} />
           </Row>
-          <Row gap={6}><Toggle text="Tout" on={!onlyChanged} onPress={() => setOnlyChanged(false)} /><Toggle text={`Chanje (${Object.keys(draft).length})`} on={onlyChanged} onPress={() => setOnlyChanged(true)} /></Row>
+          {/* Same groups as the web admin: rank names (rank_*), change-request texts (req_*) */}
+          <Row gap={6} wrap><Toggle text="Tout" on={group === 'all'} onPress={() => setGroup('all')} /><Toggle text="Ran" on={group === 'rank_'} onPress={() => setGroup('rank_')} /><Toggle text="Demann" on={group === 'req_'} onPress={() => setGroup('req_')} /><Toggle text={`Chanje (${Object.keys(draft).length})`} on={group === 'changed'} onPress={() => setGroup('changed')} /></Row>
           {keys.slice(0, 80).map((k) => {
             const d = load.data!.defaults[k]; const o = draft[k];
             return (
               <Card key={k} edge={o ? colors.blue : undefined} style={{ gap: 8 }}>
-                <T v="mono" color={o ? colors.blue : colors.muted}>{k}</T>
+                <Row gap={6}>{k.startsWith('rank_') ? <Chip text="Ran" fg="#FFFFFF" bg={colors.blue} /> : k.startsWith('req_') ? <Chip text="Demann" fg={colors.muted} bg={colors.bg} /> : null}<T v="mono" color={o ? colors.blue : colors.muted} style={{ flexShrink: 1 }}>{k}</T></Row>
                 <View style={{ gap: 4 }}>
                   <TextInput value={o?.[0] ?? ''} onChangeText={(v) => setPart(k, 0, v)} placeholder={d[0]} placeholderTextColor={colors.muted} style={input} accessibilityLabel={`${k} Kreyòl`} />
                   <T v="small" color={colors.muted}>Kreyòl: {d[0]}</T>

@@ -126,6 +126,19 @@ export default function Dashboard() {
             <StatTile value={s.reports.open} label="Rapò ouvè" color={s.reports.open ? colors.redInk : colors.muted} bg={s.reports.open ? colors.redSoft : colors.card} delay={300} onPress={() => router.push('/reports')} />
           </Row>
 
+          {/* Age / class change requests from parents */}
+          <Card edge={s.requests?.pending ? colors.yellow : colors.line} onPress={() => router.push('/requests' as never)}>
+            <Row>
+              <Icon name="fanmi" size={30} />
+              <View style={{ flex: 1 }}>
+                <T v="h3">Demann laj / klas</T>
+                <T v="small" color={colors.muted}>{s.requests?.pending ? 'Paran ki ap tann repons ou' : 'Pa gen demann k ap tann'}</T>
+              </View>
+              {s.requests?.pending ? <View style={{ minWidth: 30, height: 30, borderRadius: 15, paddingHorizontal: 8, backgroundColor: colors.red, alignItems: 'center', justifyContent: 'center' }}><T v="bold" color="#FFFFFF">{s.requests.pending}</T></View> : null}
+              <T v="h2" color={colors.blue}>›</T>
+            </Row>
+          </Card>
+
           {/* Per-category progress */}
           <T v="label" color={colors.muted}>Relekti pa kategori</T>
           <Card style={{ gap: 12 }}>

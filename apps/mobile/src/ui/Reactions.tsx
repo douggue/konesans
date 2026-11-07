@@ -196,7 +196,7 @@ export const BUBBLE_MS = 2300;
  * `side` anchors it (and its little pointer) to the left (you) or right (the opponent) avatar; `who` names the sender.
  * Mount it with a new `key` per reaction; it calls `onDone` when finished. Sized to its text — never truncated.
  */
-export function ReactionBubble({ id, side, who, anchor = 37, onDone }: { id: ReactionId; side: 'me' | 'op'; who: string; /** px from the card edge to the avatar centre */ anchor?: number; onDone?: () => void }) {
+export function ReactionBubble({ id, side, who, anchor = 37, maxWidth = '74%', onDone }: { id: ReactionId; side: 'me' | 'op'; who: string; maxWidth?: `${number}%`; /** px from the card edge to the avatar centre */ anchor?: number; onDone?: () => void }) {
   const t = useT();
   const v = useRef(new Animated.Value(0)).current;
   const [bw, setBw] = useState(0);
@@ -215,16 +215,17 @@ export function ReactionBubble({ id, side, who, anchor = 37, onDone }: { id: Rea
   const hop = reduce ? 0 : v.interpolate({ inputRange: [0, 0.12, 0.2, 0.3, 0.55, 0.62, 0.7, 1], outputRange: [0, 0, -8, 0, 0, -4, 0, 0] });
   return (
     <Animated.View testID={`bubble-${side}`} pointerEvents="none" onLayout={(e: LayoutChangeEvent) => setBw(e.nativeEvent.layout.width)}
-      style={{ maxWidth: '64%', alignSelf: left ? 'flex-start' : 'flex-end', opacity, transform: [{ translateY: ty }, { scale }],
+      style={{ maxWidth, alignSelf: left ? 'flex-start' : 'flex-end', opacity, transform: [{ translateY: ty }, { scale }],
         // grow out of the pointer (the avatar), not the middle
         transformOrigin: `${left ? anchor : Math.max(0, bw - anchor)}px 0px` }}>
       <View style={{ backgroundColor: soft, borderColor: edge, borderWidth: 3, borderBottomWidth: 5, borderRadius: 22,
         shadowColor: '#14213D', shadowOpacity: 0.18, shadowRadius: 10, shadowOffset: { width: 0, height: 6 }, elevation: 6, paddingHorizontal: 14, paddingTop: 6, paddingBottom: 8, alignItems: 'center', minWidth: 96 }}>
         <View>
-          <Burst trigger={reduce ? null : id} count={9} radius={46} shapes="stars" />
+          {/* star burst, lifted so it sprays round the sticker rather than over the label */}
+          <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: -20, bottom: 20 }}><Burst trigger={reduce ? null : id} count={9} radius={46} shapes="stars" /></View>
           <Animated.View style={{ transform: [{ translateY: hop }, { rotate: wiggle }] }}><Sticker id={id} size={58} /></Animated.View>
         </View>
-        <T v="h3" center color={colors.ink} style={{ marginTop: 2 }}>{t(reactionLabelKey(id))}</T>
+        <T v="h3" center color={colors.ink} style={{ marginTop: 2, zIndex: 1 }}>{t(reactionLabelKey(id))}</T>
         <T v="small" center color={colors.muted} style={{ fontSize: 11, lineHeight: 14 }}>{who}</T>
       </View>
       {/* pointer up to the avatar (drawn over the bubble's top border so they join) */}

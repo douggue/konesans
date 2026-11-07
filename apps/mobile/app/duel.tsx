@@ -87,14 +87,15 @@ function DuelGame({ vm, onPick, onReact, onQuit }: { vm: GameVM; onPick: (i: num
         <Bounce trigger={op.score || null} amount={0.12}><Avatar a={op.avatar} size={42} /></Bounce>
       </Card>
         {/* reaction bubbles, hanging under each player's avatar (over the timer / question for ~2 s) */}
-        <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: '100%', marginTop: 4, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-          <View style={{ flex: 1, alignItems: 'flex-start' }}>
-            {bubbles.me && <ReactionBubble key={bubbles.me.k} id={bubbles.me.id} side="me" who={t('you')} onDone={() => setBubbles((b) => ({ ...b, me: undefined }))} />}
-          </View>
-          <View style={{ flex: 1, alignItems: 'flex-end' }}>
-            {bubbles.op && <ReactionBubble key={bubbles.op.k} id={bubbles.op.id} side="op" who={op.name} onDone={() => setBubbles((b) => ({ ...b, op: undefined }))} />}
-          </View>
-        </View>
+        {(['me', 'op'] as const).map((side) => {
+          const b = bubbles[side];
+          return b ? (
+            <View key={side} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: '100%', marginTop: 4, alignItems: side === 'me' ? 'flex-start' : 'flex-end' }}>
+              <ReactionBubble key={b.k} id={b.id} side={side} who={side === 'me' ? t('you') : op.name} maxWidth={bubbles.me && bubbles.op ? '49%' : '74%'}
+                onDone={() => setBubbles((x) => ({ ...x, [side]: undefined }))} />
+            </View>
+          ) : null;
+        })}
       </FadeIn>
       <Row>
         <Progress style={{ flex: 1 }} linear value={reveal || waiting ? (waiting ? 1 : 0) : (vm.left ?? 0) / vm.questionMs} color={(vm.left ?? vm.questionMs) < 4000 ? colors.red : colors.yellowDark} />
