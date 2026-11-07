@@ -6,3 +6,4 @@ build/
 *.tar.gz
 .DS_Store
 server/nakama/build/
+server/test/node_modules
