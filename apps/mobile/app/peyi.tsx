@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { router } from 'expo-router';
 import { REGIONS, REGION_LABEL, countryPool, type CountryMode, type CountryLevel, type WorldRegion } from '@konesans/core';
 import { Screen, T, Button, TopBar, Icon, Row, PressScale } from '@/ui';
-import { LevelPicker, type Level3 } from '@/ui/LevelPicker';
+import { usePrefs } from '@/lib/prefs';
 import { colors, radius } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT } from '@/lib/i18n';
@@ -22,6 +22,7 @@ const LEVELS: { id: CountryLevel; key: 'peyi_lv1' | 'peyi_lv2' | 'peyi_lv3'; sub
 export default function Peyi() {
   const t = useT();
   const { profile, peyi, setPeyi } = useStore();
+  const level = usePrefs((s) => s.difficulty) as CountryLevel;
   const lang = profile.lang;
   const pool = countryPool(peyi).length;
   const seg = (on: boolean, color = colors.blue) => ({ borderRadius: radius.md, backgroundColor: on ? color : colors.card, borderWidth: 2, borderColor: on ? color : colors.line, borderBottomWidth: on ? 2 : 5, alignItems: 'center' as const, justifyContent: 'center' as const });
@@ -43,9 +44,8 @@ export default function Peyi() {
         })}
       </Row>
 
-      <T v="label" color={colors.muted}>{t('level_caps')}</T>
-      <LevelPicker value={peyi.level as Level3} onChange={(l) => setPeyi({ level: l as CountryLevel })} labels={[t('peyi_lv1'), t('peyi_lv2'), t('peyi_lv3')]} />
-      <T v="small" color={colors.muted}>{t(LEVELS.find((l) => l.id === peyi.level)!.sub)}</T>
+      {/* level = the difficulty chosen on Defi (one setting for everything) */}
+      <T v="small" color={colors.muted}>{t('level_caps')}: {'★'.repeat(level)} · {t(LEVELS.find((l) => l.id === level)!.sub)}</T>
 
       <T v="label" color={colors.muted}>{t('region_caps')}</T>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -61,7 +61,7 @@ export default function Peyi() {
       </View>
 
       <T v="small" center color={colors.muted}>{t('peyi_pool', { n: pool })}</T>
-      <Button title={t('play_now')} color={colors.yellowDark} onPress={() => router.push(`/quiz/peyi?mode=${peyi.mode}&level=${peyi.level}&region=${encodeURIComponent(peyi.region)}`)} />
+      <Button title={t('play_now')} color={colors.yellowDark} onPress={() => router.push(`/quiz/peyi?mode=${peyi.mode}&level=${level}&region=${encodeURIComponent(peyi.region)}`)} />
     </Screen>
   );
 }
