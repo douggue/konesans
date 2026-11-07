@@ -100,12 +100,11 @@ export default function Home() {
           { icon: 'robo', bg: colors.purpleSoft, label: t('coding'), href: '/coding', on: features.coding },
           { icon: 'vwayaj', bg: colors.greenSoft, label: t('vw_title'), href: '/vwayaj', on: true },
           { icon: 'kalkil', bg: colors.greenSoft, label: t('math_title'), href: '/math', on: features.math },
-          { icon: 'drapo', bg: colors.orangeSoft, label: categoryInfo('peyi')[profile.lang], href: '/peyi', on: features.peyi },
         ].filter((x) => x.on).map((x, i) => (
           <FadeIn key={x.href} delay={340 + i * 50} style={{ width: '31%' }}>
             <Card onPress={() => router.push(x.href as never)} soft={x.bg} edge={x.bg} style={{ alignItems: 'center', gap: 6, paddingVertical: 14, paddingHorizontal: 6 }}>
               <IconTile name={x.icon as never} bg="#FFFFFF" size={48} />
-              <T v="small" center>{x.label}</T>
+              <T v="small" center numberOfLines={1} adjustsFontSizeToFit>{x.label}</T>
             </Card>
           </FadeIn>
         ))}
