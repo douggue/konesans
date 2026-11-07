@@ -10,6 +10,7 @@ import { REQ_STRINGS } from './strings/requests';
 import { ACCOUNT_STRINGS } from './strings/account';
 import { ECON_STRINGS } from './strings/fix-economy';
 import { FIX_UX_STRINGS } from './strings/fix-ux';
+import { DAILY_STRINGS } from './strings/daily';
 
 const S = {
   ...VWAYAJ_STRINGS,
@@ -21,6 +22,7 @@ const S = {
   ...ACCOUNT_STRINGS,
   ...ECON_STRINGS,
   ...FIX_UX_STRINGS,
+  ...DAILY_STRINGS,
   // nav
   home: ['Lakay', 'Accueil'], challenge: ['Defi', 'Défis'], course: ['Kou', 'Cours'], coding: ['Enfòmatik', 'Coder'], me: ['Mwen', 'Moi'],
   // onboarding

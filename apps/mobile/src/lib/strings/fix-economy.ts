@@ -22,9 +22,14 @@ export const ECON_STRINGS = {
   ec_buy_later: ['Pa kounye a', 'Pas maintenant'],
   ec_owned: ['Pa w', 'À toi'],
   ec_price_a11y: ['{n} kòb', '{n} pièces'],
-  ec_ex_bowtie: ['Ne papiyon', 'Nœud papillon'],
-  ec_ex_catears: ['Zòrèy chat', 'Oreilles de chat'],
-  ec_ex_headwrap: ['Mouchwa tèt', 'Foulard madras'],
+  // shop item names (same key pattern as the rank unlocks: pf_<kind>_<value>)
+  pf_ex_bowtie: ['Ne papiyon', 'Nœud papillon'],
+  pf_ex_catears: ['Zòrèy chat', 'Oreilles de chat'],
+  pf_ex_headwrap: ['Mouchwa tèt madras', 'Foulard madras'],
+  pf_hc_8: ['Cheve vèt mant', 'Cheveux menthe'], pf_hc_9: ['Cheve zoranj', 'Cheveux orange'],
+  pf_shirt_9: ['Chemiz madras', 'Chemise madras'], pf_shirt_10: ['Mayo kanaval', 'Maillot carnaval'], pf_shirt_11: ['Mayo foutbòl', 'Maillot de foot'],
+  pf_bg_9: ['Bò lanmè', 'Plage'], pf_bg_10: ['Dèyè mòn', 'Montagnes'], pf_bg_11: ['Fon kanaval', 'Fond carnaval'],
+  pf_frame_5: ['Wonn lakansyèl', 'Cadre arc-en-ciel'], pf_frame_6: ['Wonn flè choublak', 'Cadre hibiscus'],
 
   // avatar editor: leaving with changes
   ec_av_leave_title: ['Sove chanjman yo?', 'Enregistrer les changements ?'],

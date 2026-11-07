@@ -3,12 +3,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Animated, Easing } from 'react-native';
 import Svg, { Path, Rect, Defs, LinearGradient, Stop, Polyline } from 'react-native-svg';
 import { router } from 'expo-router';
-import { chestReady, canOpenChest, weekProgress, emptyMissionLog, msToLocalMidnight, CHEST_BONUS_XP, CHEST_BONUS_COINS, type QuestState, type QuestKind } from '@konesans/core';
+import { chestReady, canOpenChest, weekProgress, weekdayIndex, emptyMissionLog, msToLocalMidnight, CHEST_BONUS_XP, CHEST_BONUS_COINS, type QuestState, type QuestKind } from '@konesans/core';
 import { Screen, T, Row, TopBar, Icon, Progress, CountPill, PressScale, FadeIn, Pop, Bounce, Burst, Confetti, reduceMotion } from '@/ui';
 import { RankUpListener } from '@/ui/RankUp';
 import { colors } from '@/lib/theme';
 import { useStore, todayLocal, KID_TZ, useWeeklyLegendEarned } from '@/lib/store';
 import { CardReveal } from '@/ui/CardReveal';
+import { useCards } from '@/lib/cards';
 import { useT, type StrKey } from '@/lib/i18n';
 import { useDailyCount } from '@/lib/remote';
 import { sfx, tap } from '@/lib/audio';
@@ -22,6 +23,7 @@ const QUEST_META: Record<QuestKind, { title: StrKey; color: string; href: (daily
   answer_correct: { title: 'q_k_answer_correct', color: '#0E7C86', href: (n) => `/quiz/mix?count=${n}` },
   play_category: { title: 'q_k_play_category', color: '#7048E8', href: () => '/categories' },
   review_mistakes: { title: 'q_k_review_mistakes', color: '#C99400', href: () => '/categories' },
+  coding_level: { title: 'ec_q_coding', color: '#12632F', href: () => '/coding' },
 };
 
 /** "Nouvo misyon nan 6 è 12 min", ticking; rolls the quests over at local midnight. */
@@ -131,6 +133,8 @@ export default function Quests() {
   const all = chestReady(progress) && progress.questsDay === day;
   const opened = missions.chestDay === day;
   const [justOpened, setJustOpened] = useState(false);
+  /** the chest's hero card (draw key), revealed after the chest animation */
+  const [chestCard, setChestCard] = useState<string | null>(null);
   const week = weekProgress(missions, day);
   const days = t('q_days').split(' ');
   // 7/7 week → a guaranteed Lejand hero card (once per week)
@@ -143,13 +147,17 @@ export default function Quests() {
     const r = useStore.getState().openChest();
     if (!r) return;
     tap('success'); sfx('badge');
+    // one hero card per opened chest: given now (never lost), revealed when the XP and coins have floated up
+    const key = 'chest-' + day;
+    useCards.getState().earn(key, 'chest');
+    setChestCard(key);
     setJustOpened(true);
     setTimeout(() => sfx('coin'), 450);
     setTimeout(() => sfx('coin'), 800);
   }
 
-  const title = opened ? t('q_chest_got', { xp: CHEST_BONUS_XP, c: CHEST_BONUS_COINS }) : all ? t('q_chest_ready') : t('q_chest_progress', { n: doneN });
-  const sub = opened ? t('q_chest_tomorrow') : all ? t('q_chest_tap') : t('q_chest_hint');
+  const title = opened ? t('ec_chest_got', { xp: CHEST_BONUS_XP, c: CHEST_BONUS_COINS }) : all ? t('q_chest_ready') : t('q_chest_progress', { n: doneN });
+  const sub = opened ? t('q_chest_tomorrow') : all ? t('q_chest_tap') : t('ec_chest_hint');
 
   return (
     <View style={{ flex: 1 }}>
@@ -212,16 +220,17 @@ export default function Quests() {
                   <View style={{ width: '100%', height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: d.full ? colors.greenLight : d.today ? colors.yellowSoft : d.future ? colors.bg : colors.line, borderWidth: 2, borderColor: d.full ? DONE : d.today ? colors.yellowDark : 'transparent' }}>
                     {d.full ? <Pop delay={420 + i * 50}><Svg width={16} height={16} viewBox="0 0 24 24"><Polyline points="20 6 9 17 4 12" fill="none" stroke="#FFFFFF" strokeWidth={4} strokeLinecap="round" strokeLinejoin="round" /></Svg></Pop> : null}
                   </View>
-                  <T v="small" color={d.today ? colors.ink : colors.muted}>{days[i]}</T>
+                  <T v="small" color={d.today ? colors.ink : colors.muted}>{days[weekdayIndex(d.day)]}</T>
                 </View>
               ))}
             </Row>
           </View>
         </FadeIn>
-        {legend && <CardReveal kind="legend" drawKey={legend} delay={1600} onClose={() => setLegend(null)} />}
+        {legend && !chestCard && <CardReveal kind="legend" drawKey={legend} delay={1600} onClose={() => setLegend(null)} />}
+        {chestCard && <CardReveal kind="chest" drawKey={chestCard} delay={1500} onClose={() => setChestCard(null)} />}
       </Screen>
       {justOpened && <Confetti count={22} />}
-      <RankUpListener delayMs={1600} />
+      {!chestCard && !legend && <RankUpListener delayMs={1600} />}
     </View>
   );
 }

@@ -10,7 +10,7 @@ import { router } from 'expo-router';
 import { cardById, type CardRarity, type HeroCard } from '@konesans/core';
 import { colors, fonts } from '@/lib/theme';
 import { useT, useL, type StrKey } from '@/lib/i18n';
-import { useCards, type CardWin } from '@/lib/cards';
+import { useCards, type CardWin, type CardSource } from '@/lib/cards';
 import { sfx, tap } from '@/lib/audio';
 import { T, Button, Mascot, Motif, Burst, Pop, FadeIn, Bounce, Pill, reduceMotion, springy, type MascotMood } from '@/ui';
 
@@ -205,11 +205,12 @@ function Pack({ w = 170 }: { w?: number }) {
 // ─── Reveal sequence ─────────────────────────────────────────────────────────
 type Phase = 'hidden' | 'pack' | 'opening' | 'shown';
 /**
- * Shown over a defi's end screen. Gives the card as soon as it mounts (idempotent per `drawKey`, so a re-render
- * never gives two), then after `delay` opens: pack shakes (tap or wait to open) → burst → card flies in and flips.
- * `kind="legend"` is for the weekly-mission reward (an unowned Lejand card if any is left).
+ * The card reveal for a milestone: the daily chest (`kind="chest"`), a rank-up (`"rank"`) or the weekly 7/7 reward
+ * (`"legend"`: an unowned Lejand card if any is left). Gives the card as soon as it mounts (idempotent per `drawKey`,
+ * so a re-render never gives two — callers may also give it first), then after `delay` opens: pack shakes (tap or
+ * wait to open) → burst → card flies in and flips. `note`: a line under the title saying why ("Kado pou nouvo ran ou!").
  */
-export function CardReveal({ drawKey, delay = 2000, kind = 'defi', onClose }: { drawKey?: string; delay?: number; kind?: 'defi' | 'legend'; onClose?: () => void }) {
+export function CardReveal({ drawKey, delay = 2000, kind = 'chest', note, onClose }: { drawKey?: string; delay?: number; kind?: CardSource; note?: StrKey; onClose?: () => void }) {
   const t = useT(); const l = useL();
   const [key] = useState(() => drawKey ?? `${kind}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`);
   const [win] = useState<CardWin>(() => useCards.getState().earn(key, kind));
@@ -278,6 +279,7 @@ export function CardReveal({ drawKey, delay = 2000, kind = 'defi', onClose }: { 
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 14 }}>
         <Pop><Mascot size={96} mood={mood} /></Pop>
         <T v="h1" center color="#FFFFFF">{phase === 'shown' ? (win.isNew ? t('kt_bravo', { name: card.short }) : t('kt_duplicate', { name: card.short, n: win.coins })) : t('kt_won_title')}</T>
+        {note && phase !== 'shown' ? <T v="bold" center color="#FFF4D1">{t(note)}</T> : null}
         <View style={{ width: 230, height: 300, alignItems: 'center', justifyContent: 'center' }}>
           {phase === 'pack' || phase === 'opening' ? (
             <Animated.View style={{ position: 'absolute', opacity: packOut.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }), transform: [{ scale: packOut.interpolate({ inputRange: [0, 1], outputRange: [1, 1.35] }) }] }}>

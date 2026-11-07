@@ -1,14 +1,19 @@
 /**
  * Ranks UI: the rank badge (shield in the rank's colour), unlock previews, and the full-screen "new rank" moment.
- * `RankUpListener` is mounted by the main screens (home, profile, quests): when the kid's XP crosses into a new rank
- * and that screen is focused, the celebration shows once (the store remembers the highest rank celebrated).
+ * `RankUpListener` is the celebration host, mounted by the main screens (home, profile, quests, trophies, ranks) and by
+ * the result screens (quiz, duel, Kalkil Mantal, coding) so a moment shows right where it was earned, once:
+ *   1. a new rank (the store remembers the highest rank celebrated) → 2. its hero card (one per rank reached)
+ *   → 3. each trophy just won (store.badgeQueue).
+ * Only the focused screen shows it.
  */
 import React, { useEffect, useRef } from 'react';
 import { View, Modal, Animated, Easing } from 'react-native';
 import Svg, { Path, Circle, Ellipse, G, Rect, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { router, useIsFocused } from 'expo-router';
-import { RANKS, rankForXp, rankUnlocks, type RankDef, type UnlockDef, type AvatarConfig } from '@konesans/core';
-import { T, Button, Icon } from './index';
+import { RANKS, BADGES, rankForXp, rankUnlocks, type RankDef, type UnlockDef, type AvatarConfig } from '@konesans/core';
+import { T, Button, Icon, Pill } from './index';
+import { CardReveal } from './CardReveal';
+import { useCards } from '@/lib/cards';
 import { Avatar } from './avatar';
 import { Mascot, MascotArt } from './mascot';
 import { Pop, Burst, Confetti, Hop, FadeIn, reduceMotion } from './motion';
@@ -106,7 +111,7 @@ export function UnlockChip({ u, size = 54, dim, light }: { u: UnlockDef; size?: 
 }
 
 /** Full-screen "new rank" moment. */
-export function RankUp({ open, to, onClose }: { open: boolean; from: number; to: number; onClose: () => void }) {
+export function RankUp({ open, to, onClose }: { open: boolean; from: number; to: number; /** `go`: a screen to open once the moment (and its card) is over */ onClose: (go?: string) => void }) {
   const t = useT(); const rn = useRankName();
   const rank = RANKS[Math.max(0, Math.min(RANKS.length - 1, to))];
   const unlocks = rankUnlocks(to);
@@ -139,6 +144,7 @@ export function RankUp({ open, to, onClose }: { open: boolean; from: number; to:
         </View>
         <Pop delay={380}><T v="display" color="#FFFFFF" center style={{ fontSize: 34, lineHeight: 40 }}>{t('pf_ru_title', { r: rn(rank) })}</T></Pop>
         <FadeIn delay={480}><T v="bold" color="#FFFFFF" center style={{ opacity: 0.9 }}>{t('pf_rank_level', { n: rank.level })}</T></FadeIn>
+        <Pop delay={560}><Pill text={t('ec_rank_card')} icon="ewo" color={INK} bg={colors.yellowSoft} /></Pop>
         {unlocks.length > 0 && (
           <FadeIn delay={620} style={{ alignSelf: 'stretch' }}>
             <View style={{ backgroundColor: colors.card, borderRadius: 22, borderWidth: 3, borderColor: INK, borderBottomWidth: 7, padding: 14, paddingTop: 12, gap: 10 }}>
@@ -151,7 +157,7 @@ export function RankUp({ open, to, onClose }: { open: boolean; from: number; to:
           </FadeIn>
         )}
         <FadeIn delay={900} style={{ alignSelf: 'stretch', gap: 10, marginTop: 4 }}>
-          {unlocks.length > 0 && <Button title={t('pf_ru_try')} color={colors.green} icon="avata" onPress={() => { onClose(); router.push('/avatar'); }} />}
+          {unlocks.length > 0 && <Button title={t('pf_ru_try')} color={colors.green} icon="avata" onPress={() => { tap(); onClose('/avatar'); }} />}
           <Button title={t('next')} variant="secondary" color={INK} onPress={close} />
         </FadeIn>
         {!unlocks.length && <View pointerEvents="none" style={{ position: 'absolute', left: 10, bottom: 120 }}><Hop height={10}><Mascot size={96} mood="proud" /></Hop></View>}
@@ -160,22 +166,105 @@ export function RankUp({ open, to, onClose }: { open: boolean; from: number; to:
   );
 }
 
-/** Shows the rank-up moment once when the kid reaches a new rank (only while this screen is focused). */
-export function RankUpListener({ delayMs = 0 }: { /** wait before showing (e.g. let a chest animation finish) */ delayMs?: number } = {}) {
+/**
+ * The celebration host (see the header): rank-up → its hero card(s) → new trophies, one after the other, only while
+ * this screen is focused. Each moment shows once (rankSeen / badgeQueue live in the store).
+ */
+export function RankUpListener({ delayMs = 0 }: { /** wait before showing (e.g. let a result or chest animation finish) */ delayMs?: number } = {}) {
   const xp = useStore((s) => s.progress.xp);
   const seen = useStore((s) => s.rankSeen ?? -1);
   const hydrated = useStore((s) => s.hydrated);
   const onboarded = useStore((s) => s.onboarded);
+  const queue = useStore((s) => s.badgeQueue ?? []);
   const focused = useIsFocused();
   const idx = rankForXp(xp).index;
   // first run (or progress from before ranks existed): remember the current rank quietly
   useEffect(() => { if (hydrated && seen < 0) useStore.getState().ackRank(idx); }, [hydrated, seen]);
-  const want = hydrated && onboarded && focused && seen >= 0 && idx > seen;
+  const live = hydrated && onboarded && focused;
+  const wantRank = live && seen >= 0 && idx > seen;
+  /** hero cards still to reveal for the ranks just reached (draw keys) */
+  const [cards, setCards] = React.useState<string[]>([]);
+  const [go, setGo] = React.useState<string | null>(null);
+  const [badge, setBadge] = React.useState<string | null>(null);
+  const busy = wantRank || cards.length > 0 || !!badge;
+  const wantBadge = live && !busy && queue.length > 0;
   const [ready, setReady] = React.useState(false);
   useEffect(() => {
-    if (!want) { setReady(false); return; }
+    if (!(wantRank || wantBadge)) { setReady(false); return; }
+    if (ready) return;
     const id = setTimeout(() => setReady(true), delayMs);
     return () => clearTimeout(id);
-  }, [want]);
-  return <RankUp open={want && ready} from={seen} to={idx} onClose={() => useStore.getState().ackRank(idx)} />;
+  }, [wantRank, wantBadge]);
+  // next trophy in the queue: moving it to newBadges plays the trophy jingle (lib/audio)
+  useEffect(() => {
+    if (!wantBadge || !ready) return;
+    const id = queue[0];
+    setBadge(id);
+    useStore.getState().celebrateBadge(id);
+  }, [wantBadge, ready, queue[0]]);
+
+  const closeRank = (to?: string) => {
+    // one hero card per rank reached, given now (so it is never lost), revealed next
+    const keys: string[] = [];
+    for (let r = Math.max(1, seen + 1); r <= idx; r++) { const k = `rank-${r}`; useCards.getState().earn(k, 'rank'); keys.push(k); }
+    useStore.getState().ackRank(idx);
+    setCards(keys);
+    if (to) setGo(to);
+    if (!keys.length && to) { setGo(null); router.push(to as never); }
+  };
+  const nextCard = () => {
+    setCards((c) => {
+      const rest = c.slice(1);
+      if (!rest.length && go) { const to = go; setGo(null); setTimeout(() => router.push(to as never), 0); }
+      return rest;
+    });
+  };
+  return (
+    <>
+      <RankUp open={wantRank && ready} from={seen} to={idx} onClose={closeRank} />
+      {cards.length > 0 && <CardReveal key={cards[0]} kind="rank" drawKey={cards[0]} delay={250} note="ec_rank_card" onClose={nextCard} />}
+      <BadgeMoment id={badge} onClose={() => setBadge(null)} />
+    </>
+  );
+}
+
+const TIER_COLORS: Record<string, { bg: string; ring: string; ink: string; key: StrKey }> = {
+  bronz: { bg: '#FFE8DC', ring: '#E0915F', ink: '#8A3B12', key: 'tier_bronz' },
+  ajan: { bg: '#EEF1F6', ring: '#A9B4C8', ink: '#4A5570', key: 'tier_ajan' },
+  lo: { bg: '#FFF4D1', ring: '#F5B700', ink: '#5C4600', key: 'tier_lo' },
+};
+
+/** "Nouvo twofe!" — the trophy just won, in its tier colour. */
+function BadgeMoment({ id, onClose }: { id: string | null; onClose: () => void }) {
+  const t = useT();
+  const fr = useStore((s) => s.profile.lang === 'fr');
+  const b = id ? BADGES.find((x) => x.id === id) : undefined;
+  if (!id || !b) return null;
+  const tier = TIER_COLORS[b.tier] ?? TIER_COLORS.bronz;
+  const close = (go?: boolean) => { tap(); onClose(); if (go) router.push('/trophies' as never); };
+  return (
+    <Modal visible transparent animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={() => close()}>
+      <View style={{ flex: 1, backgroundColor: 'rgba(20,33,61,0.94)', alignItems: 'center', justifyContent: 'center', padding: 22, gap: 14 }}>
+        <Confetti count={22} />
+        <FadeIn><View style={{ backgroundColor: colors.yellow, borderRadius: 999, borderWidth: 2, borderColor: INK, paddingHorizontal: 14, paddingVertical: 3 }}><T v="label" color={INK}>{t('ec_badge_title')}</T></View></FadeIn>
+        <View style={{ width: 200, height: 190, alignItems: 'center', justifyContent: 'center' }}>
+          <View pointerEvents="none" style={{ position: 'absolute', width: 180, height: 180, borderRadius: 90, backgroundColor: tier.ring, opacity: 0.22 }} />
+          <Pop delay={120} rotate={-20} from={0.2}>
+            <View style={{ width: 140, height: 140, borderRadius: 70, backgroundColor: '#FFFFFF', borderWidth: 6, borderColor: tier.ring, borderBottomWidth: 12, alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="twofe" size={84} />
+            </View>
+          </Pop>
+          <Burst trigger={id} count={16} radius={120} shapes="stars" />
+        </View>
+        <Pop delay={320}><T v="display" color="#FFFFFF" center style={{ fontSize: 32, lineHeight: 38 }}>{fr ? b.nameFr : b.name}</T></Pop>
+        <FadeIn delay={420}><T v="bold" color="#FFFFFF" center style={{ opacity: 0.9 }}>{fr ? b.howFr : b.how}</T></FadeIn>
+        <FadeIn delay={480}><View style={{ backgroundColor: tier.bg, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 2 }}><T v="label" color={tier.ink}>{t(tier.key).toUpperCase()}</T></View></FadeIn>
+        <FadeIn delay={700} style={{ alignSelf: 'stretch', gap: 10, marginTop: 8 }}>
+          <Button title={t('ec_badge_see')} color={colors.green} icon="twofe" onPress={() => close(true)} />
+          <Button title={t('next')} variant="secondary" color={INK} onPress={() => close()} />
+        </FadeIn>
+        <View pointerEvents="none" style={{ position: 'absolute', left: 12, bottom: 150 }}><Hop height={10}><Mascot size={84} mood="cheer" /></Hop></View>
+      </View>
+    </Modal>
+  );
 }
