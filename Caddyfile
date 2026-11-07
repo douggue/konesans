@@ -1,0 +1,18 @@
+# api.<domain>   → Nakama (the kids' app and the admin phone app)
+# admin.<domain> → admin web panel, with /v2 proxied to Nakama on the same origin
+api.{$DOMAIN} {
+	encode gzip
+	reverse_proxy nakama:7350
+}
+
+admin.{$DOMAIN} {
+	encode gzip
+	handle /v2/* {
+		reverse_proxy nakama:7350
+	}
+	handle {
+		root * /srv/admin
+		header /config.js Cache-Control "no-store"
+		file_server
+	}
+}
