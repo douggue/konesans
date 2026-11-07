@@ -50,7 +50,7 @@ export const CATEGORY_META: Record<string, { ht: string; fr: string; color: stri
   peyi:      { ht: 'Peyi',              fr: 'Pays',                color: colors.yellowDark, soft: colors.yellowSoft, icon: 'drapo' },
   kilti:     { ht: 'Kilti & Tradisyon', fr: 'Culture & traditions', color: colors.redLight,  soft: colors.redSoft,    icon: 'kilti' },
   syans:     { ht: 'Syans',             fr: 'Sciences',            color: colors.purple,     soft: colors.purpleSoft, icon: 'syans' },
-  matematik: { ht: 'Matematik',         fr: 'Mathématiques',       color: colors.greenLight, soft: colors.greenSoft,  icon: 'kalkil' },
+  matematik: { ht: 'Matematik',         fr: 'Mathématiques',       color: colors.greenLight, soft: colors.greenSoft,  icon: 'plis' },
   jeneral:   { ht: 'Konesans Jeneral',  fr: 'Culture générale',    color: colors.yellow,     soft: colors.yellowSoft, icon: 'kesyon' },
   espo:      { ht: 'Espò',              fr: 'Sport',               color: colors.green,      soft: colors.greenSoft,  icon: 'espo' },
   teknoloji: { ht: 'Teknoloji',         fr: 'Technologie',         color: colors.blue,       soft: colors.blueSoft,   icon: 'robo' },
