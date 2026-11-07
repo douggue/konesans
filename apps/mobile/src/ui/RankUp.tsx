@@ -16,8 +16,15 @@ import { colors } from '@/lib/theme';
 import { useStore, useAvatar } from '@/lib/store';
 import { useT, useL, type StrKey } from '@/lib/i18n';
 import { sfx, tap } from '@/lib/audio';
+import { RANK_KEY } from '@/lib/strings/ranks';
 
 const INK = '#14213D';
+
+/** Rank display name through `t()` (rank_* keys), so an admin text override reaches every place a rank name shows. */
+export function useRankName() {
+  const t = useT(); const l = useL();
+  return (r: Pick<RankDef, 'id' | 'name'>) => (RANK_KEY[r.id] ? t(RANK_KEY[r.id]) : l(r.name));
+}
 
 /** The symbol inside each rank's shield (48×48 space, drawn in the white disc centred at 24,22). */
 function Glyph({ id, size }: { id: string; size: number }) {
@@ -100,7 +107,7 @@ export function UnlockChip({ u, size = 54, dim, light }: { u: UnlockDef; size?: 
 
 /** Full-screen "new rank" moment. */
 export function RankUp({ open, to, onClose }: { open: boolean; from: number; to: number; onClose: () => void }) {
-  const t = useT(); const l = useL();
+  const t = useT(); const rn = useRankName();
   const rank = RANKS[Math.max(0, Math.min(RANKS.length - 1, to))];
   const unlocks = rankUnlocks(to);
   const glow = useRef(new Animated.Value(0)).current;
@@ -130,7 +137,7 @@ export function RankUp({ open, to, onClose }: { open: boolean; from: number; to:
           <Pop delay={150} rotate={-30} from={0.2}><RankBadge rank={rank} size={150} /></Pop>
           <Burst trigger={open ? 'up' : null} count={16} radius={130} shapes="stars" />
         </View>
-        <Pop delay={380}><T v="display" color="#FFFFFF" center style={{ fontSize: 34, lineHeight: 40 }}>{t('pf_ru_title', { r: l(rank.name) })}</T></Pop>
+        <Pop delay={380}><T v="display" color="#FFFFFF" center style={{ fontSize: 34, lineHeight: 40 }}>{t('pf_ru_title', { r: rn(rank) })}</T></Pop>
         <FadeIn delay={480}><T v="bold" color="#FFFFFF" center style={{ opacity: 0.9 }}>{t('pf_rank_level', { n: rank.level })}</T></FadeIn>
         {unlocks.length > 0 && (
           <FadeIn delay={620} style={{ alignSelf: 'stretch' }}>

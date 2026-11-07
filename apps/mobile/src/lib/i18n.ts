@@ -4,11 +4,15 @@ import { useRemote } from './remote';
 import { QUESTS_STRINGS } from './strings/quests';
 import { CARDS_STRINGS } from './strings/cards';
 import { VWAYAJ_STRINGS } from './strings/vwayaj';
+import { RANKS_STRINGS } from './strings/ranks';
+import { REQ_STRINGS } from './strings/requests';
 
 const S = {
   ...VWAYAJ_STRINGS,
   ...CARDS_STRINGS,
   ...QUESTS_STRINGS,
+  ...RANKS_STRINGS,
+  ...REQ_STRINGS,
   // nav
   home: ['Lakay', 'Accueil'], challenge: ['Defi', 'Défis'], course: ['Kou', 'Cours'], coding: ['Enfòmatik', 'Coder'], me: ['Mwen', 'Moi'],
   // onboarding

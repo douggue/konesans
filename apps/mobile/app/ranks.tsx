@@ -3,16 +3,16 @@ import React from 'react';
 import { View } from 'react-native';
 import { RANKS, UNLOCKS, rankUnlocks } from '@konesans/core';
 import { Screen, T, Row, TopBar, Progress, Icon, Mascot, FadeIn, Pop, Bob } from '@/ui';
-import { RankBadge, UnlockChip, RankUpListener } from '@/ui/RankUp';
+import { RankBadge, UnlockChip, RankUpListener, useRankName } from '@/ui/RankUp';
 import { colors } from '@/lib/theme';
 import { useStore, useLevel, useRank } from '@/lib/store';
-import { useT, useL } from '@/lib/i18n';
+import { useT } from '@/lib/i18n';
 
 const INK = '#14213D';
 const fmt = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 
 export default function Ranks() {
-  const t = useT(); const l = useL();
+  const t = useT(); const rn = useRankName();
   const xp = useStore((s) => s.progress.xp);
   const streak = useStore((s) => s.progress.streak.count);
   const badges = useStore((s) => Object.keys(s.progress.badges).length);
@@ -33,13 +33,13 @@ export default function Ranks() {
             <Pop rotate={-20}><RankBadge rank={cur.rank} size={86} /></Pop>
             <View style={{ flex: 1, gap: 2 }}>
               <T v="label" color="#FFFFFF" style={{ opacity: 0.85 }}>{t('pf_rank')}</T>
-              <T v="display" color="#FFFFFF" style={{ fontSize: 30, lineHeight: 34 }}>{l(cur.rank.name)}</T>
+              <T v="display" color="#FFFFFF" style={{ fontSize: 30, lineHeight: 34 }}>{rn(cur.rank)}</T>
               <T v="bold" color="#FFFFFF" style={{ opacity: 0.9 }}>{t('pf_rank_level', { n: lvl.level })}</T>
             </View>
             <Bob><Mascot size={70} mood={cur.next ? 'proud' : 'cool'} /></Bob>
           </Row>
           <Progress value={cur.progress} color={colors.yellow} track="rgba(255,255,255,0.3)" height={12} />
-          <T v="bold" color="#FFFFFF">{cur.next ? t('pf_next_rank', { x: fmt(cur.xpToNext), r: l(cur.next.name) }) : t('pf_top_rank')}</T>
+          <T v="bold" color="#FFFFFF">{cur.next ? t('pf_next_rank', { x: fmt(cur.xpToNext), r: rn(cur.next) }) : t('pf_top_rank')}</T>
         </View>
       </FadeIn>
       <T v="body" color={colors.muted}>{t('pf_ranks_intro')}</T>
@@ -61,7 +61,7 @@ export default function Ranks() {
                 <View style={{ flex: 1, marginTop: 8, marginBottom: 10, backgroundColor: here ? r.soft : colors.card, borderRadius: 18, borderWidth: here ? 3 : 2, borderColor: here ? r.color : colors.line, borderBottomWidth: 5, padding: 12, gap: 8, opacity: ahead ? 0.92 : 1 }}>
                   <Row gap={8}>
                     <View style={{ flex: 1 }}>
-                      <T v="h3" color={ahead ? colors.muted : colors.ink}>{l(r.name)}</T>
+                      <T v="h3" color={ahead ? colors.muted : colors.ink}>{rn(r)}</T>
                       <T v="small" color={colors.muted}>{t('pf_rank_level', { n: r.level })}</T>
                     </View>
                     {here && <View style={{ backgroundColor: r.color, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2, borderWidth: 2, borderColor: INK }}><T v="label" color="#FFFFFF">{t('pf_you_here')}</T></View>}

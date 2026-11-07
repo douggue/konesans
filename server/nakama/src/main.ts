@@ -6,6 +6,7 @@
  * - RPC `sync_progress`: idempotent event-log upload, server folds progress.
  * - RPC `consent_confirm`: parent clicked the confirmation link.
  * - Admin + content RPCs: see admin.ts and docs/API.md.
+ * - Age / class change requests (kid asks, admin approves): requests.ts.
  * Clients never see the answer key during a question (see core `publicView`).
  */
 import {
@@ -14,6 +15,7 @@ import {
   type DuelState, type AgeBand, type CategoryId, type SyncEvent,
 } from '@konesans/core';
 import * as A from './admin';
+import * as R from './requests';
 
 const TICK_RATE = 5; // 5 ticks/s is plenty for a quiz
 const OP = { STATE: 1, ANSWER: 2, REACT: 3 } as const;
@@ -274,6 +276,10 @@ function rpc_admin_reports(ctx: nkruntime.Context, logger: nkruntime.Logger, nk:
 function rpc_admin_report_resolve(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminReportResolve(ctx, logger, nk, payload); }
 function rpc_admin_change_password(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminChangePassword(ctx, logger, nk, payload); }
 function rpc_admin_audit(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.adminAudit(ctx, logger, nk, payload); }
+function rpc_change_request_submit(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return R.changeRequestSubmit(ctx, logger, nk, payload); }
+function rpc_change_request_status(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return R.changeRequestStatus(ctx, logger, nk, payload); }
+function rpc_admin_change_requests_list(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return R.adminChangeRequests(ctx, logger, nk, payload); }
+function rpc_admin_change_request_resolve(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return R.adminChangeRequestResolve(ctx, logger, nk, payload); }
 function rpc_content_manifest(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.contentManifest(ctx, logger, nk, payload); }
 function rpc_content_pack(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return A.contentPack(ctx, logger, nk, payload); }
 
@@ -307,6 +313,11 @@ const InitModule: nkruntime.InitModule = (ctx, logger, nk, initializer) => {
   initializer.registerRpc('admin_report_resolve', rpc_admin_report_resolve);
   initializer.registerRpc('admin_audit', rpc_admin_audit);
   initializer.registerRpc('admin_change_password', rpc_admin_change_password);
+  // age / class change requests (kid device session; admin approves) — see requests.ts
+  initializer.registerRpc('change_request_submit', rpc_change_request_submit);
+  initializer.registerRpc('change_request_status', rpc_change_request_status);
+  initializer.registerRpc('admin_change_requests_list', rpc_admin_change_requests_list);
+  initializer.registerRpc('admin_change_request_resolve', rpc_admin_change_request_resolve);
   initializer.registerRpc('content_manifest', rpc_content_manifest);
   initializer.registerRpc('content_pack', rpc_content_pack);
   A.bootstrapAdmins(ctx, logger, nk);

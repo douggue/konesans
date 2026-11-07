@@ -7,6 +7,7 @@
  *   admin/config           AppConfig
  *   admin/strings          { overrides }
  *   admin/audit            { entries } (last 200)
+ *   change_req/<id>        age / class change requests from kids' phones (see requests.ts)
  * Published content (what kids' phones download):
  *   published/manifest     Manifest
  *   published/pack_<cat>   { category, version, questions }
@@ -59,7 +60,7 @@ export const DEFAULT_CONFIG: AppConfig = {
 
 // ---------- helpers ----------
 
-function fail(message: string, code: number): never { throw { message, code } as nkruntime.Error; }
+export function fail(message: string, code: number): never { throw { message, code } as nkruntime.Error; }
 function parse(payload: string): any {
   if (!payload) return {};
   try { return JSON.parse(payload); } catch { fail('Body is not valid JSON', CODES.INVALID); }
@@ -67,11 +68,11 @@ function parse(payload: string): any {
 const out = (v: unknown) => JSON.stringify(v);
 const now = () => new Date().toISOString();
 
-function readSys<T>(nk: nkruntime.Nakama, collection: string, key: string): { value: T; updated?: string } | null {
+export function readSys<T>(nk: nkruntime.Nakama, collection: string, key: string): { value: T; updated?: string } | null {
   const r = nk.storageRead([{ collection, key, userId: SYSTEM_USER }])[0];
   return r ? { value: r.value as T, updated: r.updateTime ? new Date(r.updateTime * 1000).toISOString() : undefined } : null;
 }
-function writeSys(nk: nkruntime.Nakama, objs: { collection: string; key: string; value: object }[]) {
+export function writeSys(nk: nkruntime.Nakama, objs: { collection: string; key: string; value: object }[]) {
   for (let i = 0; i < objs.length; i += 100) {
     nk.storageWrite(objs.slice(i, i + 100).map((o) => ({ ...o, userId: SYSTEM_USER, permissionRead: 0 as nkruntime.ReadPermissionValues, permissionWrite: 0 as nkruntime.WritePermissionValues })));
   }
@@ -80,14 +81,14 @@ function writeSys(nk: nkruntime.Nakama, objs: { collection: string; key: string;
 function adminEmails(ctx: nkruntime.Context): string[] {
   return String(ctx.env?.KONESANS_ADMINS ?? '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
 }
-function requireAdmin(ctx: nkruntime.Context, nk: nkruntime.Nakama): string {
+export function requireAdmin(ctx: nkruntime.Context, nk: nkruntime.Nakama): string {
   if (!ctx.userId) fail('Login required', CODES.UNAUTH);
   const email = (nk.accountGetId(ctx.userId).email ?? '').toLowerCase();
   if (!email || !adminEmails(ctx).includes(email)) fail('Kont sa a pa gen dwa administratè.', CODES.PERMISSION);
   return email;
 }
 
-function audit(nk: nkruntime.Nakama, by: string, action: string, target: string) {
+export function audit(nk: nkruntime.Nakama, by: string, action: string, target: string) {
   const cur = readSys<{ entries: any[] }>(nk, C.ADMIN, 'audit')?.value?.entries ?? [];
   cur.unshift({ at: now(), by, action, target });
   writeSys(nk, [{ collection: C.ADMIN, key: 'audit', value: { entries: cur.slice(0, 200) } }]);
@@ -169,7 +170,7 @@ export const getManifest = (nk: nkruntime.Nakama) => readSys<any>(nk, C.PUB, 'ma
 
 // ---------- admin RPCs ----------
 
-const rpc = (fn: (ctx: nkruntime.Context, nk: nkruntime.Nakama, body: any, email: string, logger: nkruntime.Logger) => unknown): nkruntime.RpcFunction =>
+export const rpc = (fn: (ctx: nkruntime.Context, nk: nkruntime.Nakama, body: any, email: string, logger: nkruntime.Logger) => unknown): nkruntime.RpcFunction =>
   (ctx, logger, nk, payload) => { const email = requireAdmin(ctx, nk); return out(fn(ctx, nk, parse(payload), email, logger)); };
 
 export const adminMe = rpc((ctx, nk, _b, email) => ({ email, userId: ctx.userId, admins: adminEmails(ctx) }));
@@ -190,10 +191,12 @@ export const adminStats = rpc((ctx, nk) => {
   const changed = nk.sqlQuery(`SELECT count(*) AS n FROM storage WHERE user_id = $1 AND (collection = $2 OR (collection = $3 AND key IN ('categories','config','strings'))) AND update_time > $4::timestamptz`, [SYSTEM_USER, C.BANK, C.ADMIN, since])[0];
   const deleted = (readSys<{ ids: string[] }>(nk, C.ADMIN, 'deleted')?.value?.ids ?? []).length;
   const mod = readSys<{ reports: any[] }>(nk, 'moderation', 'state')?.value?.reports ?? [];
+  const reqPending = nk.sqlQuery(`SELECT count(*) AS n FROM storage WHERE collection = $1 AND user_id = $2 AND value->>'status' = 'pending'`, ['change_req', SYSTEM_USER])[0];
   return {
     questions: { ...tot, byCategory: by },
     players: { total: Number(players.total ?? 0), last7d: Number(players.recent ?? 0) },
     reports: { open: mod.filter((r) => !r.resolved).length },
+    requests: { pending: Number(reqPending?.n ?? 0) },
     published: { version: man?.version ?? 0, publishedAt: man?.publishedAt ?? null },
     draftChanges: Number(changed?.n ?? 0) + deleted,
   };

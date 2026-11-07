@@ -5,17 +5,17 @@ import Svg, { Path } from 'react-native-svg';
 import { router } from 'expo-router';
 import { BADGES } from '@konesans/core';
 import { Screen, T, Card, Row, BottomNav, Progress, IconTile, Icon, Avatar, PressScale, FadeIn, Pulse, Pop, useCountUp } from '@/ui';
-import { RankBadge, RankUpListener } from '@/ui/RankUp';
+import { RankBadge, RankUpListener, useRankName } from '@/ui/RankUp';
 import type { IconName } from '@/ui/icons';
 import { tap } from '@/lib/audio';
 import { colors } from '@/lib/theme';
 import { useStore, useLevel, useAvatar, useRank } from '@/lib/store';
-import { useT, useL } from '@/lib/i18n';
+import { useT } from '@/lib/i18n';
 
 const INK = '#14213D';
 
 export default function Profile() {
-  const t = useT(); const l = useL();
+  const t = useT(); const rn = useRankName();
   const { profile, progress, stats } = useStore();
   const lvl = useLevel();
   const rank = useRank();
@@ -50,7 +50,7 @@ export default function Profile() {
         </PressScale>
         <View style={{ flex: 1, gap: 4 }}>
           <T v="h1" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ fontSize: 26, lineHeight: 29 }}>{profile.username}</T>
-          <T v="bold" color={colors.muted} style={{ fontSize: 13, lineHeight: 17 }} numberOfLines={1}>{t('level')} {lvl.level} · {t(ageKey)} · <T v="bold" color={rank.rank.edge === '#000000' ? INK : rank.rank.edge} style={{ fontSize: 13, lineHeight: 17 }}>{l(rank.rank.name)}</T></T>
+          <T v="bold" color={colors.muted} style={{ fontSize: 13, lineHeight: 17 }} numberOfLines={1}>{t('level')} {lvl.level} · {t(ageKey)} · <T v="bold" color={rank.rank.edge === '#000000' ? INK : rank.rank.edge} style={{ fontSize: 13, lineHeight: 17 }}>{rn(rank.rank)}</T></T>
           <Row gap={8} style={{ marginTop: 2 }}>
             <Progress style={{ flex: 1 }} value={lvl.next ? lvl.into / lvl.next : 0} color={colors.blueLight} />
             <T v="small" color={colors.muted} style={{ fontVariant: ['tabular-nums'] }}>{fmt(lvl.into)} / {fmt(lvl.next)}</T>
@@ -67,14 +67,14 @@ export default function Profile() {
 
       {/* Rank card */}
       <FadeIn delay={120}>
-        <PressScale role="button" accessibilityLabel={`${t('pf_ranks')}: ${l(rank.rank.name)}`} scaleTo={0.97} onPress={() => { tap(); router.push('/ranks' as never); }}
+        <PressScale role="button" accessibilityLabel={`${t('pf_ranks')}: ${rn(rank.rank)}`} scaleTo={0.97} onPress={() => { tap(); router.push('/ranks' as never); }}
           style={({ pressed }) => [{ backgroundColor: rank.rank.soft, borderRadius: 20, borderWidth: 2, borderColor: rank.rank.color, borderBottomWidth: 5, paddingVertical: 12, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }, pressed && { borderBottomWidth: 3, transform: [{ translateY: 2 }] }]}>
           <Pop delay={200} rotate={-15}><RankBadge rank={rank.rank} size={56} /></Pop>
           <View style={{ flex: 1, gap: 4 }}>
             <T v="label" color={colors.muted}>{t('pf_rank')}</T>
-            <T v="h2" style={{ lineHeight: 23 }}>{l(rank.rank.name)}</T>
+            <T v="h2" style={{ lineHeight: 23 }}>{rn(rank.rank)}</T>
             <Progress value={rank.progress} color={rank.rank.color} height={8} track="rgba(20,33,61,0.10)" />
-            <T v="small" color={colors.muted}>{rank.next ? t('pf_next_rank', { x: fmt(rank.xpToNext), r: l(rank.next.name) }) : t('pf_top_rank')}</T>
+            <T v="small" color={colors.muted}>{rank.next ? t('pf_next_rank', { x: fmt(rank.xpToNext), r: rn(rank.next) }) : t('pf_top_rank')}</T>
           </View>
           {rank.next && <RankBadge rank={rank.next} size={30} dim />}
           <Icon name="pwochen" size={20} />

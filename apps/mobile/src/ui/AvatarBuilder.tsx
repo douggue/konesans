@@ -10,10 +10,10 @@ import { router, usePathname } from 'expo-router';
 import { RANKS, xpForLevel, unlockFor, isItemOpen, type AvatarConfig, type UnlockDef, type UnlockKind } from '@konesans/core';
 import { T, Row, Button, PressScale, Bounce, Icon, Sheet } from './index';
 import { Avatar, AvatarArt, SKINS, HAIR_COLORS, SHIRTS, BGS, HAIRS, EXTRAS, FRAMES, randomAvatar } from './avatar';
-import { RankBadge, withItem } from './RankUp';
+import { RankBadge, withItem, useRankName } from './RankUp';
 import { colors, radius } from '@/lib/theme';
 import { useStore, useUnlockCtx } from '@/lib/store';
-import { useT, useL, type StrKey } from '@/lib/i18n';
+import { useT, type StrKey } from '@/lib/i18n';
 import { tap, sfx } from '@/lib/audio';
 
 type Tab = 'skin' | 'hair' | 'hairColor' | 'shirt' | 'extra' | 'bg' | 'frame';
@@ -43,7 +43,7 @@ function ShirtSwatch({ i }: { i: number }) {
 type Item = { key: string; on: boolean; pick: () => void; kind?: UnlockKind; value?: string | number; swatch?: string; shirt?: number; preview?: AvatarConfig; badge?: AvatarConfig; label?: string };
 
 export function AvatarBuilder({ value, onChange, size = 170 }: { value: AvatarConfig; onChange: (a: AvatarConfig) => void; size?: number }) {
-  const t = useT(); const l = useL();
+  const t = useT(); const rn = useRankName();
   const path = usePathname();
   const [tab, setTab] = useState<Tab>('skin');
   const [bump, setBump] = useState(0);
@@ -75,9 +75,9 @@ export function AvatarBuilder({ value, onChange, size = 170 }: { value: AvatarCo
     : tab === 'bg' ? BGS.map((c, i) => ({ key: c + i, kind: 'bg' as const, value: i, badge: { ...value, bg: i, frame: 0 }, on: value.bg === i, pick: () => set({ bg: i }) }))
     : FRAMES.map((f) => ({ key: 'f' + f, kind: 'frame' as const, value: f, badge: { ...value, frame: f }, on: (value.frame ?? 0) === f, pick: () => set({ frame: f }) }));
 
-  const reqText = (d: UnlockDef) => 'rank' in d.req ? t('pf_unlock_rank', { r: l(RANKS[d.req.rank].name) }) : 'streak' in d.req ? t('pf_unlock_streak', { n: d.req.streak }) : t('pf_unlock_badges', { n: d.req.badges });
+  const reqText = (d: UnlockDef) => 'rank' in d.req ? t('pf_unlock_rank', { r: rn(RANKS[d.req.rank]) }) : 'streak' in d.req ? t('pf_unlock_streak', { n: d.req.streak }) : t('pf_unlock_badges', { n: d.req.badges });
   const howText = (d: UnlockDef) => {
-    if ('rank' in d.req) { const r = RANKS[d.req.rank]; return t('pf_how_rank', { n: r.level, r: l(r.name), x: Math.max(0, xpForLevel(r.level) - ctx.xp) }); }
+    if ('rank' in d.req) { const r = RANKS[d.req.rank]; return t('pf_how_rank', { n: r.level, r: rn(r), x: Math.max(0, xpForLevel(r.level) - ctx.xp) }); }
     if ('streak' in d.req) return t('pf_how_streak', { n: d.req.streak, s: streak });
     return t('pf_how_badges', { n: d.req.badges, b: badges });
   };
