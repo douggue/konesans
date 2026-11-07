@@ -84,7 +84,7 @@ export function Button({ title, onPress, variant = 'primary', color = colors.blu
       style,
     ]}>
       {icon && <Icon name={icon} size={22} />}
-      <T v="h3" color={fg}>{title}</T>
+      <T v="h3" color={fg} numberOfLines={1} adjustsFontSizeToFit style={{ flexShrink: 1, textAlign: 'center' }}>{title}</T>
     </PressScale>
   );
 }

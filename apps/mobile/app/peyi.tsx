@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { router } from 'expo-router';
 import { REGIONS, REGION_LABEL, countryPool, type CountryMode, type CountryLevel, type WorldRegion } from '@konesans/core';
 import { Screen, T, Button, TopBar, Icon, Row, PressScale } from '@/ui';
+import { LevelPicker, type Level3 } from '@/ui/LevelPicker';
 import { colors, radius } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT } from '@/lib/i18n';
@@ -43,17 +44,7 @@ export default function Peyi() {
       </Row>
 
       <T v="label" color={colors.muted}>{t('level_caps')}</T>
-      <Row gap={10}>
-        {LEVELS.map((l) => {
-          const on = peyi.level === l.id;
-          return (
-            <PressScale debounceMs={0} key={l.id} role="button" onPress={() => { tap(); setPeyi({ level: l.id }); }} style={[{ flex: 1, minHeight: 72, gap: 2, paddingHorizontal: 6 }, seg(on, l.color)]}>
-              <T v="h3" color={on ? '#fff' : colors.ink}>{'★'.repeat(l.id)}</T>
-              <T v="bold" color={on ? '#fff' : colors.ink}>{t(l.key)}</T>
-            </PressScale>
-          );
-        })}
-      </Row>
+      <LevelPicker value={peyi.level as Level3} onChange={(l) => setPeyi({ level: l as CountryLevel })} labels={[t('peyi_lv1'), t('peyi_lv2'), t('peyi_lv3')]} />
       <T v="small" color={colors.muted}>{t(LEVELS.find((l) => l.id === peyi.level)!.sub)}</T>
 
       <T v="label" color={colors.muted}>{t('region_caps')}</T>

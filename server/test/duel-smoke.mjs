@@ -57,6 +57,8 @@ check(v.question && v.question.answer === undefined, 'answer key hidden during t
 let rounds = 0;
 while (rounds < 12) {
   const idx = a.last.index;
+  // the server ignores answers before the question shows (3 s VS intro before question 1)
+  if (a.last.serverNow && a.last.phaseStartedAt > a.last.serverNow) await new Promise((r) => setTimeout(r, a.last.phaseStartedAt - a.last.serverNow + 150));
   await a.sock.sendMatchState(ra.matchId, OP.ANSWER, JSON.stringify({ chosen: 0 }));
   await b.sock.sendMatchState(ra.matchId, OP.ANSWER, JSON.stringify({ chosen: 1 }));
   if (rounds === 0) await a.sock.sendMatchState(ra.matchId, OP.REACT, JSON.stringify({ reaction: (await import(new URL('../../packages/core/dist/index.js', import.meta.url))).PRESET_REACTIONS[0].id ?? 'bravo' }));

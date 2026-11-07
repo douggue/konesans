@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
-import { categoryLevel, type Difficulty } from '@konesans/core';
+import { categoryLevel } from '@konesans/core';
 import { Screen, T, Card, Row, BottomNav, Progress, IconTile, PressScale, FadeIn } from '@/ui';
 import { colors } from '@/lib/theme';
 import { useStore } from '@/lib/store';
@@ -10,11 +10,9 @@ import { useCategories, hasContent } from '@/lib/content';
 import { useFeatures } from '@/lib/remote';
 import { tap } from '@/lib/audio';
 import { usePrefs } from '@/lib/prefs';
+import { LevelPicker } from '@/ui/LevelPicker';
 
 /** Difficulty instead of an age switch: the age band is set at sign-up and changed only by request (admin approves). */
-const LEVELS: { d: Difficulty; key: 'diff_easy' | 'diff_mid' | 'diff_hard'; color: string }[] = [
-  { d: 1, key: 'diff_easy', color: colors.green }, { d: 2, key: 'diff_mid', color: colors.orange }, { d: 3, key: 'diff_hard', color: colors.red },
-];
 
 export default function Categories() {
   const t = useT();
@@ -27,18 +25,7 @@ export default function Categories() {
       <View><T v="display">{t('categories')}</T><T v="body" color={colors.muted}>{t('cat_sub')}</T></View>
       <View style={{ gap: 6 }}>
         <T v="label" color={colors.muted}>{t('diff_label').toUpperCase()}</T>
-        <Row gap={8}>
-          {LEVELS.map(({ d, key, color }) => {
-            const on = d === difficulty;
-            return (
-              <PressScale debounceMs={0} role="button" key={d} accessibilityState={{ selected: on }} onPress={() => { tap(); setDifficulty(d); }}
-                style={{ flex: 1, minHeight: 48, borderRadius: 16, borderWidth: 2, borderBottomWidth: on ? 2 : 4, borderColor: on ? color : colors.line, backgroundColor: on ? color : colors.card, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
-                <View style={{ flexDirection: 'row', gap: 2 }}>{[1, 2, 3].map((k) => <View key={k} style={{ width: 5, height: 6 + k * 3, borderRadius: 2, alignSelf: 'flex-end', backgroundColor: k <= d ? (on ? '#fff' : color) : (on ? 'rgba(255,255,255,0.35)' : colors.line) }} />)}</View>
-                <T v="bold" color={on ? '#fff' : colors.ink}>{t(key)}</T>
-              </PressScale>
-            );
-          })}
-        </Row>
+        <LevelPicker value={difficulty} onChange={setDifficulty} labels={[t('diff_easy'), t('diff_mid'), t('diff_hard')]} />
       </View>
       {features.math && <FadeIn delay={60}><Card onPress={() => router.push('/math')} soft={colors.orangeSoft} edge={colors.orange} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <IconTile name="kalkil" bg="#FFFFFF" size={48} />
