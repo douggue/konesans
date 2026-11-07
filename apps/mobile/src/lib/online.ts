@@ -123,6 +123,32 @@ export async function setProfile(name: string, avatar: unknown) { await rpc('pro
 /** Parent switch in Espas Paran. */
 export async function setOnlineAllowed(on: boolean, age: AgeBand) { await rpc('online_set', { on, age }); }
 
+// ---------- age / class change requests (Espas Paran → an admin approves; server/nakama/src/requests.ts) ----------
+export type ReqStatus = 'pending' | 'approved' | 'refused';
+export interface ChangeRequest {
+  id: string; status: ReqStatus;
+  current: { age: AgeBand | null; grade: string | null };
+  requested: { age?: AgeBand; grade?: string };
+  reason: string; createdAt: string; resolvedAt?: string; note?: string;
+}
+export type ChangeRequestError = 'offline' | 'pending' | 'limit' | 'invalid' | 'server';
+/** Why a change-request call failed, in words the screen can show. */
+export function changeRequestError(e: unknown): ChangeRequestError {
+  if (!(e instanceof OnlineFailure)) return 'offline';
+  if (/pending_exists/.test(e.message) || e.status === 409) return 'pending';
+  if (/rate_limited/.test(e.message) || e.status === 429) return 'limit';
+  if (e.status === 400) return 'invalid';
+  return 'server';
+}
+/** Ask for a new age band and/or class. Only works online; one pending request at a time (server checks). */
+export async function submitChangeRequest(body: { age?: AgeBand; grade?: string; reason?: string; current: { age: AgeBand; grade?: string | null }; name?: string }): Promise<ChangeRequest> {
+  return (await rpc<{ request: ChangeRequest }>('change_request_submit', body)).request;
+}
+/** The latest request from this phone (null if none). */
+export async function changeRequestStatus(): Promise<ChangeRequest | null> {
+  return (await rpc<{ request: ChangeRequest | null }>('change_request_status', {})).request;
+}
+
 // ---------- realtime ----------
 interface Sock { send: (msg: object) => Promise<any>; close: () => void }
 function openSocket(token: string, onData: (matchId: string, op: number, data: string) => void, onClose: () => void): Promise<Sock> {

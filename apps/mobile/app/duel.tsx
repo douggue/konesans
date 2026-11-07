@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
-import { createDuel, reduce, planBotAnswer, BOT_PROFILES, BOT_NAMES, PRESET_REACTIONS, rng, type DuelState, type AvatarConfig, type Question } from '@konesans/core';
+import { createDuel, reduce, planBotAnswer, planBotReaction, BOT_PROFILES, BOT_NAMES, rng, type DuelState, type AvatarConfig, type Question } from '@konesans/core';
 import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Pill, Avatar, avatarFromSeed, PressScale, Bounce, Drop, FadeIn, Pop, Confetti, SlideSwap, useCountUp } from '@/ui';
 import { Matchmaking } from '@/ui/Matchmaking';
 import { QuestionView } from '@/ui/QuestionView';
 import { CardReveal } from '@/ui/CardReveal';
+import { ReactionTray, ReactionBubble, isReaction, reactionSfx, type ReactionId } from '@/ui/Reactions';
 import { colors } from '@/lib/theme';
 import { useStore, useAvatar } from '@/lib/store';
 import { useT, type StrKey } from '@/lib/i18n';
@@ -38,8 +39,9 @@ interface GameVM {
   /** time left in ms, or null while waiting for the first question */
   left: number | null;
   question?: Question; reveal: boolean;
-  me: Side & { chosen: number | null }; op: Side & { answered: boolean; chosen?: number; reaction?: string };
-  myReaction?: string;
+  me: Side & { chosen: number | null };
+  /** reaction = the opponent's last sticker this question; reactSeq counts their stickers (tells a repeat from an old one) */
+  op: Side & { answered: boolean; chosen?: number; reaction?: string; reactSeq?: number };
 }
 
 function DuelGame({ vm, onPick, onReact, onQuit }: { vm: GameVM; onPick: (i: number) => void; onReact: (r: string) => void; onQuit: () => void }) {
@@ -59,7 +61,12 @@ function DuelGame({ vm, onPick, onReact, onQuit }: { vm: GameVM; onPick: (i: num
     if (secs >= 1 && secs <= 3 && lastTick.current !== secs) { lastTick.current = secs; sfx('tick'); }
   }, [secs]);
   useEffect(() => { if (op.answered && !reveal) sfx('ping'); }, [op.answered]);
-  useEffect(() => { if (op.reaction) sfx('pop'); }, [op.reaction]);
+  // ── reactions: a bubble pops under the sender's avatar (+ the sticker's sound) ──
+  const [bubbles, setBubbles] = useState<{ me?: { id: ReactionId; k: number }; op?: { id: ReactionId; k: number } }>({});
+  const bubbleKey = useRef(0);
+  const show = (side: 'me' | 'op', id: ReactionId) => { reactionSfx(id); setBubbles((b) => ({ ...b, [side]: { id, k: ++bubbleKey.current } })); };
+  const opReact = op.reaction && isReaction(op.reaction) ? `${op.reaction}|${op.reactSeq ?? ''}` : null;
+  useEffect(() => { if (opReact) show('op', op.reaction as ReactionId); }, [opReact]);
   useEffect(() => {
     if (!reveal || !vm.question) return;
     musicIntensity('normal');
@@ -70,38 +77,32 @@ function DuelGame({ vm, onPick, onReact, onQuit }: { vm: GameVM; onPick: (i: num
   return (
     <Screen>
       <TopBar close title={`${t('question')} ${vm.index + 1} / ${vm.total}`} onBack={() => setQuitting(true)} />
-      <FadeIn from={-12}><Card style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10 }}>
+      <FadeIn from={-12} style={{ zIndex: 10 }}><Card style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10 }}>
         <Bounce trigger={me.score || null} amount={0.12}><Avatar a={me.avatar} size={42} /></Bounce>
         <View style={{ flex: 1 }}><T v="small" color={colors.muted}>{t('you')}</T><T v="bold" numberOfLines={1}>{me.name}</T></View>
         <Bounce trigger={me.score || null} amount={0.25}><ScoreNum n={me.score} color={colors.blue} small /></Bounce>
         <T v="small" color={colors.muted}>{t('vs')}</T>
         <Bounce trigger={op.score || null} amount={0.25}><ScoreNum n={op.score} color={colors.red} small /></Bounce>
         <View style={{ flex: 1, alignItems: 'flex-end' }}><T v="small" color={colors.muted}>{op.isBot ? t('robot') : t('opponent')}</T><T v="bold" numberOfLines={1}>{op.name}</T></View>
-        <Bounce trigger={op.score || null} amount={0.12}>
-          <View>
-            <Avatar a={op.avatar} size={42} />
-            {op.reaction ? <Pop key={op.reaction} style={{ position: 'absolute', right: -6, top: -26 }}><View style={{ backgroundColor: colors.card, borderRadius: 12, borderWidth: 2, borderColor: colors.line, paddingHorizontal: 8, paddingVertical: 2 }}><T v="small" numberOfLines={1}>{t(`re_${op.reaction}` as StrKey)}</T></View></Pop> : null}
+        <Bounce trigger={op.score || null} amount={0.12}><Avatar a={op.avatar} size={42} /></Bounce>
+      </Card>
+        {/* reaction bubbles, hanging under each player's avatar (over the timer / question for ~2 s) */}
+        <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: '100%', marginTop: 4, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <View style={{ flex: 1, alignItems: 'flex-start' }}>
+            {bubbles.me && <ReactionBubble key={bubbles.me.k} id={bubbles.me.id} side="me" who={t('you')} onDone={() => setBubbles((b) => ({ ...b, me: undefined }))} />}
           </View>
-        </Bounce>
-      </Card></FadeIn>
+          <View style={{ flex: 1, alignItems: 'flex-end' }}>
+            {bubbles.op && <ReactionBubble key={bubbles.op.k} id={bubbles.op.id} side="op" who={op.name} onDone={() => setBubbles((b) => ({ ...b, op: undefined }))} />}
+          </View>
+        </View>
+      </FadeIn>
       <Row>
         <Progress style={{ flex: 1 }} linear value={reveal || waiting ? (waiting ? 1 : 0) : (vm.left ?? 0) / vm.questionMs} color={(vm.left ?? vm.questionMs) < 4000 ? colors.red : colors.yellowDark} />
         <T v="small" color={colors.muted} style={{ width: 44, textAlign: 'right' }}>{waiting ? t('get_set') : reveal ? '' : Math.ceil((vm.left ?? 0) / 1000) + ' s'}</T>
       </Row>
       {op.answered && !reveal && <Pop><Pill text={t('already_answered', { name: op.name })} color={colors.muted} bg={colors.line} /></Pop>}
       {vm.question && <SlideSwap id={vm.index}><QuestionView q={vm.question} chosen={me.chosen} reveal={reveal} otherChosen={reveal ? op.chosen : undefined} otherAvatar={op.avatar} onPick={waiting ? undefined : (i) => { tap(); onPick(i); }} /></SlideSwap>}
-      {!reveal && (
-        <View style={{ gap: 8 }}>
-          <T v="small" color={colors.muted}>{t('reactions')}</T>
-          <Row gap={8} style={{ flexWrap: 'wrap' }}>
-            {PRESET_REACTIONS.slice(0, 4).map((r) => (
-              <PressScale role="button" key={r} scaleTo={0.9} onPress={() => { tap(); onReact(r); }} style={{ minHeight: 40, paddingHorizontal: 12, borderRadius: 20, borderWidth: 2, borderColor: vm.myReaction === r ? colors.blue : colors.line, backgroundColor: colors.card, justifyContent: 'center' }}>
-                <T v="small">{t(`re_${r}` as StrKey)}</T>
-              </PressScale>
-            ))}
-          </Row>
-        </View>
-      )}
+      <ReactionTray onSend={(id) => { show('me', id); onReact(id); }} />
       <Sheet open={quitting} title={t('quit_q')}>
         <Button title={t('stay')} onPress={() => setQuitting(false)} />
         <Button variant="secondary" color={colors.red} title={t('quit')} onPress={() => { setQuitting(false); onQuit(); router.replace('/home'); }} />
@@ -182,7 +183,6 @@ function OnlineDuel({ onFallback }: { onFallback: (note: StrKey) => void }) {
   const offset = useRef(0);                      // server clock − phone clock
   const started = useRef(false);
   const recorded = useRef(false);
-  const [myReaction, setMyReaction] = useState<string | undefined>();
 
   useEffect(() => {
     let alive = true;
@@ -252,10 +252,11 @@ function OnlineDuel({ onFallback }: { onFallback: (note: StrKey) => void }) {
     left: serverNow < v.phaseStartedAt ? null : Math.max(0, v.questionMs - (serverNow - v.phaseStartedAt)),
     question: q, reveal,
     me: { ...me, chosen: meP?.chosen ?? null },
-    op: { ...op, answered: !!opP?.answered, chosen: opP?.chosen, reaction: opP ? v.reactions[opP.id] : undefined },
-    myReaction,
+    op: { ...op, answered: !!opP?.answered, chosen: opP?.chosen, reaction: opP ? v.reactions[opP.id] : undefined,
+      // newer servers also send how many stickers each player sent, so the same sticker twice shows twice
+      reactSeq: opP ? (v as OnlineView & { reactSeq?: Record<string, number> }).reactSeq?.[opP.id] : undefined },
   };
-  return <DuelGame vm={vm} onPick={(i) => ctl.current?.answer(i)} onReact={(r) => { sfx('pop'); setMyReaction(r); ctl.current?.react(r); }} onQuit={() => ctl.current?.leave()} />;
+  return <DuelGame vm={vm} onPick={(i) => ctl.current?.answer(i)} onReact={(r) => ctl.current?.react(r)} onQuit={() => ctl.current?.leave()} />;
 }
 
 // ─── local (Robo on the phone) ───────────────────────────────────────────────
@@ -275,6 +276,18 @@ function LocalDuel({ note }: { note: StrKey | null }) {
   const [now, setNow] = useState(Date.now());
   const botPlan = useRef<{ index: number; atMs: number; chosen: number } | null>(null);
   const recorded = useRef(false);
+  const botTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => () => botTimers.current.forEach(clearTimeout), []);
+  // Robo reacts now and then (a "good luck" at the start, cheers after the kid's good answers) with the same stickers
+  const botReact = (moment: 'start' | 'reveal') => setS((d) => {
+    const r = planBotReaction(moment, d, bot.id, rand);
+    if (r) botTimers.current.push(setTimeout(() => setS((x) => (x.phase === 'ended' ? x : reduce(x, { type: 'react', playerId: bot.id, reaction: r.reaction }, Date.now()))), r.delayMs));
+    return d;
+  });
+  useEffect(() => {
+    if (s.phase === 'question' && s.index === 0 && s.players.length === 2) botReact('start');
+    if (s.phase === 'reveal') botReact('reveal');
+  }, [s.phase, s.index]);
 
   // the matchmaking sequence ends → the opponent joins and the first question starts
   const startDuel = () => { setLobby(false); setS((d) => reduce(d, { type: 'join', player: { id: bot.id, username: bot.name, isBot: true } }, Date.now())); };
@@ -323,11 +336,10 @@ function LocalDuel({ note }: { note: StrKey | null }) {
     index: s.index, total: s.questions.length, questionMs: s.questionMs,
     left: Math.max(0, s.questionMs - (now - s.phaseStartedAt)), question: s.questions[s.index], reveal,
     me: { ...me, chosen: meP?.answer?.chosen ?? null },
-    op: { ...op, answered: !!opP.answer, chosen: opP.answer?.chosen },
-    myReaction: s.reactions[ME],
+    op: { ...op, answered: !!opP.answer, chosen: opP.answer?.chosen, reaction: s.reactions[bot.id], reactSeq: s.reactSeq?.[bot.id] },
   };
   return <DuelGame vm={vm}
     onPick={(i) => setS((d) => reduce(d, { type: 'answer', playerId: ME, chosen: i }, Date.now()))}
-    onReact={(r) => { sfx('pop'); setS((d) => reduce(d, { type: 'react', playerId: ME, reaction: r }, Date.now())); }}
+    onReact={(r) => setS((d) => reduce(d, { type: 'react', playerId: ME, reaction: r }, Date.now()))}
     onQuit={() => setS((d) => reduce(d, { type: 'leave', playerId: ME }, Date.now()))} />;
 }

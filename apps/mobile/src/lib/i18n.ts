@@ -4,6 +4,7 @@ import { useRemote } from './remote';
 import { QUESTS_STRINGS } from './strings/quests';
 import { CARDS_STRINGS } from './strings/cards';
 import { VWAYAJ_STRINGS } from './strings/vwayaj';
+import { REACTIONS_STRINGS } from './strings/reactions';
 import { RANKS_STRINGS } from './strings/ranks';
 import { REQ_STRINGS } from './strings/requests';
 
@@ -11,6 +12,7 @@ const S = {
   ...VWAYAJ_STRINGS,
   ...CARDS_STRINGS,
   ...QUESTS_STRINGS,
+  ...REACTIONS_STRINGS,
   ...RANKS_STRINGS,
   ...REQ_STRINGS,
   // nav
@@ -107,8 +109,6 @@ const S = {
   listen: ['Koute', 'Écouter'], in_my_lang: ['Kreyòl', 'Français'], xp_coins: ['+{xp} XP · +{c} kòb', '+{xp} XP · +{c} pièces'],
   // trophies
   tier_bronz: ['Bwonz', 'Bronze'], tier_ajan: ['Ajan', 'Argent'], tier_lo: ['Lò', 'Or'],
-  // duel reactions
-  re_bravo: ['Bravo!', 'Bravo !'], re_wow: ['Wow!', 'Waouh !'], re_byen_jwe: ['Byen jwe!', 'Bien joué !'], re_anko: ['Ankò!', 'Encore !'], re_bon_chans: ['Bòn chans!', 'Bonne chance !'], re_mwen_pare: ['Mwen pare!', 'Je suis prêt !'],
   // matchmaking
   found: ['Nou jwenn yon jwè!', 'Joueur trouvé !'], tap_skip: ['Tape pou kòmanse', 'Touche pour commencer'], get_ready: ['Pare? Ale!', 'Prêt ? Partez !'],
   // online duels

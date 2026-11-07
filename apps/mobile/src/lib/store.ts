@@ -2,7 +2,10 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AppState } from 'react-native';
 import { avatarFromSeed } from '@/ui/avatar';
+import { changeRequestStatus, type ChangeRequest } from './online';
+import { serverConfigured } from './remote';
 import {
   DEFAULT_SETTINGS, emptyProgress, emptyCourseProgress, recordLesson as coreRecordLesson, applyEvent, ensureQuests,
   recordActivity, levelFromXp, generateUsername, localDay, noteWrong, checkBadges, courseSummary,
@@ -11,7 +14,7 @@ import {
   type AgeBand, type AvatarConfig, type KidSettings, type Progress, type CourseProgress, type CourseId, type LessonResult, type GameEvent, type Lang, type CountryQuizOptions,
 } from '@konesans/core';
 
-export interface Profile { id: string; username: string; age: AgeBand; lang: Lang; avatarColor: number; avatar?: AvatarConfig; createdAt: string }
+export interface Profile { id: string; username: string; age: AgeBand; lang: Lang; avatarColor: number; avatar?: AvatarConfig; createdAt: string; /** school class (strings/requests.ts GRADES), set by an approved change request */ grade?: string }
 export interface AppSettings { sfx: boolean; music: boolean; voice: boolean; haptic: boolean; textSize: 0 | 1 | 2 }
 export interface Stats { duels: number; duelWins: number; lessons: number; questionsAnswered: number; correct: number; perCategoryCorrect: Record<string, number>; mathBest?: number }
 
@@ -75,6 +78,13 @@ interface State {
   seenUnlocks: string[];
   syncUnlocks: () => string[];
   markUnlocksSeen: (ids: string[]) => void;
+
+  // ─── age / class change requests (Espas Paran; an admin approves, see online.ts) ───
+  /** Latest request from this phone as the server last told us. `applied`: an approved change is already in the profile. */
+  changeReq: (ChangeRequest & { applied?: boolean }) | null;
+  setChangeReq: (r: ChangeRequest | null) => void;
+  /** Ask the server for the latest request; applies an approved one (age band + class) once. Throws when offline. */
+  syncChangeReq: () => Promise<ChangeRequest | null>;
 }
 
 const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Port-au-Prince';
@@ -106,6 +116,7 @@ export const useStore = create<State>()(
       rankSeen: -1,
       unlocked: [],
       seenUnlocks: [],
+      changeReq: null,
 
       setHydrated: () => set({ hydrated: true }),
       setLang: (lang) => set((s) => ({ profile: { ...s.profile, lang } })),
@@ -170,6 +181,18 @@ export const useStore = create<State>()(
         if (add.length) set({ unlocked: [...have, ...add] });
         return add;
       },
+      setChangeReq: (r) => set((s) => ({ changeReq: r ? { ...r, applied: s.changeReq?.id === r.id ? s.changeReq.applied : false } : null })),
+      syncChangeReq: async () => {
+        const r = await changeRequestStatus();
+        const s = get();
+        // only requests made for this profile (a reset makes a new one) and never twice
+        if (r && r.status === 'approved' && !(s.changeReq?.id === r.id && s.changeReq.applied) && r.createdAt >= s.profile.createdAt) {
+          if (r.requested.age) s.setAge(r.requested.age);
+          if (r.requested.grade) set((x) => ({ profile: { ...x.profile, grade: r.requested.grade } }));
+          set({ changeReq: { ...r, applied: true } });
+        } else get().setChangeReq(r);
+        return r;
+      },
       markUnlocksSeen: (ids) => set((s) => ({ seenUnlocks: [...new Set([...(s.seenUnlocks ?? []), ...ids])] })),
 
       award: (xp, coins = Math.floor(xp / 2)) => { set((s) => ({ progress: { ...s.progress, xp: s.progress.xp + xp, coins: s.progress.coins + coins } })); get().syncUnlocks(); },
@@ -211,16 +234,26 @@ export const useStore = create<State>()(
 
       recordMath: (score, xp) => { get().touch(); get().emit({ type: 'math_run', score }); get().award(xp); set((s) => ({ stats: { ...s.stats, mathBest: Math.max(s.stats.mathBest ?? 0, score) } })); },
 
-      resetAll: () => set({ missions: emptyMissionLog(), rankSeen: -1, unlocked: [], seenUnlocks: [], recentPeyi: [], newBadges: [], onboarded: false, profile: freshProfile(), progress: emptyProgress(), courses: { en: emptyCourseProgress(), es: emptyCourseProgress() }, coding: {}, stats: freshStats(), seen: [] }),
+      resetAll: () => set({ changeReq: null, missions: emptyMissionLog(), rankSeen: -1, unlocked: [], seenUnlocks: [], recentPeyi: [], newBadges: [], onboarded: false, profile: freshProfile(), progress: emptyProgress(), courses: { en: emptyCourseProgress(), es: emptyCourseProgress() }, coding: {}, stats: freshStats(), seen: [] }),
     }),
     {
       name: 'konesans-v1',
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: (s) => ({ missions: s.missions, rankSeen: s.rankSeen, unlocked: s.unlocked, seenUnlocks: s.seenUnlocks, recentPeyi: s.recentPeyi, onboarded: s.onboarded, profile: s.profile, progress: s.progress, courses: s.courses, courseLang: s.courseLang, peyi: s.peyi, coding: s.coding, settings: s.settings, kidSettings: s.kidSettings, stats: s.stats, seen: s.seen }),
-      onRehydrateStorage: () => (state) => { state?.setHydrated(); },
+      partialize: (s) => ({ changeReq: s.changeReq, missions: s.missions, rankSeen: s.rankSeen, unlocked: s.unlocked, seenUnlocks: s.seenUnlocks, recentPeyi: s.recentPeyi, onboarded: s.onboarded, profile: s.profile, progress: s.progress, courses: s.courses, courseLang: s.courseLang, peyi: s.peyi, coding: s.coding, settings: s.settings, kidSettings: s.kidSettings, stats: s.stats, seen: s.seen }),
+      onRehydrateStorage: () => (state) => { state?.setHydrated(); checkPendingChangeReq(); },
     },
   ),
 );
+
+/** While a change request is waiting, look for the admin's answer on start and when the app comes back (at most once a minute). */
+let lastReqCheck = 0;
+function checkPendingChangeReq() {
+  const s = useStore.getState();
+  if (s.changeReq?.status !== 'pending' || !serverConfigured() || Date.now() - lastReqCheck < 60_000) return;
+  lastReqCheck = Date.now();
+  s.syncChangeReq().catch(() => { /* offline: try again later */ });
+}
+AppState.addEventListener('change', (st) => { if (st === 'active') checkPendingChangeReq(); });
 
 /** The kid's avatar (a stable default derived from the profile id until they make one). */
 export const useAvatar = (): AvatarConfig => { const p = useStore((s) => s.profile); return p.avatar ?? avatarFromSeed(p.id); };
