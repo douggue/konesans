@@ -130,7 +130,7 @@ export function AvatarBuilder({ value, onChange, size = 170 }: { value: AvatarCo
                 {!open && <View style={{ position: 'absolute', width: 30, height: 30, borderRadius: 15, backgroundColor: colors.card, borderWidth: 2, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center' }}><Icon name="femen_kle" size={20} /></View>}
               </View>
               {!open && def ? <View style={{ minHeight: 26, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' }}>{shortReq(def)}</View>
-                : it.label ? <T v="small" center numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{it.label}</T> : null}
+                : it.label ? <View style={{ minHeight: 26, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' }}><T v="small" center numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.75} style={{ fontSize: 11, lineHeight: 13 }}>{it.label}</T></View> : null}
               {fresh && <View style={{ position: 'absolute', top: -8, right: -6, backgroundColor: colors.red, borderRadius: 999, paddingHorizontal: 6, paddingVertical: 1, borderWidth: 2, borderColor: '#FFFFFF' }}><T v="small" color="#FFFFFF" style={{ fontSize: 10, lineHeight: 13 }}>{t('new_badge')}</T></View>}
             </PressScale>
           );

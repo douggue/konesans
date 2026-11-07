@@ -17,10 +17,10 @@ const REQ_TONE = { pending: ['#7A5A00', colors.yellowSoft], approved: ['#12632F'
 const REQ_LABEL = { pending: 'req_st_pending', approved: 'req_st_approved', refused: 'req_st_refused' } as const;
 
 /** Chip for the change-request form (selected = blue; the current value is greyed out). */
-function Choice({ label, on, current, onPress }: { label: string; on: boolean; current?: boolean; onPress: () => void }) {
+function Choice({ label, on, current, onPress, tight }: { label: string; on: boolean; current?: boolean; onPress: () => void; tight?: boolean }) {
   return (
-    <PressScale debounceMs={0} role="button" disabled={current} onPress={() => { tap(); onPress(); }} style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? colors.blueSoft : colors.card, borderWidth: on ? 3 : 2, borderColor: on ? colors.blue : colors.lineStrong, borderBottomWidth: on ? 3 : 4, opacity: current ? 0.45 : 1 }}>
-      <T v="bold" color={on ? colors.blue : colors.ink}>{label}</T>
+    <PressScale debounceMs={0} role="button" disabled={current} onPress={() => { tap(); onPress(); }} style={{ minHeight: 44, paddingHorizontal: tight ? 4 : 14, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? colors.blueSoft : colors.card, borderWidth: on ? 3 : 2, borderColor: on ? colors.blue : colors.lineStrong, borderBottomWidth: on ? 3 : 4, opacity: current ? 0.45 : 1 }}>
+      <T v="bold" color={on ? colors.blue : colors.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</T>
     </PressScale>
   );
 }
@@ -167,7 +167,7 @@ export default function Settings() {
               <T v="bold">{t('req_now', { x: `${ageText(profile.age)} · ${gradeText(profile.grade)}` })}</T>
               <T v="label" color={colors.muted}>{t('req_new_age').toUpperCase()}</T>
               <Row gap={8}>
-                {AGE_BANDS.map((a) => <View key={a} style={{ flex: 1 }}><Choice label={ageText(a)} on={reqAge === a} current={profile.age === a} onPress={() => setReqAge(reqAge === a ? null : a)} /></View>)}
+                {AGE_BANDS.map((a) => <View key={a} style={{ flex: 1 }}><Choice tight label={ageText(a)} on={reqAge === a} current={profile.age === a} onPress={() => setReqAge(reqAge === a ? null : a)} /></View>)}
               </Row>
               <T v="label" color={colors.muted}>{t('req_new_grade').toUpperCase()}</T>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
