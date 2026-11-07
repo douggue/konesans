@@ -109,7 +109,7 @@ export default function Settings() {
             <Row style={{ paddingVertical: 6 }}>
               <View style={{ flex: 1 }}>
                 <T v="bold">Kesyon nan defi jodi a</T>
-                <T v="small" color={colors.muted}>Ant 5 ak 20</T>
+                <T v="small" color={colors.muted}>Ant 5 ak 20. App la montre «{c.dailyCount} kesyon melanje», epi tout timoun menm laj jwenn menm {c.dailyCount} kesyon yo. Konte apre ou pibliye, pou defi demen (defi jodi a deja fikse).</T>
               </View>
               <Press label="Mwens" onPress={() => setC({ ...c, dailyCount: Math.max(5, c.dailyCount - 1) })} style={step}><T v="h2">−</T></Press>
               <T v="h1" style={{ minWidth: 40, textAlign: 'center', fontVariant: ['tabular-nums'] }}>{c.dailyCount}</T>

@@ -172,6 +172,11 @@ textarea.inp { resize: vertical; font-weight: 600; }
 .strrow .key { font-family: var(--mono); font-size: 12px; color: var(--muted); padding-top: 10px; word-break: break-all; }
 .strrow .def { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .strrow.changed .key { color: var(--blue); font-weight: 800; }
+.strrow .chk { grid-column: 2 / -1; font-size: 12px; font-weight: 700; }
+.strrow .chk .e { color: var(--red); display: block; }
+.strrow .chk .w { color: var(--yellow-ink); display: block; }
+.strrow.bad .key { color: var(--red); }
+.strrow.bad .inp { border-color: var(--red); }
 .tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
 .tbl th { text-align: left; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 6px 8px; border-bottom: 2px solid var(--line); }
 .tbl td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
@@ -261,7 +266,8 @@ textarea.inp { resize: vertical; font-weight: 600; }
 <script>
 (() => {
 'use strict';
-const CFG = Object.assign({ api: '', serverKey: 'konesans-server-key' }, window.KONESANS || {});
+// api + serverKey come from config.js (written by server/deploy/update.sh from keys.env); no built-in key
+const CFG = Object.assign({ api: '', serverKey: '' }, window.KONESANS || {});
 const qs = new URLSearchParams(location.search);
 if (qs.get('api')) CFG.api = qs.get('api');
 const $ = (s, el = document) => el.querySelector(s);
@@ -628,7 +634,7 @@ async function viewSettings() {
     </section>
     <section class="panel"><h2>Kesyon</h2>
       <label class="switch"><span class="t">Sèvi kesyon ki poko relekti<small>Lè l fèmen, se sèlman kesyon ki apwouve ki rive sou telefòn yo</small></span><input type="checkbox" class="tg" data-sf="serveReview" ${c.serveReview ? 'checked' : ''}></label>
-      <div class="row2"><div class="field"><label for="s-daily">Kesyon nan Defi jodi a</label><input class="inp" id="s-daily" type="number" min="5" max="20" data-sf="dailyCount" value="${c.dailyCount}"></div>
+      <div class="row2"><div class="field"><label for="s-daily">Kesyon nan Defi jodi a</label><input class="inp" id="s-daily" type="number" min="5" max="20" step="1" data-sf="dailyCount" value="${c.dailyCount}"><small class="muted" id="s-daily-hint">${dailyHint(c.dailyCount)}</small></div>
       <div class="field"><label for="s-minv">Vèsyon app minimòm</label><input class="inp mono" id="s-minv" data-sf="minAppVersion" value="${esc(c.minAppVersion)}"></div></div>
     </section>
     <section class="panel"><h2>Antretyen</h2><p class="muted" style="margin:0">Bloke app la ak yon mesaj pandan w ap fè gwo chanjman.</p>
@@ -644,9 +650,40 @@ $('#content').addEventListener('input', (e) => {
   const [a, b] = f.split('.'); const v = el.type === 'checkbox' ? el.checked : el.type === 'number' ? Number(el.value) : el.value;
   if (b) S.config[a][b] = v; else S.config[a] = v;
   if (f === 'announcement.ht') $('#s-preview').textContent = el.value || 'Apèsi anons lan';
+  if (f === 'dailyCount') { S.config.dailyCount = clampDaily(el.value); $('#s-daily-hint').textContent = dailyHint(S.config.dailyCount); }
 });
 
+/** Same bounds as the server (admin_config_save) and the app (core clampDailyCount). */
+const clampDaily = (v) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n > 0 ? Math.min(20, Math.max(5, n)) : 10; };
+const dailyHint = (n) => `Ant 5 ak 20. App la montre «${clampDaily(n)} kesyon melanje», epi tout timoun menm laj jwenn menm ${clampDaily(n)} kesyon yo. Konte apre ou pibliye, pou defi demen (defi jodi a deja fikse).`;
+
 // ---------- UI strings ----------
+/**
+ * Checks for text overrides (same rules as apps/admin-mobile/src/texts-check.ts). The kids' app fills {n}, {name}, {x}…:
+ * an override must keep every one of them and add none; too long texts break buttons. Errors block saving.
+ */
+const PH = /\{[A-Za-z_][A-Za-z0-9_]*\}/g;
+const placeholders = (s) => [...new Set(s.match(PH) || [])].sort();
+const maxTextLength = (def) => Math.max(60, def.length * 2);
+function checkSide(def, v, lang) {
+  const e = []; const want = placeholders(def), got = placeholders(v);
+  const missing = want.filter((p) => !got.includes(p)), extra = got.filter((p) => !want.includes(p));
+  if (missing.length) e.push(`${lang}: kenbe ${missing.join(' ')} (app la mete yon valè la a)`);
+  if (extra.length) e.push(`${lang}: ${extra.join(' ')} pa egziste pou tèks sa a`);
+  if (v.length > maxTextLength(def)) e.push(`${lang}: twò long (${v.length}/${maxTextLength(def)} karaktè)`);
+  if ((v.match(/\{/g) || []).length !== (v.match(/\}/g) || []).length) e.push(`${lang}: yon { oswa } pa fèmen`);
+  return e;
+}
+function checkText(def, val) {
+  const ht = (val[0] || '').trim(), fr = (val[1] || '').trim(); const errors = [], warnings = [];
+  if (!ht && !fr) return { errors, warnings };
+  if (ht) errors.push(...checkSide(def[0], ht, 'Kreyòl')); else warnings.push('Kreyòl vid: app la ap montre tèks orijinal la.');
+  if (fr) errors.push(...checkSide(def[1], fr, 'Français')); else warnings.push('Français vide : l’app montrera le texte d’origine.');
+  if (ht && ht === def[0] && (!fr || fr === def[1])) warnings.push('Menm jan ak tèks orijinal la.');
+  return { errors, warnings };
+}
+const chkHtml = (c) => c ? c.errors.map((x) => `<span class="e">✖ ${esc(x)}</span>`).join('') + c.warnings.map((x) => `<span class="w">⚠ ${esc(x)}</span>`).join('') : '';
+const textErrorKeys = () => Object.keys(S.stringsDirty).filter((k) => S.strings.defaults[k] && checkText(S.strings.defaults[k], S.stringsDirty[k]).errors.length);
 /** Quick filters by key prefix (same groups in the Android admin). */
 const STR_GROUPS = [['all', 'Tout'], ['rank_', 'Ran'], ['req_', 'Demann'], ['changed', 'Chanje']];
 const groupChip = (k) => k.startsWith('rank_') ? '<span class="chip blue" style="margin-right:6px">Ran</span>' : k.startsWith('req_') ? '<span class="chip" style="margin-right:6px">Demann</span>' : '';
@@ -659,12 +696,12 @@ async function viewStrings() {
     const ql = q.toLowerCase();
     const g = S.strGroup;
     const keys = Object.keys(S.strings.defaults).filter((k) => (g === 'all' || (g === 'changed' ? !!S.stringsDirty[k] : k.startsWith(g))) && (!ql || k.includes(ql) || S.strings.defaults[k].join(' ').toLowerCase().includes(ql) || (S.stringsDirty[k] || []).join(' ').toLowerCase().includes(ql)));
-    $('#content').innerHTML = `<section class="panel"><p class="muted" style="margin:0">Chanje nenpòt tèks nan app la. Kite yon kaz vid pou tounen nan tèks orijinal la.</p><div>${keys.map((k) => { const d = S.strings.defaults[k], o = S.stringsDirty[k]; return `<div class="strrow ${o ? 'changed' : ''}" data-k="${k}"><div class="key">${groupChip(k)}${k}</div><div><input class="inp" data-l="0" value="${esc(o?.[0] ?? '')}" placeholder="${esc(d[0])}" aria-label="${k} Kreyòl"><div class="def">${esc(d[0])}</div></div><div><input class="inp" data-l="1" value="${esc(o?.[1] ?? '')}" placeholder="${esc(d[1])}" aria-label="${k} français"><div class="def">${esc(d[1])}</div></div></div>`; }).join('')}</div></section>`;
+    $('#content').innerHTML = `<section class="panel"><p class="muted" style="margin:0">Chanje nenpòt tèks nan app la. Kite yon kaz vid pou tounen nan tèks orijinal la.</p><div>${keys.map((k) => { const d = S.strings.defaults[k], o = S.stringsDirty[k]; const c = o ? checkText(d, o) : null; return `<div class="strrow ${o ? 'changed' : ''} ${c && c.errors.length ? 'bad' : ''}" data-k="${k}"><div class="key">${groupChip(k)}${k}</div><div><input class="inp" data-l="0" value="${esc(o?.[0] ?? '')}" placeholder="${esc(d[0])}" aria-label="${k} Kreyòl"><div class="def">${esc(d[0])}</div></div><div><input class="inp" data-l="1" value="${esc(o?.[1] ?? '')}" placeholder="${esc(d[1])}" aria-label="${k} français"><div class="def">${esc(d[1])}</div></div><div class="chk">${chkHtml(c)}</div></div>`; }).join('')}</div></section>`;
   };
   render();
   for (const b of document.querySelectorAll('[data-sg]')) b.onclick = () => { S.strGroup = b.dataset.sg; for (const x of document.querySelectorAll('[data-sg]')) x.setAttribute('aria-pressed', String(x === b)); render($('#t-search').value); };
   let t; $('#t-search').oninput = (e) => { clearTimeout(t); t = setTimeout(() => render(e.target.value), 150); };
-  $('#t-save').onclick = (e) => busy(e.currentTarget, async () => { try { S.strings.overrides = (await rpc('admin_strings_save', { overrides: S.stringsDirty })).overrides; S.stringsDirty = JSON.parse(JSON.stringify(S.strings.overrides)); savedToast(); loadStats(); render($('#t-search').value); } catch (er) { toast(er.message, true); } });
+  $('#t-save').onclick = (e) => busy(e.currentTarget, async () => { const bad = textErrorKeys(); if (bad.length) { toast(`Korije ${bad.length} tèks anvan ou sove: ${bad.slice(0, 3).join(', ')}${bad.length > 3 ? '…' : ''}`, true); S.strGroup = 'changed'; for (const x of document.querySelectorAll('[data-sg]')) x.setAttribute('aria-pressed', String(x.dataset.sg === 'changed')); render($('#t-search').value); return; } try { S.strings.overrides = (await rpc('admin_strings_save', { overrides: S.stringsDirty })).overrides; S.stringsDirty = JSON.parse(JSON.stringify(S.strings.overrides)); savedToast(); loadStats(); render($('#t-search').value); } catch (er) { toast(er.message, true); } });
 }
 $('#content').addEventListener('input', (e) => {
   if (S.view !== 'teks') return;
@@ -672,6 +709,9 @@ $('#content').addEventListener('input', (e) => {
   const k = row.dataset.k; const v = [row.querySelector('[data-l="0"]').value.trim(), row.querySelector('[data-l="1"]').value.trim()];
   if (!v[0] && !v[1]) delete S.stringsDirty[k]; else S.stringsDirty[k] = v;
   row.classList.toggle('changed', !!S.stringsDirty[k]);
+  const c = S.stringsDirty[k] ? checkText(S.strings.defaults[k], S.stringsDirty[k]) : null;
+  row.classList.toggle('bad', !!(c && c.errors.length));
+  row.querySelector('.chk').innerHTML = chkHtml(c);
 });
 
 // ---------- age / class change requests ----------
@@ -751,6 +791,7 @@ async function viewAccount() {
 // ---------- boot ----------
 $('#loginform').onsubmit = async (e) => {
   e.preventDefault(); $('#lg-err').hidden = true;
+  if (!CFG.serverKey) { $('#lg-err').hidden = false; $('#lg-err').textContent = 'Kle sèvè a manke: config.js pa gen serverKey (server/deploy/update.sh ekri l).'; return; }
   const email = $('#lg-email').value.trim(), pass = $('#lg-pass').value;
   await busy($('#lg-btn'), async () => {
     try { await login(email, pass); store.set('email', email); $('#lg-pass').value = ''; await showApp(); }

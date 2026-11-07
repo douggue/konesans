@@ -21,5 +21,6 @@ export const DAILY_STRINGS = {
   dl_no_rank_offline: ['Pa gen entènèt: klasman an bezwen entènèt. Nòt ou rete sou telefòn sa a.', 'Pas d’internet : le classement a besoin d’internet. Ton score reste sur ce téléphone.'],
   dl_loading: ['N ap prepare kesyon jodi a…', 'On prépare les questions du jour…'],
   dl_empty: ['Pa gen kesyon pou laj ou jodi a.', 'Pas de questions pour ton âge aujourd’hui.'],
+  dl_quit_scored: ['Si ou kite kounye a, nòt ou ap konte jan l ye a (kesyon ki rete yo konte kòm move).', 'Si tu quittes maintenant, ton score compte tel quel (les questions restantes comptent comme fausses).'],
   dl_tomorrow: ['Nouvo kesyon demen!', 'Nouvelles questions demain !'],
 } as const;

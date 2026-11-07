@@ -6,6 +6,7 @@ import { useSession } from '@/session';
 import { publishNow } from '@/lib';
 import { Screen, Header, T, Row, Button, Loading, ErrorBox, Card, Icon, Toggle, Chip, haptic } from '@/ui';
 import { colors, fonts } from '@/theme';
+import { checkText, textErrors } from '@/texts-check';
 
 type Pair = [string, string];
 const input = { borderWidth: 2, borderColor: colors.line, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8, backgroundColor: colors.bg, fontFamily: fonts.body, fontSize: 15, color: colors.ink } as const;
@@ -21,6 +22,9 @@ export default function Texts() {
   const [saving, setSaving] = useState(false);
   useEffect(() => { if (load.data) setDraft(JSON.parse(JSON.stringify(load.data.overrides))); }, [load.data]);
   const dirty = !!load.data && JSON.stringify(draft) !== JSON.stringify(load.data.overrides);
+  // placeholders ({n}, {name}…) kept, sane length: an override with an error cannot be saved
+  const errs = useMemo(() => (load.data ? textErrors(load.data.defaults, draft) : {}), [load.data, draft]);
+  const nErr = Object.keys(errs).length;
 
   const keys = useMemo(() => {
     if (!load.data) return [];
@@ -37,6 +41,7 @@ export default function Texts() {
     return next;
   });
   const save = async () => {
+    if (nErr) { haptic('warn'); setGroup('changed'); toast(`Korije ${nErr} tèks anvan ou sove`, 'err'); return; }
     setSaving(true);
     try { const r = await api.saveStrings(draft); load.setData({ ...load.data!, overrides: r.overrides }); setDraft(JSON.parse(JSON.stringify(r.overrides))); haptic('ok'); bump(); toast('Sove ✓ · Timoun yo pa wè l toutotan ou pa pibliye', 'info', { label: 'Pibliye', run: publishNow(toast, bump) }); }
     catch (e) { toast(errText(e), 'err'); } finally { setSaving(false); }
@@ -45,7 +50,7 @@ export default function Texts() {
   return (
     <Screen onRefresh={load.refresh} refreshing={load.refreshing}
       header={<Header back title="Tèks app la" sub="Kite yon kaz vid pou tounen nan tèks orijinal la" />}
-      bottom={dirty ? <View style={{ padding: 12 }}><Button title="Sove tèks yo" big busy={saving} onPress={save} /></View> : undefined}>
+      bottom={dirty ? <View style={{ padding: 12, gap: 6 }}>{nErr ? <T v="small" color={colors.red} center>{nErr === 1 ? '1 tèks gen yon erè' : `${nErr} tèks gen erè`}: gade sa ki an wouj.</T> : null}<Button title={nErr ? 'Korije erè yo anvan' : 'Sove tèks yo'} big busy={saving} disabled={!!nErr} onPress={save} /></View> : undefined}>
       {load.loading && !load.data ? <Loading /> : null}
       {load.error ? <ErrorBox text={load.error} onRetry={load.reload} /> : null}
       {load.data ? (
@@ -58,8 +63,9 @@ export default function Texts() {
           <Row gap={6} wrap><Toggle text="Tout" on={group === 'all'} onPress={() => setGroup('all')} /><Toggle text="Ran" on={group === 'rank_'} onPress={() => setGroup('rank_')} /><Toggle text="Demann" on={group === 'req_'} onPress={() => setGroup('req_')} /><Toggle text={`Chanje (${Object.keys(draft).length})`} on={group === 'changed'} onPress={() => setGroup('changed')} /></Row>
           {keys.slice(0, 80).map((k) => {
             const d = load.data!.defaults[k]; const o = draft[k];
+            const chk = o ? checkText(d, o) : null;
             return (
-              <Card key={k} edge={o ? colors.blue : undefined} style={{ gap: 8 }}>
+              <Card key={k} edge={errs[k] ? colors.red : o ? colors.blue : undefined} style={{ gap: 8 }}>
                 <Row gap={6}>{k.startsWith('rank_') ? <Chip text="Ran" fg="#FFFFFF" bg={colors.blue} /> : k.startsWith('req_') ? <Chip text="Demann" fg={colors.muted} bg={colors.bg} /> : null}<T v="mono" color={o ? colors.blue : colors.muted} style={{ flexShrink: 1 }}>{k}</T></Row>
                 <View style={{ gap: 4 }}>
                   <TextInput value={o?.[0] ?? ''} onChangeText={(v) => setPart(k, 0, v)} placeholder={d[0]} placeholderTextColor={colors.muted} style={input} accessibilityLabel={`${k} Kreyòl`} />
@@ -69,6 +75,8 @@ export default function Texts() {
                   <TextInput value={o?.[1] ?? ''} onChangeText={(v) => setPart(k, 1, v)} placeholder={d[1]} placeholderTextColor={colors.muted} style={input} accessibilityLabel={`${k} français`} />
                   <T v="small" color={colors.muted}>Français : {d[1]}</T>
                 </View>
+                {chk?.errors.map((e) => <T key={e} v="small" color={colors.red}>✖ {e}</T>)}
+                {chk?.warnings.map((w) => <T key={w} v="small" color={colors.yellowInk}>⚠ {w}</T>)}
               </Card>
             );
           })}

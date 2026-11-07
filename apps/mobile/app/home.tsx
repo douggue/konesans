@@ -9,6 +9,7 @@ import { colors, fonts } from '@/lib/theme';
 import { categoryInfo } from '@/lib/content';
 import { useAnnouncement, useFeatures, useDailyCount } from '@/lib/remote';
 import { useStore, useAvatar } from '@/lib/store';
+import { useDailyHome } from '@/lib/daily';
 import { useT, useL } from '@/lib/i18n';
 import { tap, music } from '@/lib/audio';
 
@@ -17,7 +18,7 @@ export default function Home() {
   const { profile, progress, courses, courseLang, touch } = useStore();
   const ann = useAnnouncement();
   const features = useFeatures();
-  const daily = useDailyCount();
+  const daily = useDailyHome(profile.age); // real count + today's result (src/lib/daily.ts)
   const avatar = useAvatar();
   useEffect(() => { touch(); }, []);
   useFocusEffect(useCallback(() => { music(null); }, [])); // no music in menus (concentration); music only in duels
@@ -56,9 +57,9 @@ export default function Home() {
       <FadeIn delay={80}><View style={{ backgroundColor: colors.blue, borderRadius: 24, padding: 20, paddingRight: 118, gap: 6, borderBottomWidth: 5, borderBottomColor: '#14307D', overflow: 'hidden' }}>
         <Motif kind="drapo" opacity={0.2} height={170} />
         <T v="label" color="#E6ECFB">{t('daily')}</T>
-        <T v="h1" color="#fff">{t('daily_title')}</T>
-        <T v="small" color="#E6ECFB">{t('daily_sub')}</T>
-        <Button small title={t('play_now')} variant="secondary" color={colors.blue} onPress={() => router.push(`/quiz/mix?count=${daily}`)} style={{ alignSelf: 'flex-start', marginTop: 6 }} />
+        <T v="h1" color="#fff">{t('dl_title', { n: daily.count })}</T>
+        <T v="small" color="#E6ECFB">{daily.result ? (daily.rank ? t('dl_home_rank', { c: daily.result.correct, t: daily.result.total, r: daily.rank }) : t('dl_home_done', { c: daily.result.correct, t: daily.result.total })) : t('dl_home_sub')}</T>
+        <Button small title={daily.result ? t('dl_see') : t('play_now')} variant="secondary" color={colors.blue} onPress={() => router.push('/daily')} style={{ alignSelf: 'flex-start', marginTop: 6 }} />
         <View style={{ position: 'absolute', right: 2, bottom: 0 }}><Mascot size={118} mood="happy" /></View>
       </View></FadeIn>
 

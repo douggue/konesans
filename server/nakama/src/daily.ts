@@ -131,7 +131,8 @@ function top(nk: nkruntime.Nakama, day: string, age: AgeBand, userId: string): {
 
 function displayName(nk: nkruntime.Nakama, userId: string): { name: string; avatar?: unknown } {
   const u = nk.usersGetId([userId])[0];
-  return { name: (u?.displayName || u?.username || 'Jwè').slice(0, 24), avatar: (u?.metadata as any)?.avatar };
+  // the kid-safe name the app set with profile_set; never Nakama's internal username
+  return { name: (u?.displayName || 'Jwè').slice(0, 24), avatar: (u?.metadata as any)?.avatar };
 }
 
 // ---------- RPCs ----------

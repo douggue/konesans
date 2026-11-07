@@ -6,13 +6,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
-import { startSolo, answerSolo, soloSummary, quizXp, avatarFromSeedSafe, type SoloSession, type AvatarConfig } from './daily-helpers';
-import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Pill, CountPill, Stars, FadeIn, Pop, Drop, SlideSwap, Confetti, Avatar, Motif, useCountUp } from '@/ui';
+import { startSolo, answerSolo, soloSummary, quizXp, type SoloSession, type AvatarConfig } from '@konesans/core';
+import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Pill, CountPill, Stars, FadeIn, Pop, Drop, SlideSwap, Confetti, Avatar, Motif, useCountUp, avatarFromSeed } from '@/ui';
+import { HAIRS, EXTRAS } from '@/ui/avatar';
 import { QuestionView } from '@/ui/QuestionView';
 import { RankUpListener } from '@/ui/RankUp';
 import { useQuitGuard, useQuestionClock, questionTimeMs, scoredNow } from '@/ui/activity';
 import { colors } from '@/lib/theme';
-import { useStore } from '@/lib/store';
+import { useStore, useAvatar } from '@/lib/store';
 import { useT, useL, formatDate } from '@/lib/i18n';
 import { loadDaily, submitDaily, refreshTop, markRewarded, type DailyDay, type DailyRow } from '@/lib/daily';
 import { speak, tap, sfx, music, answerSfx } from '@/lib/audio';
@@ -23,6 +24,8 @@ type Phase = 'loading' | 'intro' | 'play' | 'result';
 export default function Daily() {
   const t = useT();
   const { profile } = useStore();
+  const avatar = useAvatar();
+  const who = { name: profile.username, avatar };
   const [phase, setPhase] = useState<Phase>('loading');
   const [d, setD] = useState<DailyDay | null>(null);
   const [online, setOnline] = useState(false);
@@ -33,7 +36,7 @@ export default function Daily() {
   useEffect(() => { music(null); }, []);
   useEffect(() => {
     let alive = true;
-    loadDaily(profile.age).then((r) => { if (!alive) return; setD(r.day); setOnline(r.online); setPhase('intro'); });
+    loadDaily(profile.age, who).then((r) => { if (!alive) return; setD(r.day); setOnline(r.online); setPhase('intro'); });
     return () => { alive = false; };
   }, [profile.age]);
 
@@ -56,16 +59,17 @@ export default function Daily() {
   if (phase === 'play') {
     return (
       <Play key={runKey} d={d} practice={practice} onQuit={() => setPhase('intro')} onDone={async (answers, sum) => {
+        // a scored run that is left half way still counts (unanswered = wrong): the day has one chance
         if (practice) { setPhase('result'); return; }
         setSending(true); setPhase('result');
-        let next = await submitDaily(d, answers);
+        let next = await submitDaily(d, answers, false, who);
         if (!next.result?.rewarded) {
           // the scored run gives the normal quiz rewards, once a day
           useStore.getState().recordQuiz({ category: 'mix', correct: sum.correct, total: sum.total, score: sum.score, wrongIds: sum.wrongIds, ids: d.questions.map((q) => q.id) });
           next = markRewarded(next);
         }
         setD(next); setSending(false);
-      }} lastPractice={(s) => setLastPractice(s)} />
+      }} lastPractice={(s) => { lastRun.current = s; }} />
     );
   }
 
@@ -97,8 +101,6 @@ export default function Daily() {
       <RankUpListener delayMs={1800} />
     </Screen>
   );
-
-  function setLastPractice(_s: SoloSession) { /* practice results are shown by PracticeResult from the last run */ lastRun.current = _s; }
 }
 
 /** The last practice run (shown on the result screen). */
@@ -195,11 +197,25 @@ function PlaceNumber({ rank }: { rank: number }) {
   return <T v="display" color="#fff">#{Math.max(1, n)}</T>;
 }
 
+/** Another kid's avatar comes from the server: keep only values the drawing knows (else one made from the name). */
+function safeAvatar(v: unknown, seed: string): AvatarConfig {
+  const base = avatarFromSeed(seed);
+  if (!v || typeof v !== 'object') return base;
+  const o = v as Record<string, unknown>;
+  const n = (k: keyof AvatarConfig) => (typeof o[k] === 'number' && Number.isInteger(o[k]) && (o[k] as number) >= 0 && (o[k] as number) < 32 ? (o[k] as number) : (base[k] as number));
+  return {
+    skin: n('skin'), hairColor: n('hairColor'), shirt: n('shirt'), bg: n('bg'),
+    hair: HAIRS.includes(o.hair as never) ? (o.hair as AvatarConfig['hair']) : base.hair,
+    extra: EXTRAS.includes(o.extra as never) ? (o.extra as AvatarConfig['extra']) : base.extra,
+    ...(typeof o.frame === 'number' && Number.isInteger(o.frame) && o.frame >= 0 && o.frame < 8 ? { frame: o.frame } : {}),
+  };
+}
+
 /** One line of the ranking: place, avatar, kid-safe username, score. Nothing else about the kid. */
 function RankRow({ row, delay }: { row: DailyRow; delay: number }) {
   const t = useT();
   const medal = row.rank <= 3 ? MEDAL[row.rank - 1] : null;
-  const a: AvatarConfig = avatarFromSeedSafe(row.avatar, row.name);
+  const a = safeAvatar(row.avatar, row.name);
   return (
     <FadeIn delay={delay} x={row.me ? -24 : 24} from={0}>
       <Card edge={row.me ? colors.blue : undefined} soft={row.me ? colors.blueSoft : undefined} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, paddingHorizontal: 12 }}>
@@ -282,9 +298,15 @@ function Play({ d, practice, onQuit, onDone, lastPractice }: {
         </Card></FadeIn>
       )}
       <Sheet open={quitting} title={t('quit_q')} onClose={() => setQuitting(false)}>
-        {!practice && <T v="small" center color={colors.muted}>{t('dl_rule')}</T>}
+        {!practice && s.answers.length > 0 && <T v="small" center color={colors.muted}>{t('dl_quit_scored')}</T>}
         <Button title={t('stay')} onPress={() => setQuitting(false)} />
-        <Button variant="secondary" color={colors.red} title={t('quit')} onPress={() => { setQuitting(false); leave(onQuit); }} />
+        <Button variant="secondary" color={colors.red} title={t('quit')} onPress={() => {
+          setQuitting(false);
+          if (practice || done.current || s.answers.length === 0) { leave(onQuit); return; } // nothing answered yet: no attempt used
+          done.current = true;
+          const sum = soloSummary(s);
+          leave(() => onDone(s.answers.map((a) => ({ i: a.chosen, ms: a.elapsedMs })), { ...sum, total: s.questions.length, wrongIds: [...sum.wrongIds, ...s.questions.slice(s.answers.length).map((x) => x.id)] }));
+        }} />
       </Sheet>
     </Screen>
   );

@@ -13,7 +13,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BANK, SAMPLE_QUESTIONS, pickDaily, scoreDaily, haitiDay, clampDailyCount, type AgeBand, type Question, type DailyAnswer } from '@konesans/core';
-import { callRpc, onlineFailure } from './online';
+import { callRpc, onlineFailure, setProfile } from './online';
 import { useRemote, serverConfigured } from './remote';
 
 export interface DailyRow { rank: number; name: string; avatar?: unknown; correct: number; total: number; score: number; me: boolean }
@@ -69,7 +69,7 @@ function localDay(age: AgeBand): DailyDay {
 interface ServerResult { correct: number; total: number; score: number; ms: number; perQuestion: boolean[] }
 
 /** Today's challenge for an age band: from the server when it answers, otherwise built on the phone. */
-export async function loadDaily(age: AgeBand): Promise<{ day: DailyDay; online: boolean }> {
+export async function loadDaily(age: AgeBand, who?: { name: string; avatar: unknown }): Promise<{ day: DailyDay; online: boolean }> {
   const today = todayHaiti();
   const cached = useDaily.getState().days[keyOf(today, age)];
   if (!serverConfigured()) return { day: save(localDay(age)), online: false };
@@ -81,7 +81,7 @@ export async function loadDaily(age: AgeBand): Promise<{ day: DailyDay; online: 
       result: r.result ? { ...r.result, synced: true, rewarded: mine?.result?.rewarded } : mine?.result, top: mine?.top ?? [], me: mine?.me ?? null,
     };
     // a scored run of today's server set that never reached the server: send it now
-    if (d.result && !d.result.synced && d.result.answers && mine?.source === 'server') d = await submitDaily(d, d.result.answers, true);
+    if (d.result && !d.result.synced && d.result.answers && mine?.source === 'server') d = await submitDaily(d, d.result.answers, true, who);
     else if (d.result?.synced && r.allowed) d = await refreshTop(d);
     return { day: save(d), online: true };
   } catch {
@@ -93,13 +93,15 @@ export async function loadDaily(age: AgeBand): Promise<{ day: DailyDay; online: 
  * The one scored run of the day. Online: the server scores it and answers with the ranking.
  * Offline (or refused): scored on the phone, kept, sent again later if the set came from the server.
  */
-export async function submitDaily(d: DailyDay, answers: DailyAnswer[], retry = false): Promise<DailyDay> {
+export async function submitDaily(d: DailyDay, answers: DailyAnswer[], retry = false, who?: { name: string; avatar: unknown }): Promise<DailyDay> {
   const local = scoreDaily(d.questions, answers);
   const prev = d.result;
   if (prev?.synced && !retry) return d; // already scored: replays are practice
   const keepLocal: DailyDay = { ...d, result: { ...local, synced: false, answers, rewarded: prev?.rewarded } };
   if (d.source !== 'server' || !serverConfigured()) return save(keepLocal);
   try {
+    // the ranking shows the kid's generated username + avatar (the same public identity as duels)
+    if (who) await setProfile(who.name, who.avatar).catch(() => {});
     const r = await callRpc<ServerResult & { allowed: boolean; already: boolean; top: DailyRow[]; me: DailyRow | null }>('daily_submit', { day: d.day, age: d.age, answers });
     return save({ ...d, allowed: r.allowed, top: r.top ?? [], me: r.me ?? null,
       result: { correct: r.correct, total: r.total, score: r.score, ms: r.ms, perQuestion: r.perQuestion, synced: true, rewarded: prev?.rewarded } });

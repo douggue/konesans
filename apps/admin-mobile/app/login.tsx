@@ -29,6 +29,7 @@ export default function Login() {
   const submit = async () => {
     setError(null);
     if (!apiUrl.trim() || apiUrl.includes('CHANGE-ME')) { setShowServer(true); setError('Mete adrès sèvè a (egz. https://api.konesans.ht).'); doShake(); return; }
+    if (!serverKey.trim()) { setShowServer(true); setError('Mete kle sèvè a (SERVER_KEY nan keys.env sou sèvè a).'); doShake(); return; }
     if (!email.trim() || !password) { setError('Mete imèl ak modpas ou.'); doShake(); return; }
     setBusy(true);
     try {
@@ -75,7 +76,7 @@ export default function Login() {
             {showServer ? (
               <View style={{ gap: 12 }}>
                 <Field label="Adrès sèvè a" value={apiUrl} onChangeText={setApiUrl} autoCapitalize="none" autoCorrect={false} keyboardType="url" placeholder="https://api.konesans.ht" />
-                <Field label="Kle sèvè a" value={serverKey} onChangeText={setServerKey} autoCapitalize="none" autoCorrect={false} placeholder="konesans-server-key" />
+                <Field label="Kle sèvè a" value={serverKey} onChangeText={setServerKey} autoCapitalize="none" autoCorrect={false} placeholder="SERVER_KEY (keys.env)" />
               </View>
             ) : null}
 
