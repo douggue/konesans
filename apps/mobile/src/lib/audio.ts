@@ -46,6 +46,16 @@ const SFX_SRC = {
   coin: 'sfx_coin',
   badge: 'sfx_badge',
   level: 'sfx_level',
+  // duel reaction stickers (src/ui/Reactions.tsx)
+  re_bravo: 'sfx_re_bravo',
+  re_byen_jwe: 'sfx_re_byen_jwe',
+  re_wow: 'sfx_re_wow',
+  re_dife: 'sfx_re_dife',
+  re_ri: 'sfx_re_ri',
+  re_ke: 'sfx_re_ke',
+  re_bon_chans: 'sfx_re_bon_chans',
+  re_anko: 'sfx_re_anko',
+  re_mwen_pare: 'sfx_re_mwen_pare',
 } as const;
 export type SfxName = keyof typeof SFX_SRC;
 
@@ -62,7 +72,8 @@ export type MusicTrack = Exclude<Loop, 'duel_hurry'>;
 const STING_MS: Partial<Record<SfxName, number>> = { win: 2600, lose: 2200, draw: 1300, level: 1800 };
 
 /** Effects volume (0–1). Kept soft so kids can concentrate; small UI ticks even softer. */
-const SFX_VOL: Partial<Record<SfxName, number>> = { tap: 0.25, tick: 0.35, pop: 0.35, ping: 0.35 };
+const SFX_VOL: Partial<Record<SfxName, number>> = { tap: 0.25, tick: 0.35, pop: 0.35, ping: 0.35,
+  re_bravo: 0.35, re_byen_jwe: 0.35, re_wow: 0.35, re_dife: 0.35, re_ri: 0.35, re_ke: 0.35, re_bon_chans: 0.35, re_anko: 0.35, re_mwen_pare: 0.35 };
 
 /** Music sits under SFX and the voice; while TTS talks it ducks further. */
 const MUSIC_VOL = 0.28; // quiet bed under the game (owner: 'too loud')

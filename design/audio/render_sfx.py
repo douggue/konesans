@@ -252,7 +252,126 @@ def level_complete():
     return fade_edges(y, 0, 0.25), dict(target=-15)
 
 
+# ─── duel reactions (one short, soft sound per sticker; 0.25–0.6 s) ─────────
+def _glide(m0: float, m1: float, dur: float, shape='tri', curve=1.0, cutoff=None, kmax=12):
+    """Pitch slide from MIDI m0 to m1 (curve>1 = late, <1 = early)."""
+    n = ns(dur)
+    t = secs(n)
+    k = np.clip(t / dur, 0, 1) ** curve
+    f = hz(m0) * 2 ** ((m1 - m0) * k / 12)
+    return additive(f, n, shape, cutoff=cutoff, kmax=kmax), n
+
+
+def re_bravo():
+    """Party popper: a cork pop, then a little shower of confetti twinkles going up."""
+    b = mixer(0.75)
+    n = ns(0.09)
+    t = secs(n)
+    f = 300 * (1 + 2.0 * (1 - np.exp(-t / 0.015)))
+    b.add(np.sin(2 * np.pi * np.cumsum(f) / SR) * np.minimum(1, t / 0.002) * np.exp(-t / 0.025) * 0.9, 0.0)
+    b.add(filt(noise(n, 81), 'bp', (1800, 7000)) * perc(n, 0.006) * 0.5, 0.0)
+    for i, m in enumerate((84, 88, 91, 96, 100)):
+        b.add(bell(m, 0.05, 0.32 - 0.03 * i, ratio=3.5, index=1.1, decay=0.12), 0.07 + 0.045 * i, 1.0, pan=-0.5 + 0.25 * i)
+    b.add(chip(96, 0.12, 0.12, shape='pulse', duty=0.25), 0.27)
+    return reverb_tail(b.buf, 0.7, 0.14)[:ns(0.62)], dict(target=-21)
+
+
+def re_byen_jwe():
+    """Thumbs up: two warm mallet notes up a fifth ('nice!') with a soft chip sparkle."""
+    b = mixer(0.6)
+    for at, m, v in ((0.0, 79, 0.8), (0.1, 86, 1.0)):
+        b.add(mallet(m, 0.1, 0.7 * v, decay=0.14), at)
+        b.add(chip(m + 12, 0.05, 0.12 * v, shape='pulse', duty=0.5), at)
+        b.add(bell(m + 12, 0.06, 0.18 * v, ratio=2.0, index=0.8, decay=0.12), at)
+    return reverb_tail(b.buf, 0.6, 0.12)[:ns(0.5)], dict(target=-21)
+
+
+def re_wow():
+    """Wow: a slide-whistle 'woo-OOP' that swoops up and wobbles."""
+    b = mixer(0.62)
+    x, n = _glide(67, 86, 0.42, shape='sine', curve=1.8)
+    t = secs(n)
+    x = x * (1 + 0.15 * np.sin(2 * np.pi * 9 * t) * np.clip((t - 0.25) / 0.1, 0, 1))
+    x += 0.08 * filt(noise(n, 83), 'bp', (1500, 4000)) * np.abs(x)  # breathy whistle
+    b.add(x * adsr(n, 0.03, 0.2, 0.85, 0.08, gate=0.34) * 0.7, 0.0)
+    b.add(bell(98, 0.05, 0.15, ratio=3.5, index=1.0, decay=0.15), 0.33)
+    return reverb_tail(b.buf, 0.6, 0.12)[:ns(0.58)], dict(target=-22)
+
+
+def re_dife():
+    """On fire: a quick rising whoosh with a crackle, landing on a bright chip arpeggio."""
+    b = mixer(0.62)
+    b.add(whoosh(0.26, 600, 7000, 0.7, seed=84, rev=True), 0.0)
+    rng = np.random.default_rng(85)
+    for k in range(9):  # crackles
+        n = ns(0.012)
+        b.add(filt(noise(n, 86 + k), 'bp', (2000, 9000)) * perc(n, 0.003) * rng.uniform(0.15, 0.35), 0.02 + 0.03 * k + rng.uniform(0, 0.012), 1.0, pan=rng.uniform(-0.5, 0.5))
+    for i, m in enumerate((81, 85, 88, 93)):
+        b.add(chip(m, 0.05 if i < 3 else 0.14, 0.22, shape='pulse', duty=0.25), 0.2 + 0.04 * i, 1.0, pan=-0.2 + 0.13 * i)
+    return reverb_tail(b.buf, 0.6, 0.12)[:ns(0.6)], dict(target=-22)
+
+
+def re_ri():
+    """Laugh: a bouncy little 'ha-ha-ha-ha', rounded vowel tone stepping down."""
+    b = mixer(0.6)
+    for i, m in enumerate((81, 79, 77, 76)):
+        d = 0.06 if i < 3 else 0.1
+        n = ns(d + 0.05)
+        t = secs(n)
+        f = hz(m) * (1 + 0.05 * np.exp(-t / 0.02))
+        x = additive(f, n, 'saw', cutoff=1400 + 800 * np.exp(-t / 0.03), kmax=14) * 0.5 + 0.6 * np.sin(2 * np.pi * np.cumsum(f) / SR)
+        b.add(x * adsr(n, 0.004, 0.05, 0.6, 0.03, gate=d) * 0.6, 0.1 * i, 1.0, pan=0.15 * (-1) ** i)
+    return reverb_tail(b.buf, 0.5, 0.1)[:ns(0.55)], dict(target=-22)
+
+
+def re_ke():
+    """Love: a soft heartbeat 'ba-dum' under two gentle bell notes."""
+    b = mixer(0.62)
+    for at, v in ((0.0, 1.0), (0.13, 0.75)):
+        n = ns(0.16)
+        t = secs(n)
+        f = 110 * (1 + 0.8 * np.exp(-t / 0.02))
+        b.add(np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t / 0.05) * v * 0.9, at)
+    for at, m in ((0.0, 84), (0.13, 88)):
+        b.add(bell(m, 0.12, 0.35, ratio=2.0, index=0.7, decay=0.22), at, 1.0, pan=-0.15 if m == 84 else 0.15)
+    sparkle(b, 0.22, count=3, span=0.2, base=100, vel=0.08, seed=87)
+    return reverb_tail(b.buf, 0.7, 0.15)[:ns(0.6)], dict(target=-22)
+
+
+def re_bon_chans():
+    """Good luck: a magic-wand twinkle running up the scale."""
+    b = mixer(0.62)
+    for i, m in enumerate((86, 88, 91, 93, 96, 98)):
+        b.add(bell(m, 0.04, 0.3, ratio=3.5, index=1.2, decay=0.1 if i < 5 else 0.25), 0.04 * i, 1.0, pan=-0.5 + 0.2 * i)
+    b.add(whoosh(0.3, 2000, 9000, 0.25, seed=88), 0.0)
+    return reverb_tail(b.buf, 0.8, 0.16)[:ns(0.6)], dict(target=-22)
+
+
+def re_anko():
+    """Again!: a springy cartoon 'boing'."""
+    n = ns(0.45)
+    t = secs(n)
+    f = hz(55) * 2 ** ((14 * (1 - np.exp(-t / 0.05)) + 1.5 * np.sin(2 * np.pi * 14 * t) * np.exp(-t / 0.18)) / 12)
+    x = fm(f, n, 1.0, 1.4, np.exp(-t / 0.12)) * np.minimum(1, t / 0.003) * np.exp(-t / 0.16)
+    b = mixer(0.55)
+    b.add(fade_edges(x, 0.0005, 0.06) * 0.8, 0.0)
+    return reverb_tail(b.buf, 0.5, 0.1)[:ns(0.5)], dict(target=-22)
+
+
+def re_mwen_pare():
+    """I'm ready: a short power-up zap."""
+    b = mixer(0.45)
+    x, n = _glide(72, 91, 0.16, shape='square', curve=0.7, cutoff=3500, kmax=16)
+    b.add(x * adsr(n, 0.003, 0.08, 0.7, 0.04, gate=0.14) * 0.35, 0.0)
+    b.add(chip(96, 0.09, 0.2, shape='pulse', duty=0.25), 0.15)
+    return reverb_tail(b.buf, 0.5, 0.1)[:ns(0.4)], dict(target=-22)
+
+
+REACTIONS = ['bravo', 'byen_jwe', 'wow', 'dife', 'ri', 'ke', 'bon_chans', 'anko', 'mwen_pare']
+
 SFX = {
+    're_bravo': re_bravo, 're_byen_jwe': re_byen_jwe, 're_wow': re_wow, 're_dife': re_dife, 're_ri': re_ri, 're_ke': re_ke,
+    're_bon_chans': re_bon_chans, 're_anko': re_anko, 're_mwen_pare': re_mwen_pare,
     'tap': tap, 'correct': correct, 'wrong': wrong, 'combo': combo, 'tick': tick, 'timeup': timeup,
     'vs': vs_slam, 'found': player_found, 'ping': ping, 'pop': pop, 'win': win, 'lose': lose, 'draw': draw,
     'coin': coin, 'badge': badge, 'level': level_complete,

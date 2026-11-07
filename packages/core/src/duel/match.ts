@@ -38,8 +38,12 @@ export interface DuelState {
   lobbyTimeoutMs: number;
   /** Pause between "opponent found" and the first question (online: lets both phones play the VS animation). */
   introMs?: number;
-  /** Last reactions (username → preset id), for the UI. */
+  /** Last reactions (player id → preset id) this question, for the UI. */
   reactions: Record<PlayerId, string>;
+  /** How many reactions each player has sent this match — lets a client tell a repeat of the same sticker from an old one. */
+  reactSeq?: Record<PlayerId, number>;
+  /** When each player's last reaction was accepted (ms), for the anti-spam cooldown. */
+  reactAt?: Record<PlayerId, number>;
   endReason?: 'completed' | 'forfeit' | 'timeout';
   winnerId?: PlayerId | null;     // null = draw
 }
@@ -80,7 +84,14 @@ export function reduce(s: DuelState, cmd: DuelCommand, now: number): DuelState {
     }
     case 'react': {
       if (!(PRESET_REACTIONS as readonly string[]).includes(cmd.reaction) || !s.players.some((p) => p.id === cmd.playerId)) return s;
-      return { ...s, reactions: { ...s.reactions, [cmd.playerId]: cmd.reaction } };
+      const last = s.reactAt?.[cmd.playerId];
+      if (last !== undefined && now - last < REACT_COOLDOWN_MS) return s; // spam: drop it
+      return {
+        ...s,
+        reactions: { ...s.reactions, [cmd.playerId]: cmd.reaction },
+        reactSeq: { ...s.reactSeq, [cmd.playerId]: (s.reactSeq?.[cmd.playerId] ?? 0) + 1 },
+        reactAt: { ...s.reactAt, [cmd.playerId]: now },
+      };
     }
     case 'leave': {
       if (s.phase === 'ended') return s;
@@ -121,8 +132,14 @@ function finish(s: DuelState): DuelState {
   return { ...s, phase: 'ended', endReason: 'completed', winnerId };
 }
 
-/** Preset, kid-safe reactions. Free text is never accepted. */
-export const PRESET_REACTIONS = ['bravo', 'wow', 'byen_jwe', 'anko', 'bon_chans', 'mwen_pare'] as const;
+/**
+ * Preset, kid-safe reactions (all friendly — nothing mocking). Free text is never accepted.
+ * Append only: older apps still send the first ids, and the server checks every id against this list.
+ */
+export const PRESET_REACTIONS = ['bravo', 'wow', 'byen_jwe', 'anko', 'bon_chans', 'mwen_pare', 'ri', 'ke', 'dife'] as const;
+export type ReactionId = (typeof PRESET_REACTIONS)[number];
+/** Minimum time between two reactions from the same player; faster ones are dropped (the app waits 3 s). */
+export const REACT_COOLDOWN_MS = 2_000;
 
 /** What a client is allowed to see. Hides the answer key during `question`, and the opponent's choice until reveal. */
 export function publicView(s: DuelState, viewerId: PlayerId) {
@@ -137,7 +154,7 @@ export function publicView(s: DuelState, viewerId: PlayerId) {
       answered: !!p.answer,
       chosen: p.id === viewerId || showAnswer ? p.answer?.chosen : undefined,
     })),
-    reactions: s.reactions, endReason: s.endReason, winnerId: s.winnerId,
+    reactions: s.reactions, reactSeq: s.reactSeq ?? {}, endReason: s.endReason, winnerId: s.winnerId,
   };
 }
 

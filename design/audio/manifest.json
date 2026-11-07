@@ -142,6 +142,87 @@
   "true_peak": -8.1
  },
  {
+  "file": "sfx_re_anko.mp3",
+  "kind": "sfx",
+  "name": "re_anko",
+  "descr": "Reaction Again \u2014 springy boing",
+  "seconds": 0.5,
+  "bytes": 6896,
+  "true_peak": -12.6
+ },
+ {
+  "file": "sfx_re_bon_chans.mp3",
+  "kind": "sfx",
+  "name": "re_bon_chans",
+  "descr": "Reaction Good luck \u2014 magic-wand twinkle",
+  "seconds": 0.6,
+  "bytes": 7836,
+  "true_peak": -16.1
+ },
+ {
+  "file": "sfx_re_bravo.mp3",
+  "kind": "sfx",
+  "name": "re_bravo",
+  "descr": "Reaction Bravo \u2014 party popper + confetti twinkles",
+  "seconds": 0.62,
+  "bytes": 8150,
+  "true_peak": -10.3
+ },
+ {
+  "file": "sfx_re_byen_jwe.mp3",
+  "kind": "sfx",
+  "name": "re_byen_jwe",
+  "descr": "Reaction Well played \u2014 two mallet notes up a fifth",
+  "seconds": 0.5,
+  "bytes": 6896,
+  "true_peak": -13.0
+ },
+ {
+  "file": "sfx_re_dife.mp3",
+  "kind": "sfx",
+  "name": "re_dife",
+  "descr": "Reaction On fire \u2014 whoosh, crackle, chip arpeggio",
+  "seconds": 0.6,
+  "bytes": 7836,
+  "true_peak": -10.8
+ },
+ {
+  "file": "sfx_re_ke.mp3",
+  "kind": "sfx",
+  "name": "re_ke",
+  "descr": "Reaction Love \u2014 soft heartbeat + bells",
+  "seconds": 0.6,
+  "bytes": 7836,
+  "true_peak": -11.6
+ },
+ {
+  "file": "sfx_re_mwen_pare.mp3",
+  "kind": "sfx",
+  "name": "re_mwen_pare",
+  "descr": "Reaction I'm ready \u2014 power-up zap",
+  "seconds": 0.4,
+  "bytes": 5642,
+  "true_peak": -17.3
+ },
+ {
+  "file": "sfx_re_ri.mp3",
+  "kind": "sfx",
+  "name": "re_ri",
+  "descr": "Reaction Let's have fun \u2014 bouncy ha-ha-ha",
+  "seconds": 0.55,
+  "bytes": 7523,
+  "true_peak": -16.8
+ },
+ {
+  "file": "sfx_re_wow.mp3",
+  "kind": "sfx",
+  "name": "re_wow",
+  "descr": "Reaction Wow \u2014 slide-whistle swoop",
+  "seconds": 0.58,
+  "bytes": 7836,
+  "true_peak": -17.8
+ },
+ {
   "file": "sfx_tap.mp3",
   "kind": "sfx",
   "name": "tap",

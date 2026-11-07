@@ -37,6 +37,11 @@ DESCR = {
     'found': 'Opponent found', 'ping': 'Opponent answered (subtle)', 'pop': 'Reaction pop', 'win': 'Win fanfare',
     'lose': 'Lose — gentle, encouraging', 'draw': 'Draw', 'coin': 'XP / coin gain', 'badge': 'Trophy unlocked',
     'level': 'Lesson / quiz complete',
+    're_bravo': 'Reaction Bravo — party popper + confetti twinkles', 're_byen_jwe': 'Reaction Well played — two mallet notes up a fifth',
+    're_wow': 'Reaction Wow — slide-whistle swoop', 're_dife': 'Reaction On fire — whoosh, crackle, chip arpeggio',
+    're_ri': 'Reaction Let\'s have fun — bouncy ha-ha-ha', 're_ke': 'Reaction Love — soft heartbeat + bells',
+    're_bon_chans': 'Reaction Good luck — magic-wand twinkle', 're_anko': 'Reaction Again — springy boing',
+    're_mwen_pare': 'Reaction I\'m ready — power-up zap',
 }
 
 
