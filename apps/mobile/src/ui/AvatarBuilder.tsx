@@ -1,12 +1,12 @@
 /**
  * Avatar builder (onboarding step + /avatar screen). Live preview bobs; every change pops.
- * Items gated by rank / streak / trophies (core progress/ranks.ts) show a lock and "Debloke nan <rank>";
- * tapping one explains how to get it. Items unlocked since the kid last looked get a "Nouvo" tag.
+ * Items gated by rank / streak / trophies (core progress/ranks.ts) show a centred lock and a short label
+ * (rank name, "7 jou", "3 <trophy>"); tapping any locked item explains how to get it. Items unlocked since the kid last looked get a "Nouvo" tag.
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { View, ScrollView } from 'react-native';
 import Svg, { Rect, Path, Circle } from 'react-native-svg';
-import { router, usePathname } from 'expo-router';
+import { router } from 'expo-router';
 import { RANKS, xpForLevel, unlockFor, isItemOpen, type AvatarConfig, type UnlockDef, type UnlockKind } from '@konesans/core';
 import { T, Row, Button, PressScale, Bounce, Icon, Sheet } from './index';
 import { Avatar, AvatarArt, SKINS, HAIR_COLORS, SHIRTS, BGS, HAIRS, EXTRAS, FRAMES, randomAvatar } from './avatar';
@@ -44,7 +44,6 @@ type Item = { key: string; on: boolean; pick: () => void; kind?: UnlockKind; val
 
 export function AvatarBuilder({ value, onChange, size = 170 }: { value: AvatarConfig; onChange: (a: AvatarConfig) => void; size?: number }) {
   const t = useT(); const rn = useRankName();
-  const path = usePathname();
   const [tab, setTab] = useState<Tab>('skin');
   const [bump, setBump] = useState(0);
   const [why, setWhy] = useState<UnlockDef | null>(null);
@@ -81,7 +80,16 @@ export function AvatarBuilder({ value, onChange, size = 170 }: { value: AvatarCo
     if ('streak' in d.req) return t('pf_how_streak', { n: d.req.streak, s: streak });
     return t('pf_how_badges', { n: d.req.badges, b: badges });
   };
-  const inOnboarding = path.startsWith('/onboarding');
+  /** Short label under a locked tile: rank name, "7 jou" or "3 <trophy>" (the sheet explains the rest). */
+  const shortReq = (d: UnlockDef) => {
+    const small = { fontSize: 11, lineHeight: 13 };
+    if ('rank' in d.req) return <T v="small" center color={colors.muted} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.75} style={small}>{rn(RANKS[d.req.rank])}</T>;
+    if ('streak' in d.req) return <T v="small" center color={colors.muted} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={small}>{`${d.req.streak} ${t('days')}`}</T>;
+    return <Row gap={2} style={{ justifyContent: 'center' }}><T v="small" color={colors.muted} style={small}>{String(d.req.badges)}</T><Icon name="twofe" size={16} /></Row>;
+  };
+  const GAP = 10;
+  const [gridW, setGridW] = useState(0);
+  const tileW = gridW ? Math.floor((gridW - GAP * 3) / 4) : '22%';
 
   return (
     <View style={{ gap: 14 }}>
@@ -102,24 +110,27 @@ export function AvatarBuilder({ value, onChange, size = 170 }: { value: AvatarCo
           );
         })}
       </ScrollView>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+      <View onLayout={(e) => setGridW(e.nativeEvent.layout.width)} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: GAP }}>
         {items.map((it) => {
           const open = !it.kind || isOpen(it.kind, it.value!);
           const def = it.kind ? unlockFor(it.kind, it.value!) : undefined;
           const fresh = it.kind ? isNew(it.kind, it.value!) : false;
+          // no accessibilityState.disabled on locked items: Pressable treats it as disabled and the explanation would never open
           return (
-            <PressScale key={it.key} role="button" accessibilityLabel={open ? it.label ?? it.key : `${it.label ?? ''} ${def ? reqText(def) : ''}`} accessibilityState={{ selected: it.on, disabled: !open }} scaleTo={0.9}
+            <PressScale key={it.key} role="button" accessibilityLabel={open ? it.label ?? it.key : `${it.label ?? ''} ${def ? reqText(def) : t('pf_locked')}`} accessibilityState={{ selected: it.on }} scaleTo={0.9}
               onPress={open ? it.pick : () => { tap('error'); sfx('tap'); setWhy(def ?? null); }}
-              style={{ width: '22%', minHeight: 74, borderRadius: radius.md, backgroundColor: open ? colors.card : colors.bg, alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 6, paddingHorizontal: 2, borderWidth: it.on ? 3 : 2, borderColor: it.on ? colors.blue : colors.lineStrong, borderBottomWidth: it.on ? 3 : 5, borderStyle: open ? 'solid' : 'dashed' }}>
-              <View style={{ opacity: open ? 1 : 0.4 }}>
-                {it.swatch ? <View style={{ width: 40, height: 40, borderRadius: 12, borderWidth: 2, borderColor: colors.ink, backgroundColor: it.swatch }} />
-                  : it.shirt !== undefined ? <ShirtSwatch i={it.shirt} />
-                  : it.badge ? <Avatar a={it.badge} size={46} />
-                  : it.preview ? <AvatarArt a={it.preview} size={46} /> : null}
+              style={{ width: tileW, minHeight: 84, borderRadius: radius.md, backgroundColor: open ? colors.card : colors.bg, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 6, paddingHorizontal: 3, borderWidth: it.on ? 3 : 2, borderColor: it.on ? colors.blue : colors.lineStrong, borderBottomWidth: it.on ? 3 : 5, borderStyle: open ? 'solid' : 'dashed' }}>
+              <View style={{ width: 46, height: 46, alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ opacity: open ? 1 : 0.35 }}>
+                  {it.swatch ? <View style={{ width: 40, height: 40, borderRadius: 12, borderWidth: 2, borderColor: colors.ink, backgroundColor: it.swatch }} />
+                    : it.shirt !== undefined ? <ShirtSwatch i={it.shirt} />
+                    : it.badge ? <Avatar a={it.badge} size={46} />
+                    : it.preview ? <AvatarArt a={it.preview} size={46} /> : null}
+                </View>
+                {!open && <View style={{ position: 'absolute', width: 30, height: 30, borderRadius: 15, backgroundColor: colors.card, borderWidth: 2, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center' }}><Icon name="femen_kle" size={20} /></View>}
               </View>
-              {!open && <View style={{ position: 'absolute', top: 4, right: 4 }}><Icon name="femen_kle" size={20} /></View>}
-              {!open && def ? <T v="small" center numberOfLines={2} color={colors.muted} style={{ fontSize: 10, lineHeight: 12 }}>{reqText(def)}</T>
-                : it.label ? <T v="small" center numberOfLines={1}>{it.label}</T> : null}
+              {!open && def ? <View style={{ minHeight: 26, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' }}>{shortReq(def)}</View>
+                : it.label ? <T v="small" center numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{it.label}</T> : null}
               {fresh && <View style={{ position: 'absolute', top: -8, right: -6, backgroundColor: colors.red, borderRadius: 999, paddingHorizontal: 6, paddingVertical: 1, borderWidth: 2, borderColor: '#FFFFFF' }}><T v="small" color="#FFFFFF" style={{ fontSize: 10, lineHeight: 13 }}>{t('new_badge')}</T></View>}
             </PressScale>
           );
@@ -140,7 +151,7 @@ export function AvatarBuilder({ value, onChange, size = 170 }: { value: AvatarCo
           <T v="h2" center>{reqText(why)}</T>
           <T v="body" center color={colors.muted}>{howText(why)}</T>
         </View>}
-        {why && 'rank' in why.req && !inOnboarding && <Button title={t('pf_see_ranks')} color="#7048E8" onPress={() => { setWhy(null); router.push('/ranks' as never); }} />}
+        {why && <Button title={t('pf_see_ranks')} color="#7048E8" onPress={() => { setWhy(null); router.push('/ranks' as never); }} />}
         <Button title={t('pf_ok')} variant="secondary" onPress={() => setWhy(null)} />
       </Sheet>
     </View>

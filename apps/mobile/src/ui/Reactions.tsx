@@ -130,6 +130,7 @@ export function ReactionTray({ onSend }: { onSend: (id: ReactionId) => void }) {
   const t = useT();
   const [w, setW] = useState(0);
   const [cooling, setCooling] = useState(false);
+  const [sent, setSent] = useState<ReactionId | null>(null);
   const bar = useRef(new Animated.Value(1)).current;
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
@@ -140,6 +141,7 @@ export function ReactionTray({ onSend }: { onSend: (id: ReactionId) => void }) {
     tap();
     onSend(id);
     setCooling(true);
+    setSent(id);
     bar.setValue(0);
     Animated.timing(bar, { toValue: 1, duration: REACT_COOLDOWN, easing: Easing.linear, useNativeDriver: true }).start();
     timer.current = setTimeout(() => setCooling(false), REACT_COOLDOWN);
@@ -149,7 +151,7 @@ export function ReactionTray({ onSend }: { onSend: (id: ReactionId) => void }) {
       <T v="small" color={colors.muted} style={{ marginLeft: 14 }}>{t('reactions')}</T>
       <View testID="react-tray" onLayout={(e: LayoutChangeEvent) => setW(e.nativeEvent.layout.width)}
         style={{ flexDirection: 'row', gap: GAP, padding: PAD, paddingBottom: PAD + 3, backgroundColor: colors.card, borderRadius: 20, borderWidth: 2, borderBottomWidth: 4, borderColor: colors.line, overflow: 'hidden' }}>
-        {TRAY_REACTIONS.map((id) => <TrayButton key={id} id={id} cell={cell} dim={cooling} label={t(reactionLabelKey(id))} onPress={() => send(id)} />)}
+        {TRAY_REACTIONS.map((id) => <TrayButton key={id} id={id} cell={cell} dim={cooling} lit={cooling && sent === id} label={t(reactionLabelKey(id))} onPress={() => send(id)} />)}
         {/* cooldown bar along the bottom edge */}
         <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 3, overflow: 'hidden' }}>
           {w > 0 && <Animated.View style={{ width: w, height: 3, backgroundColor: colors.blueLight, opacity: cooling ? 1 : 0, transform: [{ translateX: bar.interpolate({ inputRange: [0, 1], outputRange: [-w, 0] }) }] }} />}
@@ -159,7 +161,7 @@ export function ReactionTray({ onSend }: { onSend: (id: ReactionId) => void }) {
   );
 }
 
-function TrayButton({ id, cell, dim, label, onPress }: { id: ReactionId; cell: number; dim: boolean; label: string; onPress: () => void }) {
+function TrayButton({ id, cell, dim, lit, label, onPress }: { id: ReactionId; cell: number; dim: boolean; /** the one just sent stays bright */ lit: boolean; label: string; onPress: () => void }) {
   const s = useRef(new Animated.Value(0)).current; // 0 rest → 1 pop
   const press = useRef(new Animated.Value(1)).current;
   const pop = () => {
@@ -175,7 +177,7 @@ function TrayButton({ id, cell, dim, label, onPress }: { id: ReactionId; cell: n
       onPressIn={() => { if (!dim && !reduceMotion()) Animated.spring(press, { toValue: 0.86, speed: 40, bounciness: 0, useNativeDriver: true }).start(); }}
       onPressOut={() => Animated.spring(press, { toValue: 1, speed: 30, bounciness: 12, useNativeDriver: true }).start()}
       onPress={() => { if (dim) return; pop(); onPress(); }}
-      style={{ flex: 1, height: Math.max(44, size + 8), borderRadius: 14, backgroundColor: soft, alignItems: 'center', justifyContent: 'center', opacity: dim ? 0.45 : 1 }}>
+      style={{ flex: 1, height: Math.max(44, size + 8), borderRadius: 14, backgroundColor: soft, alignItems: 'center', justifyContent: 'center', opacity: dim && !lit ? 0.4 : 1 }}>
       <Animated.View style={{ transform: [
         { scale: press },
         { scale: s.interpolate({ inputRange: [0, 0.18, 0.4, 0.62, 1], outputRange: [1, 1.45, 0.92, 1.06, 1] }) },
@@ -216,9 +218,10 @@ export function ReactionBubble({ id, side, who, anchor = 37, onDone }: { id: Rea
       style={{ maxWidth: '64%', alignSelf: left ? 'flex-start' : 'flex-end', opacity, transform: [{ translateY: ty }, { scale }],
         // grow out of the pointer (the avatar), not the middle
         transformOrigin: `${left ? anchor : Math.max(0, bw - anchor)}px 0px` }}>
-      <View style={{ backgroundColor: soft, borderColor: edge, borderWidth: 3, borderBottomWidth: 5, borderRadius: 22, paddingHorizontal: 14, paddingTop: 6, paddingBottom: 8, alignItems: 'center', minWidth: 96 }}>
+      <View style={{ backgroundColor: soft, borderColor: edge, borderWidth: 3, borderBottomWidth: 5, borderRadius: 22,
+        shadowColor: '#14213D', shadowOpacity: 0.18, shadowRadius: 10, shadowOffset: { width: 0, height: 6 }, elevation: 6, paddingHorizontal: 14, paddingTop: 6, paddingBottom: 8, alignItems: 'center', minWidth: 96 }}>
         <View>
-          <Burst trigger={reduce ? null : id} count={10} radius={52} shapes="stars" />
+          <Burst trigger={reduce ? null : id} count={9} radius={46} shapes="stars" />
           <Animated.View style={{ transform: [{ translateY: hop }, { rotate: wiggle }] }}><Sticker id={id} size={58} /></Animated.View>
         </View>
         <T v="h3" center color={colors.ink} style={{ marginTop: 2 }}>{t(reactionLabelKey(id))}</T>

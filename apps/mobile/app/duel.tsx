@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
-import { createDuel, reduce, planBotAnswer, planBotReaction, BOT_PROFILES, BOT_NAMES, rng, type DuelState, type AvatarConfig, type Question } from '@konesans/core';
-import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Pill, Avatar, avatarFromSeed, PressScale, Bounce, Drop, FadeIn, Pop, Confetti, SlideSwap, useCountUp } from '@/ui';
+import { createDuel, reduce, planBotAnswer, planBotReaction, BOT_PROFILES, BOT_NAMES, rng, type DuelState, type ReactionId, type AvatarConfig, type Question } from '@konesans/core';
+import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Pill, Avatar, avatarFromSeed, Bounce, Drop, FadeIn, Pop, Confetti, SlideSwap, useCountUp } from '@/ui';
 import { Matchmaking } from '@/ui/Matchmaking';
 import { QuestionView } from '@/ui/QuestionView';
 import { CardReveal } from '@/ui/CardReveal';
-import { ReactionTray, ReactionBubble, isReaction, reactionSfx, type ReactionId } from '@/ui/Reactions';
+import { ReactionTray, ReactionBubble, isReaction, reactionSfx } from '@/ui/Reactions';
 import { colors } from '@/lib/theme';
 import { useStore, useAvatar } from '@/lib/store';
 import { useT, type StrKey } from '@/lib/i18n';
@@ -279,14 +279,10 @@ function LocalDuel({ note }: { note: StrKey | null }) {
   const botTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   useEffect(() => () => botTimers.current.forEach(clearTimeout), []);
   // Robo reacts now and then (a "good luck" at the start, cheers after the kid's good answers) with the same stickers
-  const botReact = (moment: 'start' | 'reveal') => setS((d) => {
-    const r = planBotReaction(moment, d, bot.id, rand);
-    if (r) botTimers.current.push(setTimeout(() => setS((x) => (x.phase === 'ended' ? x : reduce(x, { type: 'react', playerId: bot.id, reaction: r.reaction }, Date.now()))), r.delayMs));
-    return d;
-  });
   useEffect(() => {
-    if (s.phase === 'question' && s.index === 0 && s.players.length === 2) botReact('start');
-    if (s.phase === 'reveal') botReact('reveal');
+    const moment = s.phase === 'question' && s.index === 0 && s.players.length === 2 ? 'start' : s.phase === 'reveal' ? 'reveal' : null;
+    const r = moment && planBotReaction(moment, s, bot.id, rand);
+    if (r) botTimers.current.push(setTimeout(() => setS((x) => (x.phase === 'ended' ? x : reduce(x, { type: 'react', playerId: bot.id, reaction: r.reaction }, Date.now()))), r.delayMs));
   }, [s.phase, s.index]);
 
   // the matchmaking sequence ends → the opponent joins and the first question starts
