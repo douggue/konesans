@@ -131,6 +131,16 @@ export async function switchDevice(id: string) { await AsyncStorage.setItem(DEVI
 /** The account this phone is logged into (null until the first online call). */
 export const currentUserId = () => session?.userId ?? null;
 
+/** Link a Google account (ID token) to this phone's account, so the kid can log in with it on a new phone. */
+export async function linkGoogle(idToken: string) { const s = await getSession(); await http('/v2/account/link/google', { auth: 'Bearer ' + s.token, body: { token: idToken } }); }
+/** Log into the account a Google account is linked to (never creates one). Returns that account's session token. */
+export async function googleSession(idToken: string): Promise<string> {
+  return (await http<{ token: string }>('/v2/account/authenticate/google?create=false', { auth: 'Basic ' + b64encode(SERVER.serverKey + ':'), body: { token: idToken } })).token;
+}
+/** Calls made with another account's session (Google restore, before this phone switches to it). */
+export async function rpcWithToken<T>(token: string, id: string, body: object): Promise<T> { return http<T>(`/v2/rpc/${id}?unwrap`, { auth: 'Bearer ' + token, body }); }
+export async function linkDeviceWithToken(token: string, id: string) { await http('/v2/account/link/device', { auth: 'Bearer ' + token, body: { id } }); }
+
 /** Kid's public identity for duels (their kid-safe username and avatar). */
 export async function setProfile(name: string, avatar: unknown) { await rpc('profile_set', { name, avatar }); }
 

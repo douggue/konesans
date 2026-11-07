@@ -13,9 +13,13 @@ import { useT, type StrKey } from '@/lib/i18n';
 import { tap, sfx } from '@/lib/audio';
 import { useStore } from '@/lib/store';
 import { previewCode, recoverWithCode, localProgress, RecoverFailure, type RecoverError } from '@/lib/cloud';
+import { googleEnabled, findGoogleAccount, restoreFromGoogle, GoogleFailure, type GoogleError, type GoogleFound } from '@/lib/google';
+import { ParentGate } from '@/ui/ParentGate';
 
 type Step = 'enter' | 'confirm' | 'choose' | 'working' | 'done' | 'kept';
 const ERR: Record<RecoverError, StrKey> = { format: 'rc_format', bad_code: 'rc_bad', rate_limited: 'rc_limit', same_account: 'rc_same', offline: 'rc_offline', server: 'rc_err' };
+const GERR: Record<GoogleError, StrKey | null> = { cancelled: null, unavailable: 'gg_err_unavailable', in_use: 'gg_err_in_use', not_found: 'gg_err_not_found', offline: 'rc_offline', server: 'rc_err' };
+const errKey = (e: unknown): StrKey | null => (e instanceof RecoverFailure ? ERR[e.kind] : e instanceof GoogleFailure ? GERR[e.kind] : 'rc_err');
 
 function Who({ p, selected, onPress, label }: { p: SavePreview | null; selected?: boolean; onPress?: () => void; label?: string }) {
   const t = useT();
@@ -44,7 +48,8 @@ export default function Recover() {
   const [input, setInput] = useState('');
   const [err, setErr] = useState<StrKey | null>(null);
   const [busy, setBusy] = useState(false);
-  const [found, setFound] = useState<{ code: string; preview: SavePreview | null } | null>(null);
+  const [found, setFound] = useState<{ code?: string; google?: GoogleFound; preview: SavePreview | null } | null>(null);
+  const [gate, setGate] = useState(false);
   const [local, setLocal] = useState<SavePreview | null>(null);
   const [keep, setKeep] = useState<'code' | 'phone'>('code');
   const [name, setName] = useState('');
@@ -52,18 +57,24 @@ export default function Recover() {
   const check = async () => {
     setErr(null); setBusy(true);
     try { setFound(await previewCode(input)); setStep('confirm'); sfx('correct'); }
-    catch (e) { setErr(ERR[e instanceof RecoverFailure ? e.kind : 'server']); }
+    catch (e) { setErr(errKey(e)); }
+    finally { setBusy(false); }
+  };
+  const withGoogle = async () => {
+    setErr(null); setBusy(true);
+    try { const g = await findGoogleAccount(); setFound({ google: g, preview: g.preview }); setStep('confirm'); sfx('correct'); }
+    catch (e) { setErr(errKey(e)); }
     finally { setBusy(false); }
   };
   const restore = async () => {
     if (!found) return;
     setStep('working'); setErr(null);
     try {
-      const p = await recoverWithCode(found.code);
+      const p = found.google ? await restoreFromGoogle(found.google) : await recoverWithCode(found.code!);
       setName(p?.username || found.preview?.username || '');
       if (!useStore.getState().onboarded) useStore.getState().finishOnboarding();
       setStep('done'); sfx('level');
-    } catch (e) { setErr(ERR[e instanceof RecoverFailure ? e.kind : 'server']); setStep('enter'); }
+    } catch (e) { setErr(errKey(e)); setStep('enter'); }
   };
   const yes = () => {
     const l = localProgress();
@@ -83,6 +94,7 @@ export default function Recover() {
             style={{ minHeight: 64, borderWidth: 3, borderColor: err ? colors.red : colors.blue, borderRadius: 18, paddingHorizontal: 16, fontFamily: fonts.display, fontSize: 30, letterSpacing: 2, textAlign: 'center', color: colors.ink, backgroundColor: colors.card }} />
           {err ? <T v="bold" center color={colors.red}>{t(err)}</T> : null}
           {busy ? <ActivityIndicator color={colors.blue} style={{ minHeight: 54 }} /> : <Button title={t('check')} disabled={input.trim().length < 6} onPress={check} />}
+          {googleEnabled() && !busy ? <><T v="small" center color={colors.muted}>{t('gg_or')}</T><Button variant="secondary" title={t('gg_login')} onPress={() => setGate(true)} /></> : null}
         </FadeIn>
       )}
 
@@ -121,6 +133,7 @@ export default function Recover() {
           <Button title={t('rc_go')} color={colors.green} style={{ alignSelf: 'stretch' }} onPress={() => router.replace('/home')} />
         </FadeIn>
       )}
+      <ParentGate open={gate} title={t('gg_login')} note={t('gg_gate_note')} onClose={() => setGate(false)} onPass={withGoogle} />
     </Screen>
   );
 }

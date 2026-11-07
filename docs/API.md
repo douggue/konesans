@@ -164,3 +164,10 @@ Errors from `account_recover`: 404 `bad_code` (counts as a wrong try), 429 `rate
 phone, 30 per network address, 600 for the whole server), 409 `same_account` (it is this phone's own code),
 400 `bad deviceId`. Storage: `cloud/save`, `account/code`, `account/tries` (user); `recovery/<CODE>` (system: the
 code index, written with version `*` so codes stay unique), `recovery_ip/<ip>` (system).
+
+Google (optional, `docs/GOOGLE-SIGNIN.md`): plain Nakama endpoints, no RPC. Connect = `POST /v2/account/link/google
+{ token: <Google ID token> }` with the kid's device session; new phone = `POST /v2/account/authenticate/google?create=false`
+(server key) → session of the kid's account → `POST /v2/account/link/device { id: <new kns- id> }` with that session →
+`save_get`. Before hooks refuse tokens whose `aud` is not in the runtime env `GOOGLE_CLIENT_IDS` (`google token not for this
+app`, 401; `google_not_configured`, 400 when it is empty); after hooks set the display name back to the kid's generated name
+and clear the avatar URL. `account_info.google` says whether a Google account is linked.

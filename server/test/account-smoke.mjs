@@ -119,4 +119,23 @@ check(codes.size === 22, `22 accounts → 22 different codes`);
 const D = await phone();
 check((await D.rpc('account_recover', { code: wrong, preview: true })).status === 404, 'another phone on the same network can still try');
 
+// ── Google (optional): only ID tokens made for our client id reach Nakama's own Google check ──
+// Run with GOOGLE_CLIENT_ID=<the value of the server's GOOGLE_CLIENT_IDS> to test the audience check.
+const b64u = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+const fakeJwt = (aud) => `${b64u({ alg: 'RS256', kid: 'x' })}.${b64u({ iss: 'https://accounts.google.com', aud, sub: '123', exp: Math.floor(Date.now() / 1000) + 600 })}.c2ln`;
+const linkG = (tok) => call('/v2/account/link/google', { token: tok }, 'Bearer ' + A.token);
+const authG = (tok) => call('/v2/account/authenticate/google?create=false', { token: tok }, basic);
+if (process.env.GOOGLE_CLIENT_ID) {
+  const other = await linkG(fakeJwt('someone-else.apps.googleusercontent.com'));
+  check(other.status === 401 && /not for this app/.test(JSON.stringify(other.body)), `link: token for another app refused (${other.status})`);
+  check(/not for this app/.test(JSON.stringify((await authG(fakeJwt('evil.apps.googleusercontent.com'))).body)), 'login: token for another app refused');
+  check((await linkG('not-a-jwt')).status === 400, 'link: garbage token refused');
+  const ours = await linkG(fakeJwt(process.env.GOOGLE_CLIENT_ID));
+  check(ours.status >= 400 && !/not for this app|google_not_configured/.test(JSON.stringify(ours.body)), `our audience passes the hook; Nakama then rejects the fake signature (${ours.status} ${JSON.stringify(ours.body).slice(0, 80)})`);
+  check((await A.rpc('account_info', {})).body.google === false, 'no Google link was made');
+} else {
+  const r = await linkG(fakeJwt('x.apps.googleusercontent.com'));
+  check(r.status >= 400 && /google_not_configured/.test(JSON.stringify(r.body)), `no GOOGLE_CLIENT_IDS on the server → Google refused (${r.status})`);
+}
+
 console.log(`\n${ok} passed, ${bad} failed`); process.exit(bad ? 1 : 0);

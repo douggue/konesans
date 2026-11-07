@@ -36,6 +36,8 @@ Send the IP to Claude so the kids' app and the admin app point to your server.
 Nothing to set up. Each phone saves the kid's progress on your server by itself (when it has internet) and shows a code like
 **MANGO-4821** in Paramèt / Mwen → *Kòd pou rekipere pwogrè m*. On a new phone the kid taps **Mwen gen yon kòd** on the first
 screen and types it. Saves live in Postgres with everything else, so DigitalOcean backups cover them. Details: docs/API.md.
+Optional Google sign-in: put the Web client ID in `server/deploy/keys.env` (`GOOGLE_CLIENT_IDS=`) and in the app — step by
+step in [GOOGLE-SIGNIN.md](GOOGLE-SIGNIN.md). The server passes it to Nakama as the runtime env `GOOGLE_CLIENT_IDS`.
 
 ## If something goes wrong
 - Setup log on the server: `/var/log/konesans-setup.log`; deploy log: `/opt/konesans/deploys.log`.

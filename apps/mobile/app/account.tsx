@@ -1,13 +1,18 @@
 /** "Kòd pou rekipere pwogrè m": the account's recovery code, big, to write down or share (src/lib/cloud.ts). */
 import React, { useEffect, useState } from 'react';
 import { View, Platform, Share, ActivityIndicator } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Screen, T, Card, TopBar, Button, Icon, Mascot, FadeIn, Pop } from '@/ui';
 import { colors, fonts } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT, formatDate } from '@/lib/i18n';
 import { useCloud, fetchAccountInfo, startCloudSync, syncNow } from '@/lib/cloud';
 import { serverConfigured } from '@/lib/remote';
+import { googleEnabled, connectGoogle, GoogleFailure, type GoogleError } from '@/lib/google';
+import { ParentGate } from '@/ui/ParentGate';
+import type { StrKey } from '@/lib/i18n';
+
+const GERR: Record<GoogleError, StrKey | null> = { cancelled: null, unavailable: 'gg_err_unavailable', in_use: 'gg_err_in_use', not_found: 'gg_err_not_found', offline: 'rc_offline', server: 'rc_err' };
 
 export default function Account() {
   const t = useT();
@@ -16,6 +21,17 @@ export default function Account() {
   const lastSync = useCloud((s) => s.lastSync);
   const [state, setState] = useState<'loading' | 'ok' | 'offline'>(code ? 'ok' : 'loading');
   const [copied, setCopied] = useState(false);
+  // Google (optional): the home offer opens this screen with ?google=1 → parent gate right away
+  const { google: askGoogle } = useLocalSearchParams<{ google?: string }>();
+  const linked = useCloud((s) => s.google);
+  const [gate, setGate] = useState(false);
+  const [gBusy, setGBusy] = useState(false);
+  const [gErr, setGErr] = useState<StrKey | null>(null);
+  useEffect(() => { if (askGoogle && googleEnabled() && !useCloud.getState().google) setTimeout(() => setGate(true), 400); }, []);
+  const connect = async () => {
+    setGBusy(true); setGErr(null);
+    try { await connectGoogle(); } catch (e) { setGErr(GERR[e instanceof GoogleFailure ? e.kind : 'server']); } finally { setGBusy(false); }
+  };
   const load = () => {
     if (!serverConfigured()) { setState('offline'); return; }
     if (!useCloud.getState().code) setState('loading');
@@ -62,7 +78,18 @@ export default function Account() {
       </Card></FadeIn>
       {code ? <Button icon="pataje" title={copied ? t('ac_copied') : Platform.OS === 'web' ? t('ac_copy') : t('ac_share')} color={copied ? colors.green : colors.blue} onPress={share} /> : null}
       <T v="small" center color={colors.muted}>{lastSync ? t('ac_saved', { x: formatDate(new Date(lastSync).toISOString(), lang) }) : t('ac_saved_never')}</T>
+      {googleEnabled() ? (
+        <Card style={{ gap: 8 }}>
+          <T v="label" color={colors.muted}>{t('gg_section').toUpperCase()}</T>
+          {linked ? <T v="bold" color={colors.green}>{t('gg_linked')}</T> : <>
+            <T v="small" color={colors.muted}>{t('gg_connect_sub')}</T>
+            {gBusy ? <ActivityIndicator color={colors.blue} style={{ minHeight: 54 }} /> : <Button variant="secondary" title={t('gg_connect')} onPress={() => setGate(true)} />}
+            {gErr ? <T v="small" color={colors.red}>{t(gErr)}</T> : null}
+          </>}
+        </Card>
+      ) : null}
       <Button variant="ghost" title={t('ac_other_code')} onPress={() => router.push('/recover' as never)} />
+      <ParentGate open={gate} title={t('gg_connect')} note={t('gg_gate_note')} onClose={() => setGate(false)} onPass={connect} />
     </Screen>
   );
 }

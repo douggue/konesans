@@ -199,3 +199,54 @@ export const accountRecover: nkruntime.RpcFunction = (ctx, logger, nk, payload) 
   logger.info('account %s recovered on a new device (from %s)', owner, ctx.userId);
   return out({ ok: true, save, code });
 };
+
+// ---------- Google (optional, docs/GOOGLE-SIGNIN.md) ----------
+/**
+ * Before Nakama links / logs in with a Google ID token, check it was made for OUR app: its `aud` must be one of the
+ * client ids in the runtime env GOOGLE_CLIENT_IDS (comma-separated; the *Web* client id the app asks tokens for).
+ * Nakama itself then checks Google's signature and expiry. Without GOOGLE_CLIENT_IDS every Google call is refused.
+ */
+function checkGoogleToken(ctx: nkruntime.Context, nk: nkruntime.Nakama, token: unknown) {
+  const allowed = String((ctx.env && ctx.env['GOOGLE_CLIENT_IDS']) || '').split(',').map((s) => s.trim()).filter(Boolean);
+  if (!allowed.length) fail('google_not_configured', 9);
+  const parts = typeof token === 'string' ? token.split('.') : [];
+  if (parts.length !== 3) fail('bad google token', CODES.INVALID);
+  let claims: any;
+  try { claims = JSON.parse(nk.binaryToString(nk.base64UrlDecode(parts[1], false))); } catch (e) { return fail('bad google token', CODES.INVALID); }
+  const aud = claims && claims.aud;
+  const auds: string[] = Array.isArray(aud) ? aud : [aud];
+  if (!auds.some((a) => allowed.indexOf(String(a)) >= 0)) fail('google token not for this app', CODES.UNAUTH);
+}
+export const beforeAuthenticateGoogle: nkruntime.BeforeHookFunction<nkruntime.AuthenticateGoogleRequest> = (ctx, logger, nk, data) => {
+  checkGoogleToken(ctx, nk, data && data.account && data.account.token);
+  return data;
+};
+/** Link: Nakama 3.22 hands the hook the account itself ({ token }); newer typings wrap it ({ account: { token } }). */
+export const beforeLinkGoogle: nkruntime.BeforeHookFunction<nkruntime.LinkGoogleRequest> = (ctx, logger, nk, data) => {
+  const d = data as any;
+  checkGoogleToken(ctx, nk, d && (d.token || (d.account && d.account.token)));
+  return data;
+};
+/**
+ * After a Google link: Nakama fills an empty display name / avatar URL from the Google profile (the parent's real name
+ * and photo). Duels show the display name, so put the kid's generated game name back and clear the photo.
+ */
+export const afterLinkGoogle: nkruntime.AfterHookFunction<void, nkruntime.LinkGoogleRequest> = (ctx, logger, nk) => {
+  if (ctx.userId) kidSafeProfile(nk, ctx.userId);
+  logger.info('google linked to %s (display name kept kid-safe)', ctx.userId);
+};
+/** Same after a Google login on a new phone (the user id is in the new session token). */
+export const afterAuthenticateGoogle: nkruntime.AfterHookFunction<nkruntime.Session, nkruntime.AuthenticateGoogleRequest> = (ctx, logger, nk, data) => {
+  try {
+    const uid = JSON.parse(nk.binaryToString(nk.base64UrlDecode(String(data && data.token).split('.')[1], false))).uid;
+    if (uid) kidSafeProfile(nk, uid);
+  } catch (e) { /* the login itself already worked */ }
+};
+function kidSafeProfile(nk: nkruntime.Nakama, userId: string) {
+  const s = readSave(nk, userId);
+  const p = s && s.parts.profile && s.parts.profile.data;
+  const a = nk.accountGetId(userId);
+  const name = p && typeof p.username === 'string' && isValidUsername(p.username) ? p.username : '';
+  const safe = name || (a && a.user && isValidUsername(a.user.displayName || '') ? a.user.displayName : '');
+  nk.accountUpdateId(userId, null, safe, null, null, null, '', null);
+}
