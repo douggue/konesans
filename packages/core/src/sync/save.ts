@@ -7,7 +7,7 @@
  * phone. Merge rule, per part:
  *   - the newest part wins (higher `at`), so an older phone never overwrites newer data;
  *   - but things a kid earned never go away: XP, trophies, hero cards, finished lessons/stars, departments,
- *     counters, unlocked avatar items… take the max / union of both sides.
+ *     counters, unlocked and bought avatar items… take the max / union of both sides.
  * Pure functions, no I/O. Written in plain ES5-friendly style (the Nakama runtime bundles this file).
  */
 
@@ -124,6 +124,7 @@ function mergeMissions(n: Record<string, any>, o: Record<string, any>) {
     chestDay: laterDay(n.chestDay, o.chestDay),
     fullDays: union(n.fullDays, o.fullDays).sort().slice(-21),
     legendWeeks: union(n.legendWeeks, o.legendWeeks).sort(),
+    firstDay: earlierDay(n.firstDay, o.firstDay), // the kid's mission weeks count from their first play day
   };
 }
 
@@ -133,6 +134,7 @@ function mergeExtra(n: Record<string, any>, o: Record<string, any>) {
     rankSeen: Math.max(typeof n.rankSeen === 'number' ? n.rankSeen : -1, typeof o.rankSeen === 'number' ? o.rankSeen : -1),
     unlocked: union(n.unlocked, o.unlocked),
     seenUnlocks: union(n.seenUnlocks, o.seenUnlocks),
+    bought: union(n.bought, o.bought), // avatar shop items: once bought, kept on every phone
     onboarded: !!(n.onboarded || o.onboarded),
   };
 }

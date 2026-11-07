@@ -1,7 +1,7 @@
 /** Vwayaj Ayiti (Haiti adventure map) UI strings — Kreyòl, French. Spread into the dictionary in ../i18n.ts. */
 export const VWAYAJ_STRINGS = {
   vw_title: ['Vwayaj Ayiti', 'Voyage en Haïti'],
-  vw_done_count: ['{n} / 10 depatman debloke', '{n} / 10 départements débloqués'],
+  vw_done_count: ['{n} / 10 depatman fini', '{n} / 10 départements terminés'],
   vw_event: ['EVÈNMAN', 'ÉVÉNEMENT'],
   vw_event_today: ['JODI A', 'AUJOURD’HUI'],
   vw_event_tomorrow: ['DEMEN', 'DEMAIN'],

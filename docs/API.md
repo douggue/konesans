@@ -171,3 +171,35 @@ Google (optional, `docs/GOOGLE-SIGNIN.md`): plain Nakama endpoints, no RPC. Conn
 `save_get`. Before hooks refuse tokens whose `aud` is not in the runtime env `GOOGLE_CLIENT_IDS` (`google token not for this
 app`, 401; `google_not_configured`, 400 when it is empty); after hooks set the display name back to the kid's generated name
 and clear the avatar URL. `account_info.google` says whether a Google account is linked.
+
+## Daily challenge (Defi Jodi a)
+
+Kid device session (`Authorization: Bearer <device session>`), see `server/nakama/src/daily.ts`, shared logic in core `modules/daily.ts`, test `server/test/daily-smoke.mjs`.
+
+- **Day** = calendar day in Haiti (America/Port-au-Prince, with summer time), `YYYY-MM-DD`.
+- **Same questions for everyone of an age band that day.** The first `daily_get` of a (day, age) builds the set with core `pickDaily` from the published packs (approved, plus review when the admin serves review; the bundled bank before the first publish), spread over categories, options shuffled, and freezes it in storage (`daily_set/<day>_<age>`), so a publish during the day does not change it. Count = the published `config.dailyCount` (5–20, default 10); the app's title uses the returned `count`.
+- **Getting the questions needs no parent permission** (it is content, like packs). **Appearing in the ranking does**: consent record confirmed **and** `settings/kid.randomDuelsAllowed` (both written by `online_set`). Without it the kid gets their own score only and an empty top; a kid whose parent switches online play off is removed from the board.
+- **One scored attempt per account per day.** The server scores the answers itself against its own key (core `scoreDaily`: 10 pts per right answer + speed + combo); any score the phone sends is ignored. Replays on the phone are practice and are not sent.
+- **Anti-cheat basics:** `daily_get` must come first (records `startedAt`); a run shorter than 0.8 s per answered question since then is refused (`too_fast`); per-answer times are clamped to 0.8–15 s for the speed bonus, answers later than the timer count as wrong; only today (or yesterday within 1 h of opening it, for a kid who started just before midnight); the result is written with a storage version check so two simultaneous submits score once. The answer key is sent with the questions (the phone shows right/wrong after each tap), so a modified app could read it — the ranking is a kid's game, not a prize.
+- **Ranking:** Nakama leaderboard `daily_<day>_<age>` (authoritative, ranks on), score = `correct × 1000 + points`, subscore favours the faster total time. Boards older than 8 days are deleted. Rows carry the kid-safe display name (`profile_set`) and avatar only.
+
+### `daily_get`
+Body `{ "age": "9-11" }` →
+```json
+{ "day": "2026-11-06", "age": "9-11", "count": 10, "questions": [Question…],
+  "result": null | { "correct": 7, "total": 10, "score": 92, "ms": 41000, "perQuestion": [true…], "at": "…", "ranked": true },
+  "playedAge": null | "9-11", "allowed": true }
+```
+`questions` use the app `Question` shape (with `answer`).
+
+### `daily_submit`
+Body `{ "day": "2026-11-06", "age": "9-11", "answers": [{ "i": 2, "ms": 3400 }, { "i": null, "ms": 15000 }, …] }` (`i` = chosen option index, `null` = time ran out) →
+```json
+{ "day": "…", "age": "9-11", "correct": 7, "total": 10, "score": 92, "ms": 41000, "perQuestion": […], "at": "…", "ranked": true,
+  "allowed": true, "already": false, "top": [TopRow…], "me": TopRow | null }
+```
+A second submit returns the first result with `already: true`. Errors: `400 daily_not_started` (no `daily_get` that day), `400 daily_closed`, `400 too_fast`.
+
+### `daily_top`
+Body `{ "age": "9-11", "day"?: "2026-11-06" }` → `{ "day", "age", "allowed", "top": TopRow[] (≤ 10), "me": TopRow | null }`, empty when online play is not allowed.
+`TopRow = { "rank": 1, "name": "Malfini Ble", "avatar": {…} | null, "correct": 9, "total": 10, "score": 131, "me": false }` — no user ids.

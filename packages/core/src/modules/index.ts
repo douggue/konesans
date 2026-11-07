@@ -9,6 +9,7 @@ import type { GenModule } from './base.js';
 export * from './base.js';
 export * from './math.js';
 export * from './countries.js';
+export * from './daily.js';
 
 /** Registry of every generated module. The app lists these next to authored categories. */
 export const MODULES: GenModule[] = [...MATH_MODULES, ...COUNTRY_MODULES, basicsGen];

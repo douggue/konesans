@@ -5,6 +5,8 @@
  *  3. a big "VS" slams down and the screen shakes, then onDone().
  * Online, `opponent` is null while the server is still looking: the radar keeps going until a player is found
  * (`hint` shows under it after a few seconds).
+ * `instant` (Robo on the phone): nobody is being searched for, so there is no radar — straight to the face-off,
+ * titled "Robo pare pou jwe avè w!".
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Animated, Easing, Pressable, StyleSheet } from 'react-native';
@@ -16,9 +18,9 @@ import { colors } from '@/lib/theme';
 import { useT } from '@/lib/i18n';
 import { tap, sfx, music } from '@/lib/audio';
 
-export function Matchmaking({ me, opponent, onDone, hint }: { me: { name: string; avatar: AvatarConfig; sub?: string }; opponent: { name: string; avatar: AvatarConfig; sub?: string } | null; onDone: () => void; hint?: string }) {
+export function Matchmaking({ me, opponent, onDone, hint, instant }: { me: { name: string; avatar: AvatarConfig; sub?: string }; opponent: { name: string; avatar: AvatarConfig; sub?: string } | null; onDone: () => void; hint?: string; instant?: boolean }) {
   const t = useT();
-  const [phase, setPhase] = useState<'search' | 'found'>('search');
+  const [phase, setPhase] = useState<'search' | 'found'>(instant ? 'found' : 'search');
   const done = useRef(false);
   const finish = () => { if (done.current) return; done.current = true; onDone(); };
   const rings = [useRef(new Animated.Value(0)).current, useRef(new Animated.Value(0)).current, useRef(new Animated.Value(0)).current];
@@ -26,12 +28,13 @@ export function Matchmaking({ me, opponent, onDone, hint }: { me: { name: string
   const vs = useRef(new Animated.Value(0)).current;
   const shake = useRef(new Animated.Value(0)).current;
   const [dots, setDots] = useState(1);
-  const [waited, setWaited] = useState(false); // minimum radar time passed
+  const [waited, setWaited] = useState(!!instant); // minimum radar time passed
   const [longWait, setLongWait] = useState(false);
   const loopsRef = useRef<Animated.CompositeAnimation[]>([]);
 
   // 1. radar while searching (at least 1.7 s so it never just flashes)
   useEffect(() => {
+    if (instant) return;
     music('duel_search');
     const minId = setTimeout(() => setWaited(true), reduceMotion() ? 300 : 1700);
     const longId = setTimeout(() => setLongWait(true), 3500);
@@ -81,7 +84,7 @@ export function Matchmaking({ me, opponent, onDone, hint }: { me: { name: string
           </>
         ) : (
           <>
-            <T v="label" color={colors.green}>{t('found').toUpperCase()}</T>
+            <T v={instant ? 'h2' : 'label'} center color={colors.green}>{instant ? t('robo_ready') : t('found').toUpperCase()}</T>
             <View style={{ width: '100%', gap: 8 }}>
               <Animated.View style={{ transform: [{ translateX: slide.interpolate({ inputRange: [0, 1], outputRange: [-360, 0] }) }] }}>
                 <PlayerCard p={me} color={colors.blue} />
@@ -108,7 +111,7 @@ function PlayerCard({ p, color, right }: { p: { name: string; avatar: AvatarConf
     <View style={{ flexDirection: right ? 'row-reverse' : 'row', alignItems: 'center', gap: 14, backgroundColor: colors.card, borderWidth: 2, borderColor: color, borderBottomWidth: 6, borderRadius: 22, padding: 14 }}>
       <Avatar a={p.avatar} size={78} live />
       <View style={{ flex: 1, alignItems: right ? 'flex-end' : 'flex-start' }}>
-        <T v="h1" color={color} numberOfLines={1}>{p.name}</T>
+        <T v="h1" color={color} numberOfLines={2}>{p.name}</T>
         {p.sub ? <T v="small" color={colors.muted}>{p.sub}</T> : null}
       </View>
     </View>

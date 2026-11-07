@@ -7,6 +7,9 @@ import { colors, radius } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT, useL } from '@/lib/i18n';
 import { tap, sfx, music, answerSfx } from '@/lib/audio';
+import { useQuitGuard } from '@/ui/activity';
+
+const AGE_KEY = { '6-8': 'age_6_8', '9-11': 'age_9_11', '12-14': 'age_12_14' } as const;
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '−', '0', '⌫'];
 
@@ -27,17 +30,24 @@ export default function MathRapid() {
   const good = run ? run.history.filter((h) => h.ok).length : 0;
 
   useEffect(() => {
-    if (!run) return;
+    if (!run || quitting) return;
     const id = setInterval(() => setLeft(Math.max(0, run.endsAt - Date.now())), 100);
     return () => clearInterval(id);
-  }, [run]);
+  }, [run, quitting]);
+  // the 60 s stop while the quit sheet is open: push the end back by the time it was open
+  const pausedAt = useRef(0);
+  useEffect(() => {
+    if (quitting) { pausedAt.current = Date.now(); return; }
+    if (pausedAt.current) { const d = Date.now() - pausedAt.current; pausedAt.current = 0; setRun((r) => (r ? { ...r, endsAt: r.endsAt + d } : r)); }
+  }, [quitting]);
+  const leave = useQuitGuard(!!run && !over, () => setQuitting(true));
   useEffect(() => { if (over && !saved.current && run) { saved.current = true; recordMath(run.score, mathXp(run)); tap('success'); sfx('level'); setTimeout(() => sfx('coin'), 1200); } }, [over]);
   useEffect(() => { music(null); }, []);
   const results = useRef<boolean[]>([]);
 
   const start = () => { results.current = []; setHits(0); setMisses(0); saved.current = false; setTyped(''); setLeft(60_000); setRun(startMath(profile.age, Date.now() % 1e9, Date.now())); };
   const press = (k: string) => {
-    if (!run || over) return;
+    if (!run || over || quitting) return;
     tap();
     if (k === '⌫') return setTyped((s) => s.slice(0, -1));
     if (k === '−') { if (neg) setTyped((s) => (s.startsWith('-') ? s.slice(1) : '-' + s)); return; }
@@ -59,7 +69,7 @@ export default function MathRapid() {
   if (!run) {
     return (
       <Screen scroll={false}>
-        <TopBar title={t('math_title')} sub={`${profile.age} ${t('years')}`} onBack={() => router.back()} />
+        <TopBar title={t('math_title')} sub={t(AGE_KEY[profile.age])} onBack={() => router.back()} />
         <View style={{ alignItems: 'center', gap: 12, marginTop: 'auto', marginBottom: 'auto' }}>
           <Drop><Mascot size={140} mood="cheer" /></Drop>
           <Pop delay={350}><T v="display" center>{t('math_60s_dot')}</T></Pop>
@@ -85,7 +95,7 @@ export default function MathRapid() {
         </View>
         <View style={{ marginTop: 'auto', gap: 10 }}>
           <Button title={t('again')} color={colors.orange} onPress={start} />
-          <Button variant="secondary" title={t('done')} onPress={() => router.replace('/home')} />
+          <Button variant="secondary" title={t('done')} onPress={() => (router.canGoBack() ? router.back() : router.replace('/home'))} />
         </View>
       </Screen>
     );
@@ -116,12 +126,13 @@ export default function MathRapid() {
             </PressScale>
           );
         })}
-        <Button small variant="secondary" color={colors.muted} title={t('skip')} onPress={skip} style={{ width: '31%' }} />
+        <Button small variant="secondary" color={colors.muted} title={t('skip')} onPress={skip} style={{ width: '31%', paddingHorizontal: 6 }} />
         <Button small title="OK" color={colors.green} onPress={submit} style={{ flex: 1 }} />
       </View>
-      <Sheet open={quitting} title={t('quit_q')}>
+      <Sheet open={quitting} title={t('quit_q')} onClose={() => setQuitting(false)}>
+        <T v="small" center color={colors.muted}>{t('quit_paused')}</T>
         <Button title={t('stay')} onPress={() => setQuitting(false)} />
-        <Button variant="secondary" color={colors.red} title={t('quit')} onPress={() => { setQuitting(false); router.replace('/home'); }} />
+        <Button variant="secondary" color={colors.red} title={t('quit')} onPress={() => { setQuitting(false); leave(() => (router.canGoBack() ? router.back() : router.replace('/home'))); }} />
       </Sheet>
     </Screen>
   );

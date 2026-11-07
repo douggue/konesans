@@ -135,7 +135,8 @@ export function ReactionTray({ onSend }: { onSend: (id: ReactionId) => void }) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   const PAD = 5, GAP = 3;
-  const cell = w ? Math.min(52, (w - PAD * 2 - GAP * (TRAY_REACTIONS.length - 1)) / TRAY_REACTIONS.length) : 36;
+  // w is the outer width: take off the 2 px borders so all 8 stickers fit (the last one used to be clipped at 360 px)
+  const cell = w ? Math.floor(Math.min(52, (w - 4 - PAD * 2 - GAP * (TRAY_REACTIONS.length - 1)) / TRAY_REACTIONS.length)) : 36;
   const send = (id: ReactionId) => {
     if (cooling) return;
     tap();
@@ -150,7 +151,7 @@ export function ReactionTray({ onSend }: { onSend: (id: ReactionId) => void }) {
     <View style={{ gap: 6, marginHorizontal: -12 }}>
       <T v="small" color={colors.muted} style={{ marginLeft: 14 }}>{t('reactions')}</T>
       <View testID="react-tray" onLayout={(e: LayoutChangeEvent) => setW(e.nativeEvent.layout.width)}
-        style={{ flexDirection: 'row', gap: GAP, padding: PAD, paddingBottom: PAD + 3, backgroundColor: colors.card, borderRadius: 20, borderWidth: 2, borderBottomWidth: 4, borderColor: colors.line, overflow: 'hidden' }}>
+        style={{ flexDirection: 'row', justifyContent: 'space-between', gap: GAP, padding: PAD, paddingBottom: PAD + 3, backgroundColor: colors.card, borderRadius: 20, borderWidth: 2, borderBottomWidth: 4, borderColor: colors.line, overflow: 'hidden' }}>
         {TRAY_REACTIONS.map((id) => <TrayButton key={id} id={id} cell={cell} dim={cooling} lit={cooling && sent === id} label={t(reactionLabelKey(id))} onPress={() => send(id)} />)}
         {/* cooldown bar along the bottom edge */}
         <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 3, overflow: 'hidden' }}>
@@ -170,14 +171,14 @@ function TrayButton({ id, cell, dim, lit, label, onPress }: { id: ReactionId; ce
     Animated.timing(s, { toValue: 1, duration: 620, easing: Easing.linear, useNativeDriver: true }).start();
   };
   const { soft } = REACTION_COLORS[id];
-  const size = Math.max(26, Math.min(40, cell - 3));
+  const size = Math.max(24, Math.min(40, cell - 3));
   return (
     <Pressable testID={`react-${id}`} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled: dim }}
       hitSlop={{ top: 6, bottom: 6 }}
       onPressIn={() => { if (!dim && !reduceMotion()) Animated.spring(press, { toValue: 0.86, speed: 40, bounciness: 0, useNativeDriver: true }).start(); }}
       onPressOut={() => Animated.spring(press, { toValue: 1, speed: 30, bounciness: 12, useNativeDriver: true }).start()}
       onPress={() => { if (dim) return; pop(); onPress(); }}
-      style={{ flex: 1, height: Math.max(44, size + 8), borderRadius: 14, backgroundColor: soft, alignItems: 'center', justifyContent: 'center', opacity: dim && !lit ? 0.4 : 1 }}>
+      style={{ width: cell, flexShrink: 1, height: Math.max(44, size + 8), borderRadius: 14, backgroundColor: soft, alignItems: 'center', justifyContent: 'center', opacity: dim && !lit ? 0.4 : 1 }}>
       <Animated.View style={{ transform: [
         { scale: press },
         { scale: s.interpolate({ inputRange: [0, 0.18, 0.4, 0.62, 1], outputRange: [1, 1.45, 0.92, 1.06, 1] }) },

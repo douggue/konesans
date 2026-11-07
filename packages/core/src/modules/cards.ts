@@ -1,6 +1,7 @@
 /**
- * Kat Ewo — which card a kid wins.
- *  - drawCard: after a finished defi (duel or category quiz). Always a card the kid does not have yet while any
+ * Kat Ewo — which card a kid wins. Cards are earned only by milestones (owner decision): one card per opened daily
+ * chest, one per rank-up, and the weekly 7/7 Lejand card — not after every quiz or duel.
+ *  - drawCard: chest / rank-up card. Always a card the kid does not have yet while any
  *    is left (rarity picked by weight among the rarities still missing); once the set is complete, a duplicate
  *    that turns into coins.
  *  - grantLegendCard: weekly-mission reward. Always an unowned Lejand card if one is left, otherwise a normal draw.
@@ -50,7 +51,7 @@ function pickRarity(available: CardRarity[], weights: Record<CardRarity, number>
 }
 const pickOne = <T>(list: T[], rand: () => number): T => list[Math.min(list.length - 1, Math.floor(rand() * list.length))];
 
-/** The card won after a finished defi. */
+/** The card won from a daily chest or a rank-up. */
 export function drawCard(owned: readonly string[], rand: () => number, opts: DrawOptions = {}): CardDraw {
   const cards = opts.cards ?? HERO_CARDS;
   if (!cards.length) throw new Error('drawCard: empty card set');

@@ -33,9 +33,22 @@ export function recordActivity(p: Progress, settings: KidSettings, now: number, 
   return { ...p, streak: { count: 1, lastDay: today, freezeAvailable } };
 }
 
-/** A new freeze is granted every 7 days of streak. */
+/** Freeze rule: every 7 days in a row (7, 14, 21…) earns a streak freeze 🧊. The kid holds at most one. */
+export const FREEZE_EVERY = 7;
 export const grantFreeze = (p: Progress): Progress =>
-  p.streak.count > 0 && p.streak.count % 7 === 0 ? { ...p, streak: { ...p.streak, freezeAvailable: true } } : p;
+  p.streak.count > 0 && p.streak.count % FREEZE_EVERY === 0 ? { ...p, streak: { ...p.streak, freezeAvailable: true } } : p;
+
+/**
+ * A real activity was finished (quiz, lesson, duel, Kalkil Mantal, coding level, Vwayaj run — never just opening
+ * the app): counts the day for the streak, and re-grants the freeze when the streak reaches a multiple of 7.
+ */
+export function recordPlay(p: Progress, settings: KidSettings, now: number, tz: string): Progress {
+  const next = recordActivity(p, settings, now, tz);
+  return next.streak.lastDay !== p.streak.lastDay ? grantFreeze(next) : next; // a new day was counted
+}
+
+/** Days still to play before the next freeze (0 when the kid already holds one). */
+export const daysToFreeze = (p: Progress) => (p.streak.freezeAvailable ? 0 : FREEZE_EVERY - (p.streak.count % FREEZE_EVERY));
 
 export type Mood = 'maten' | 'midi' | 'aswe' | 'rapel' | 'lannwit';
 

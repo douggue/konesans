@@ -78,7 +78,7 @@ describe('Kalkil Mantal engine', () => {
     // skip advances
     r = skipMath(r, 1000); expect(r.i).toBe(7); expect(r.misses).toBe(2); expect(r.current).not.toEqual(before);
     expect(weakKinds(r)[0]).toBe(before.kind);
-    expect(mathXp(r)).toBe(r.score * 2);
+    expect(mathXp(r)).toBe(Math.min(40, 10 + Math.round(r.score * 0.4)));
     // time over: nothing changes
     const frozen = answerMath(r, r.current.answer, 70_000); expect(frozen).toBe(r);
   });

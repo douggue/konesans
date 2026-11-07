@@ -48,7 +48,9 @@ export interface Profile {
 
 export interface AvatarConfig {
   skin: number; hair: 'afro' | 'braids' | 'short' | 'puffs' | 'bun' | 'mohawk' | 'locs'; hairColor: number;
-  shirt: number; extra: 'none' | 'glasses' | 'cap' | 'mask' | 'uniform' | 'headphones' | 'strawhat' | 'shades' | 'crown' | 'flower'; bg: number;
+  shirt: number; extra: 'none' | 'glasses' | 'cap' | 'mask' | 'uniform' | 'headphones' | 'strawhat' | 'shades' | 'crown' | 'flower'
+    /** sold in the avatar shop (progress/shop.ts) */
+    | 'headwrap' | 'bowtie' | 'catears'; bg: number;
   /** ring around the round avatar (0 = plain ink). Items past the first ones unlock by rank (see progress/ranks). */
   frame?: number;
 }
@@ -85,7 +87,7 @@ export interface Progress {
 export interface ReviewItem { box: 0 | 1 | 2 | 3 | 4; due: string; misses: number }
 
 export interface QuestState { id: string; kind: QuestKind; goal: number; progress: number; xp: number; done: boolean }
-export type QuestKind = 'win_duel' | 'finish_lessons' | 'math_score' | 'answer_correct' | 'play_category' | 'review_mistakes';
+export type QuestKind = 'win_duel' | 'finish_lessons' | 'math_score' | 'answer_correct' | 'play_category' | 'review_mistakes' | 'coding_level';
 
 export const emptyProgress = (): Progress => ({
   xp: 0, coins: 0, streak: { count: 0, lastDay: null, freezeAvailable: true },

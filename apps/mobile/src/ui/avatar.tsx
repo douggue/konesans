@@ -1,7 +1,8 @@
 /**
  * Kid avatars — ported from the mockup (design/project/Avatar.dc.html): chunky ink outlines, 5 skin tones, 4 hair styles,
  * plus the items unlocked by rank / streak / trophies (core progress/ranks.ts): 3 hair styles, 5 extras, 3 hair colours,
- * 3 special shirts, 3 special backgrounds and 4 rings. Old saved avatars draw exactly as before.
+ * 3 special shirts, 3 special backgrounds and 4 rings — and the shop items bought with coins (core progress/shop.ts):
+ * 2 hair colours, 3 shirts, 3 accessories, 3 backgrounds, 2 rings. Old saved avatars draw exactly as before.
  */
 import React from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
@@ -11,16 +12,16 @@ import { useBlink, Bob } from './motion';
 
 const INK = '#14213D';
 export const SKINS = ['#8D5524', '#5C3A1E', '#C68642', '#3B2314', '#E0AC69'];
-/** 0–4 free; 5 blue, 6 purple, 7 pink unlock */
-export const HAIR_COLORS = ['#14213D', '#3B2314', '#7A4212', '#D21034', '#F5B700', '#4D7CFE', '#9775FA', '#FF6FA8'];
-/** 0–5 plain colours (free); 6 stripes, 7 Haitian flag, 8 gold unlock. Entries are the base colour. */
-export const SHIRTS = ['#FF5A6E', '#4D7CFE', '#51CF66', '#FFD43B', '#9775FA', '#FF9F43', '#FFFFFF', '#00209F', '#FFD43B'];
-/** 0–5 plain (free); 6 sunrise, 7 flag, 8 starry night unlock. Entries are the base colour. */
-export const BGS = ['#E6ECFB', '#FFE8DC', '#D3F9D8', '#FFF4D1', '#EDE7FF', '#14213D', '#FFD8A8', '#00209F', '#1B2A55'];
+/** 0–4 free; 5 blue, 6 purple, 7 pink unlock; 8 mint, 9 orange in the shop */
+export const HAIR_COLORS = ['#14213D', '#3B2314', '#7A4212', '#D21034', '#F5B700', '#4D7CFE', '#9775FA', '#FF6FA8', '#20C997', '#F76707'];
+/** 0–5 plain colours (free); 6 stripes, 7 Haitian flag, 8 gold unlock; 9 madras, 10 kanaval, 11 football in the shop. Entries are the base colour. */
+export const SHIRTS = ['#FF5A6E', '#4D7CFE', '#51CF66', '#FFD43B', '#9775FA', '#FF9F43', '#FFFFFF', '#00209F', '#FFD43B', '#FFD43B', '#7048E8', '#12B886'];
+/** 0–5 plain (free); 6 sunrise, 7 flag, 8 starry night unlock; 9 beach, 10 mountains, 11 kanaval in the shop. Entries are the base colour. */
+export const BGS = ['#E6ECFB', '#FFE8DC', '#D3F9D8', '#FFF4D1', '#EDE7FF', '#14213D', '#FFD8A8', '#00209F', '#1B2A55', '#74C0FC', '#D0EBFF', '#5F3DC4'];
 export const HAIRS: AvatarConfig['hair'][] = ['afro', 'braids', 'short', 'puffs', 'bun', 'mohawk', 'locs'];
-export const EXTRAS: AvatarConfig['extra'][] = ['none', 'glasses', 'cap', 'mask', 'uniform', 'flower', 'headphones', 'strawhat', 'shades', 'crown'];
-/** 0 plain ink, 1 silver, 2 gold, 3 flag, 4 legend */
-export const FRAMES = [0, 1, 2, 3, 4];
+export const EXTRAS: AvatarConfig['extra'][] = ['none', 'glasses', 'cap', 'mask', 'uniform', 'flower', 'headphones', 'strawhat', 'shades', 'crown', 'bowtie', 'catears', 'headwrap'];
+/** 0 plain ink, 1 silver, 2 gold, 3 flag, 4 legend; 5 rainbow, 6 hibiscus in the shop */
+export const FRAMES = [0, 1, 2, 3, 4, 5, 6];
 
 /** What existed before unlockables: random/bot avatars only use these, so a seed keeps its look. */
 const BASE_HAIRS: AvatarConfig['hair'][] = ['afro', 'braids', 'short', 'puffs'];
@@ -64,7 +65,20 @@ export function AvatarArt({ a, size, blink }: { a: AvatarConfig; size: number; b
       {special === 6 && <G clipPath="url(#kns-shirt)"><Path d="M20 100h80M20 108h80M20 116h80" stroke="#4D7CFE" strokeWidth={4} /></G>}
       {special === 7 && <G clipPath="url(#kns-shirt)"><Rect x="20" y="104" width="80" height="16" fill="#D21034" /><Rect x="52" y="100" width="16" height="10" rx="2" fill="#FFFFFF" /><Circle cx="60" cy="105" r="2.5" fill="#2F9E44" /></G>}
       {special === 8 && <G><Path d="M60 98l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" fill="#FFFFFF" stroke={INK} strokeWidth={1.5} strokeLinejoin="round" /><Path d="M38 104l4 6M82 104l-4 6" stroke="#F5B700" strokeWidth={3} strokeLinecap="round" /></G>}
-      {(special === 6 || special === 7) && <Path d={SHIRT_D} fill="none" stroke={INK} strokeWidth={2.5} />}
+      {special === 9 && <G clipPath="url(#kns-shirt)">
+        <Path d="M20 98h80M20 108h80" stroke="#D21034" strokeWidth={5} opacity={0.85} />
+        <Path d="M42 88v32M60 88v32M78 88v32" stroke="#2F9E44" strokeWidth={5} opacity={0.75} />
+        <Path d="M20 103h80M51 88v32M69 88v32" stroke="#14213D" strokeWidth={1.2} opacity={0.5} />
+      </G>}
+      {special === 10 && <G clipPath="url(#kns-shirt)">
+        {[[42, 104, '#FFD43B'], [56, 112, '#FF5A6E'], [70, 100, '#51CF66'], [80, 112, '#FFD43B'], [48, 116, '#4D7CFE'], [64, 118, '#FFD43B']].map(([x, y, c], k) => <Path key={k} d={`M${x} ${Number(y) - 4}l4 4-4 4-4-4z`} fill={String(c)} stroke={INK} strokeWidth={1} />)}
+      </G>}
+      {special === 11 && <G clipPath="url(#kns-shirt)">
+        <Path d="M40 90v30M80 90v30" stroke="#FFFFFF" strokeWidth={5} />
+        <Path d="M50 92q10 8 20 0" fill="none" stroke="#FFFFFF" strokeWidth={4} />
+        <Path d="M57 104l4-2v14" fill="none" stroke="#FFFFFF" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
+      </G>}
+      {(special === 6 || special === 7 || special >= 9) && <Path d={SHIRT_D} fill="none" stroke={INK} strokeWidth={2.5} />}
       {a.extra === 'uniform' && <G><Path d="M48 92l12 10 12-10" fill="none" stroke="#FFFFFF" strokeWidth={3} /><Path d="M60 102v16" stroke={INK} strokeWidth={2} /></G>}
       {a.hair === 'puffs' && <G><Circle cx="30" cy="30" r="16" fill={hc} stroke={INK} strokeWidth={2.5} /><Circle cx="90" cy="30" r="16" fill={hc} stroke={INK} strokeWidth={2.5} /></G>}
       {a.hair === 'bun' && <Circle cx="60" cy="16" r="13" fill={hc} stroke={INK} strokeWidth={2.5} />}
@@ -112,6 +126,24 @@ export function AvatarArt({ a, size, blink }: { a: AvatarConfig; size: number; b
         <Path d="M38 30L40 8l11 11 9-15 9 15 11-11 2 22z" fill="#FFD43B" stroke={INK} strokeWidth={2.5} strokeLinejoin="round" />
         <Circle cx="60" cy="22" r="3.5" fill="#D21034" stroke={INK} strokeWidth={1.5} /><Circle cx="47" cy="25" r="2.5" fill="#4D7CFE" /><Circle cx="73" cy="25" r="2.5" fill="#51CF66" />
       </G>}
+      {a.extra === 'bowtie' && <G>
+        <Path d="M60 96l-13-7v14zM60 96l13-7v14z" fill="#D21034" stroke={INK} strokeWidth={2.2} strokeLinejoin="round" />
+        <Path d="M49 93l3 3-3 3M71 93l-3 3 3 3" fill="none" stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" opacity={0.7} />
+        <Rect x="56" y="92" width="8" height="8" rx="2.5" fill="#FF5A6E" stroke={INK} strokeWidth={2} />
+      </G>}
+      {a.extra === 'catears' && <G>
+        <Path d="M30 34L33 8l20 14z" fill={hc} stroke={INK} strokeWidth={2.5} strokeLinejoin="round" />
+        <Path d="M90 34L87 8 67 22z" fill={hc} stroke={INK} strokeWidth={2.5} strokeLinejoin="round" />
+        <Path d="M35 27l1.5-12 9 7z" fill="#FF8FAB" />
+        <Path d="M85 27l-1.5-12-9 7z" fill="#FF8FAB" />
+      </G>}
+      {a.extra === 'headwrap' && <G>
+        <Path d="M27 48C24 24 40 12 60 12s36 12 33 36c-8-9-19-13-33-13S35 39 27 48z" fill="#D21034" stroke={INK} strokeWidth={2.5} strokeLinejoin="round" />
+        <Path d="M33 34c8-6 17-9 27-9s19 3 27 9M30 42c9-7 19-10 30-10s21 3 30 10" fill="none" stroke="#FFD43B" strokeWidth={3} />
+        <Path d="M44 15v24M60 12v22M76 15v24" stroke="#2F9E44" strokeWidth={2.5} opacity={0.8} />
+        <Path d="M60 14c-10-12-22-6-16 2 4 5 12 2 16-2zM60 14c10-12 22-6 16 2-4 5-12 2-16-2z" fill="#D21034" stroke={INK} strokeWidth={2.2} strokeLinejoin="round" />
+        <Circle cx="60" cy="14" r="4" fill="#FFD43B" stroke={INK} strokeWidth={1.8} />
+      </G>}
       {a.extra === 'flower' && <G>
         {[0, 72, 144, 216, 288].map((r) => <Ellipse key={r} cx="86" cy="26" rx="6" ry="9" fill="#FF5A6E" stroke={INK} strokeWidth={1.8} transform={`rotate(${r} 86 34)`} />)}
         <Circle cx="86" cy="34" r="4" fill="#FFD43B" stroke={INK} strokeWidth={1.5} />
@@ -134,6 +166,27 @@ function BgArt({ bg, size }: { bg: number; size: number }) {
         <Path d="M0 74q25-10 50 0t50 0V100H0z" fill="#51CF66" opacity={0.55} />
       </G>}
       {i === 7 && <G><Rect width="100" height="50" fill="#00209F" /><Rect y="50" width="100" height="50" fill="#D21034" /></G>}
+      {i === 9 && <G>
+        <Rect width="100" height="100" fill="#74C0FC" />
+        <Circle cx="78" cy="24" r="10" fill="#FFD43B" />
+        <Path d="M0 58q12-4 25 0t25 0 25 0 25 0V76H0z" fill="#1C7ED6" />
+        <Path d="M0 64q12-3 25 0t25 0 25 0 25 0" fill="none" stroke="#FFFFFF" strokeWidth={1.5} opacity={0.6} />
+        <Path d="M0 74q50-8 100 0V100H0z" fill="#FFE066" />
+        <Path d="M14 74c0-14 2-24 6-30" stroke="#7A4212" strokeWidth={3} fill="none" strokeLinecap="round" />
+        <Path d="M20 44c-6-4-14-2-16 2M20 44c6-5 14-4 16 0M20 44c-2-6 0-12 6-14M20 44c-4-6-12-8-16-4" stroke="#2F9E44" strokeWidth={3.5} fill="none" strokeLinecap="round" />
+      </G>}
+      {i === 10 && <G>
+        <Rect width="100" height="100" fill="#D0EBFF" />
+        <Circle cx="24" cy="22" r="7" fill="#FFF4D1" />
+        <Path d="M-5 70L22 34l20 22 18-26 26 30 19-14V100H-5z" fill="#8CE99A" />
+        <Path d="M-5 82l24-22 22 16 22-20 24 20 18-10V100H-5z" fill="#40C057" />
+        <Path d="M-5 92l30-14 26 10 26-12 28 12V100H-5z" fill="#2F9E44" />
+      </G>}
+      {i === 11 && <G>
+        <Rect width="100" height="100" fill="#5F3DC4" />
+        <Path d="M-4 20q20 14 40 0t40 0 30 4M-4 44q24-12 50 2t54-4" fill="none" stroke="#FFD43B" strokeWidth={3} opacity={0.8} />
+        {[[12, 10, '#FF5A6E'], [30, 30, '#51CF66'], [70, 14, '#4D7CFE'], [88, 34, '#FF5A6E'], [50, 22, '#FFFFFF'], [8, 54, '#FFD43B'], [92, 60, '#51CF66'], [20, 78, '#FF9F43'], [84, 84, '#FFFFFF']].map(([x, y, c], k) => <Rect key={k} x={Number(x) - 2.5} y={Number(y) - 2.5} width="5" height="5" rx="1" fill={String(c)} transform={`rotate(${k * 23} ${x} ${y})`} />)}
+      </G>}
       {i === 8 && <G>
         <Rect width="100" height="100" fill="#1B2A55" />
         {[[16, 20, 2.2], [78, 14, 1.6], [30, 42, 1.4], [86, 46, 2.4], [60, 24, 1.2], [12, 64, 1.6], [90, 74, 1.4]].map(([x, y, r], k) => <Circle key={k} cx={x} cy={y} r={r} fill="#FFF4D1" />)}
@@ -161,6 +214,11 @@ function FrameArt({ frame, size }: { frame: number; size: number }) {
       {frame === 2 && <G><Circle cx={c} cy={c} r={r} fill="none" stroke="#F5B700" strokeWidth={sw} /><Circle cx={c} cy={c} r={r} fill="none" stroke="#FFE58A" strokeWidth={sw / 3} strokeDasharray={`${sw * 0.8} ${sw * 1.6}`} /></G>}
       {frame === 3 && <G><Path d={arc(Math.PI, 2 * Math.PI)} fill="none" stroke="#00209F" strokeWidth={sw} /><Path d={arc(0, Math.PI)} fill="none" stroke="#D21034" strokeWidth={sw} /></G>}
       {frame === 4 && <G><Circle cx={c} cy={c} r={r} fill="none" stroke="#7048E8" strokeWidth={sw} /><Circle cx={c} cy={c} r={r - sw / 2 + 1} fill="none" stroke="#FFD43B" strokeWidth={Math.max(1.5, sw / 3)} />{[0, 1, 2, 3, 4, 5, 6, 7].map((k) => { const a = (k / 8) * Math.PI * 2 - Math.PI / 2; return <Circle key={k} cx={c + r * Math.cos(a)} cy={c + r * Math.sin(a)} r={sw / 4} fill="#FFD43B" />; })}</G>}
+      {frame === 5 && <G>{['#FF5A6E', '#FF9F43', '#FFD43B', '#51CF66', '#4D7CFE', '#9775FA'].map((col, k) => <Path key={k} d={arc(-Math.PI / 2 + (k * Math.PI) / 3, -Math.PI / 2 + ((k + 1) * Math.PI) / 3 + 0.02)} fill="none" stroke={col} strokeWidth={sw} />)}</G>}
+      {frame === 6 && <G>
+        <Circle cx={c} cy={c} r={r} fill="none" stroke="#2F9E44" strokeWidth={sw} />
+        {[0, 1, 2, 3].map((k) => { const a = (k / 4) * Math.PI * 2 - Math.PI / 4; const x = c + r * Math.cos(a), y = c + r * Math.sin(a); const pr = sw * 0.62; return <G key={k}>{[0, 1, 2, 3, 4].map((j) => { const b = (j / 5) * Math.PI * 2; return <Circle key={j} cx={x + pr * Math.cos(b)} cy={y + pr * Math.sin(b)} r={pr * 0.72} fill="#FF6FA8" />; })}<Circle cx={x} cy={y} r={pr * 0.45} fill="#FFD43B" /></G>; })}
+      </G>}
       {ink}
     </Svg>
     </View>

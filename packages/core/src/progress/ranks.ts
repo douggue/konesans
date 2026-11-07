@@ -5,6 +5,7 @@
  */
 import type { AvatarConfig } from '../types.js';
 import { levelFromXp, xpForLevel } from './xp.js';
+import { shopItemFor } from './shop.js';
 
 export interface RankDef {
   id: string;
@@ -95,8 +96,13 @@ export const unlocksEarned = (c: UnlockCtx): string[] => UNLOCKS.filter((x) => r
 /** Items a rank unlocks (for the rank list and the rank-up moment). */
 export const rankUnlocks = (rankIndex: number): UnlockDef[] => UNLOCKS.filter((x) => 'rank' in x.req && x.req.rank === rankIndex);
 
-/** Is this avatar value free or already unlocked? `owned` = ids the app has recorded as unlocked. */
+/**
+ * Is this avatar value free, unlocked or bought? `owned` = ids the app has recorded as unlocked plus the shop items
+ * bought (progress/shop.ts): a shop item is open only once bought.
+ */
 export function isItemOpen(kind: UnlockKind, value: string | number, owned: readonly string[], c?: UnlockCtx): boolean {
+  const sold = shopItemFor(kind, value);
+  if (sold) return owned.includes(sold.id);
   const def = unlockFor(kind, value);
   if (!def) return true;
   return owned.includes(def.id) || (!!c && reqMet(def.req, c));

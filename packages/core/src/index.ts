@@ -26,3 +26,5 @@ export * from './courses/content.js';
 export * from './courses/engine.js';
 export * from './modules/cards.js';
 export * from './modules/vwayaj.js';
+export * from './progress/shop.js';
+export * from './progress/persist.js';

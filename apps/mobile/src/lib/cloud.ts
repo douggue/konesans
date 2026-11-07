@@ -19,7 +19,7 @@ import {
   emptyProgress, emptyCourseProgress, emptyMissionLog, emptyVwayaj, DEFAULT_SETTINGS,
   type CloudSave, type SavePart, type SaveParts, type SavePreview,
 } from '@konesans/core';
-import { useStore, KID_TZ } from './store';
+import { useStore, KID_TZ, onResetAll } from './store';
 import { useCards } from './cards';
 import { useVwayaj } from './vwayaj';
 import { usePrefs } from './prefs';
@@ -50,10 +50,22 @@ interface CloudMeta {
   playDays: string[];
   /** last time the "save with Google" card was closed (ms) */
   offerClosedAt: number;
+  /** "Rekòmanse a zewo" was used: the next upload replaces the account's save whole (never merges the old kid back) */
+  forceNext?: boolean;
 }
-const emptyMeta = (): CloudMeta => ({ synced: {}, changedAt: {}, profileId: null, code: null, google: false, lastSync: 0, status: 'idle', playDays: [], offerClosedAt: 0 });
+const emptyMeta = (): CloudMeta => ({ synced: {}, changedAt: {}, profileId: null, code: null, google: false, lastSync: 0, status: 'idle', playDays: [], offerClosedAt: 0, forceNext: false });
 
 export const useCloud = create<CloudMeta>()(persist(() => emptyMeta(), { name: 'konesans-cloud', storage: createJSONStorage(() => AsyncStorage), version: 1 }));
+
+/**
+ * "Rekòmanse a zewo": forget what this phone synced (the new kid's parts are all "changed") and replace the
+ * account's save on the next upload. The account link (code, Google, device) stays: it is the same phone.
+ */
+onResetAll('cloud', () => {
+  if (timer) { clearTimeout(timer); timer = null; firstPendingAt = 0; }
+  for (const k of Object.keys(changed)) delete changed[k as SavePart];
+  useCloud.setState({ synced: {}, changedAt: {}, status: 'idle', playDays: [], offerClosedAt: 0, forceNext: true });
+});
 
 // ---------- reading / writing the stores ----------
 
@@ -64,7 +76,7 @@ export function readParts(): Record<SavePart, Data> {
   return {
     profile: s.profile, progress: trimProgress(s.progress), courses: s.courses, stats: s.stats, missions: s.missions ?? emptyMissionLog(),
     settings: s.settings, kidSettings: s.kidSettings, coding: s.coding,
-    extra: { rankSeen: s.rankSeen, unlocked: s.unlocked ?? [], seenUnlocks: s.seenUnlocks ?? [], onboarded: s.onboarded, courseLang: s.courseLang, peyi: s.peyi },
+    extra: { rankSeen: s.rankSeen, unlocked: s.unlocked ?? [], seenUnlocks: s.seenUnlocks ?? [], bought: s.bought ?? [], onboarded: s.onboarded, courseLang: s.courseLang, peyi: s.peyi },
     cards: { owned: c.owned, fresh: c.fresh, read: c.read },
     vwayaj: { done: v.done, best: v.best, eventsPlayed: v.eventsPlayed, selected: v.selected },
     prefs: { difficulty: p.difficulty },
@@ -101,8 +113,8 @@ function writeParts(parts: SaveParts, replace: boolean) {
     const ks = val('kidSettings'); if (ks) main.kidSettings = { ...DEFAULT_SETTINGS, ...ks };
     const cd = val('coding'); if (cd) main.coding = cd;
     const ex = val('extra');
-    if (ex) for (const k of ['rankSeen', 'unlocked', 'seenUnlocks', 'onboarded', 'courseLang', 'peyi'] as const) if (ex[k] !== undefined) main[k] = ex[k];
-    if (replace) Object.assign(main, { onboarded: true, changeReq: null, newBadges: [], seen: [], recentPeyi: [] });
+    if (ex) for (const k of ['rankSeen', 'unlocked', 'seenUnlocks', 'bought', 'onboarded', 'courseLang', 'peyi'] as const) if (ex[k] !== undefined) main[k] = ex[k];
+    if (replace) Object.assign(main, { onboarded: true, changeReq: null, newBadges: [], badgeQueue: [], seen: [], recentPeyi: [] });
     useStore.setState(main as never);
     const ca = val('cards'); if (ca) useCards.setState({ owned: ca.owned ?? [], fresh: ca.fresh ?? [], read: ca.read ?? [], ...(replace ? { draws: {} } : {}) });
     const vw = val('vwayaj'); if (vw) useVwayaj.setState({ ...(replace ? emptyVwayaj() : {}), done: vw.done ?? {}, best: vw.best ?? {}, eventsPlayed: vw.eventsPlayed ?? [], ...(vw.selected !== undefined ? { selected: vw.selected } : {}) });
@@ -119,7 +131,8 @@ function writeParts(parts: SaveParts, replace: boolean) {
       synced[k] = { h: same ? hashOf(now[k]) : 'server:' + hashOf(r.data), at: r.at };
       if (same) delete changedAt[k]; else changedAt[k] = Date.now();
     }
-    useCloud.setState({ synced, changedAt });
+    // a restore is not a reset: the phone now equals the account's save, nothing to force
+    useCloud.setState({ synced, changedAt, ...(replace ? { forceNext: false } : {}) });
   } finally { applying = false; }
 }
 
@@ -155,7 +168,8 @@ export async function syncNow(opts: { force?: boolean; pull?: boolean } = {}): P
     const meta = useCloud.getState();
     const local = readParts();
     const profileId: string = local.profile.id;
-    const force = !!opts.force || (!!meta.profileId && meta.profileId !== profileId); // a reset made a new kid on this phone
+    // a reset made a new kid on this phone: replace the account's save (forceNext also covers a reset before the first sync)
+    const force = !!opts.force || !!meta.forceNext || (!!meta.profileId && meta.profileId !== profileId);
     const send: SaveParts = {}; const hashes: Partial<Record<SavePart, string>> = {};
     for (const k of SAVE_PARTS) {
       const h = (hashes[k] = hashOf(local[k]));
@@ -170,7 +184,7 @@ export async function syncNow(opts: { force?: boolean; pull?: boolean } = {}): P
       // another phone chose its own progress for this account: this phone takes the account's save
       const g = await callRpc<{ save: CloudSave | null; code: string }>('save_get', {});
       if (g.save) writeParts(g.save.parts, true);
-      useCloud.setState({ profileId: g.save?.profileId ?? profileId, code: g.code, lastSync: Date.now(), status: 'ok' });
+      useCloud.setState({ profileId: g.save?.profileId ?? profileId, code: g.code, lastSync: Date.now(), status: 'ok', forceNext: false });
       firstDone = true; retryMs = 60_000;
       return true;
     }
@@ -183,7 +197,7 @@ export async function syncNow(opts: { force?: boolean; pull?: boolean } = {}): P
       if (hashOf(after[k]) === hashes[k] && !changed[k]) delete changedAt[k];
     }
     for (const k of SAVE_PARTS) if (!send[k] && synced[k]?.h === hashOf(after[k])) delete changedAt[k];
-    useCloud.setState({ synced, changedAt, profileId, code: r.code ?? m.code, lastSync: Date.now(), status: 'ok' });
+    useCloud.setState({ synced, changedAt, profileId, code: r.code ?? m.code, lastSync: Date.now(), status: 'ok', ...(force ? { forceNext: false } : {}) });
     if (r.pull && Object.keys(r.pull).length) writeParts(r.pull, false);
     firstDone = true; retryMs = 60_000;
     return true;
@@ -213,7 +227,7 @@ export function startCloudSync() {
     const MAIN: SavePart[] = ['profile', 'progress', 'courses', 'stats', 'missions', 'settings', 'kidSettings', 'coding'];
     useStore.subscribe((s, p) => {
       for (const k of MAIN) if ((s as any)[k] !== (p as any)[k]) mark(k);
-      if (s.rankSeen !== p.rankSeen || s.unlocked !== p.unlocked || s.seenUnlocks !== p.seenUnlocks || s.onboarded !== p.onboarded || s.courseLang !== p.courseLang || s.peyi !== p.peyi) mark('extra');
+      if (s.rankSeen !== p.rankSeen || s.unlocked !== p.unlocked || s.bought !== p.bought || s.seenUnlocks !== p.seenUnlocks || s.onboarded !== p.onboarded || s.courseLang !== p.courseLang || s.peyi !== p.peyi) mark('extra');
       if (!applying && s.progress.xp > p.progress.xp) notePlayDay();
     });
     useCards.subscribe((s, p) => { if (s.owned !== p.owned || s.fresh !== p.fresh || s.read !== p.read) mark('cards'); });

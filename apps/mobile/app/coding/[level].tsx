@@ -2,18 +2,23 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { levelById, run, scoreRun, countBlocks, validateProgram, isWall, type Block, type Robot, type RunResult, type Level } from '@konesans/core';
-import { Screen, T, Button, Card, Row, TopBar, Icon, Stars, Pill, Mascot, PressScale } from '@/ui';
+import { Screen, T, Button, Card, Row, TopBar, Icon, Stars, Pill, Mascot, PressScale, Sheet, readableOn } from '@/ui';
+import { useQuitGuard } from '@/ui/activity';
 import { colors, radius } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT, type StrKey } from '@/lib/i18n';
 import { tap, sfx, music } from '@/lib/audio';
 
 type Kind = Block['type'];
+// block colours: label text is white or ink, whichever reads (WCAG AA); "avanse" uses a deeper blue so white text passes
+const AVANSE_BLUE = '#2F5FE0';
 const PALETTE: { type: Kind; icon: 'avanse' | 'vire_goch' | 'vire_dwat' | 'repete' | 'simi' | 'zetwal_gri'; color: string }[] = [
-  { type: 'avanse', icon: 'avanse', color: colors.blueLight }, { type: 'vire_goch', icon: 'vire_goch', color: colors.orange }, { type: 'vire_dwat', icon: 'vire_dwat', color: colors.orange },
+  { type: 'avanse', icon: 'avanse', color: AVANSE_BLUE }, { type: 'vire_goch', icon: 'vire_goch', color: colors.orange }, { type: 'vire_dwat', icon: 'vire_dwat', color: colors.orange },
   { type: 'repete', icon: 'repete', color: colors.purple }, { type: 'si_mi', icon: 'simi', color: colors.redLight }, { type: 'jiska_zetwal', icon: 'zetwal_gri', color: colors.green },
 ];
 const ARROW: Record<Robot['dir'], string> = { N: '▲', E: '▶', S: '▼', W: '◀' };
+/** where the little "facing" arrow sits around the robot */
+const ARROW_POS: Record<Robot['dir'], object> = { N: { top: -3, alignSelf: 'center' }, S: { bottom: -3, alignSelf: 'center' }, E: { right: -3, top: '30%' }, W: { left: -3, top: '30%' } };
 
 function makeBlock(type: Kind): Block {
   switch (type) {
@@ -38,6 +43,9 @@ export default function CodingLevel() {
   const [gems, setGems] = useState<Set<string>>(new Set());
   const [showHint, setShowHint] = useState(false);
   const anim = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [quitting, setQuitting] = useState(false);
+  // a program being built isn't thrown away by Android back / browser back without asking
+  const leave = useQuitGuard(program.length > 0 && !result?.ok, () => setQuitting(true));
 
   const reset = () => { if (anim.current) clearInterval(anim.current); setRobot({ ...lv.maze.start, dir: lv.maze.startDir }); setGems(new Set()); setResult(null); };
   useEffect(() => () => { if (anim.current) clearInterval(anim.current); }, []);
@@ -66,7 +74,7 @@ export default function CodingLevel() {
 
   return (
     <Screen>
-      <TopBar title={`${lv.id}. ${fr ? lv.titleFr : lv.title}`} sub={`${countBlocks(program)} ${t('blocks')} · ${t('par', { n: lv.par })}`} onBack={() => router.back()}
+      <TopBar title={`${lv.id}. ${fr ? lv.titleFr : lv.title}`} sub={`${countBlocks(program)} ${t('blocks')} · ${t('par_goal', { n: lv.par })}`} onBack={() => router.back()}
         right={<PressScale debounceMs={0} role="button" onPress={() => { tap(); setShowHint(!showHint); }} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.yellowSoft, alignItems: 'center', justifyContent: 'center' }}><Icon name="endis" size={26} /></PressScale>} />
       {showHint && <Card soft={colors.yellowSoft} edge={colors.yellowDark}><T v="body">{fr ? lv.hintFr : lv.hint}</T></Card>}
 
@@ -83,7 +91,12 @@ export default function CodingLevel() {
                 <View key={c} style={{ width: cell, height: cell, backgroundColor: wall ? colors.ink : (r + c) % 2 ? '#E8F0FF' : '#F6F9FF', alignItems: 'center', justifyContent: 'center' }}>
                   {star && !here && <T style={{ fontSize: cell * 0.6, lineHeight: cell * 0.7 }} color={colors.yellowDark}>★</T>}
                   {gem && <T style={{ fontSize: cell * 0.45, lineHeight: cell * 0.6 }}>💎</T>}
-                  {here && <View style={{ width: cell * 0.78, height: cell * 0.78, borderRadius: cell * 0.25, backgroundColor: result?.ok ? colors.green : colors.blueLight, borderWidth: 2.5, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' }}><T color="#fff" style={{ fontSize: cell * 0.4, lineHeight: cell * 0.5 }}>{ARROW[robot.dir]}</T></View>}
+                  {here && (
+                    <View accessibilityLabel="Robo" style={{ width: cell * 0.9, height: cell * 0.9, borderRadius: cell * 0.28, backgroundColor: result?.ok ? colors.greenSoft : '#FFFFFF', borderWidth: 2, borderColor: result?.ok ? colors.green : colors.ink, alignItems: 'center', justifyContent: 'center' }}>
+                      <Icon name="robo" size={cell * 0.72} />
+                      <View style={[{ position: 'absolute' }, ARROW_POS[robot.dir]]}><T color={colors.red} style={{ fontSize: cell * 0.26, lineHeight: cell * 0.3 }}>{ARROW[robot.dir]}</T></View>
+                    </View>
+                  )}
                 </View>
               );
             })}
@@ -104,7 +117,7 @@ export default function CodingLevel() {
         {PALETTE.filter((b) => lv.allowed.includes(b.type)).map((b) => (
           <PressScale debounceMs={0} role="button" key={b.type} onPress={() => { tap(); add(b.type); }} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: b.color, borderRadius: radius.sm, paddingHorizontal: 12, minHeight: 48, borderBottomWidth: 4, borderBottomColor: 'rgba(0,0,0,0.25)' }, pressed && { transform: [{ translateY: 2 }], borderBottomWidth: 2 }]}>
             <Icon name={b.icon} size={24} />
-            <T v="h3" color="#fff">{t(`b_${b.type}` as StrKey)}</T>
+            <T v="h3" color={readableOn(b.color)}>{t(`b_${b.type}` as StrKey)}</T>
           </PressScale>
         ))}
       </View>
@@ -113,10 +126,16 @@ export default function CodingLevel() {
       {result && msg && (
         <Card edge={result.ok ? colors.green : colors.red} soft={result.ok ? colors.greenSoft : colors.redSoft} style={{ gap: 6 }}>
           <Row><Mascot size={56} mood={result.ok ? 'cheer' : 'sad'} /><View style={{ flex: 1 }}><T v="h3" color={result.ok ? '#12632F' : '#8F0A22'}>{t(msg)}</T>{result.ok && <Row><Stars n={stars} /><Pill text={`+${scoreRun(result, lv)} XP`} color="#5C4600" bg={colors.yellowSoft} /></Row>}</View></Row>
-          {result.ok && <Button small title={t('continue')} color={colors.green} onPress={() => router.back()} />}
+          {result.ok && <Button small title={t('continue')} color={colors.green} onPress={() => leave(() => router.back())} />}
         </Card>
       )}
-      <Button title={t('run')} color={colors.green} icon="jwe" disabled={program.length === 0 || problems.length > 0} onPress={play} />
+      {/* solved: nothing to re-run until the program changes */}
+      {result?.ok ? <T v="small" center color={colors.muted}>{t('run_again')}</T> : null}
+      <Button title={t('run')} color={colors.green} icon="jwe" disabled={program.length === 0 || problems.length > 0 || !!result?.ok} onPress={play} />
+      <Sheet open={quitting} title={t('quit_q')} onClose={() => setQuitting(false)}>
+        <Button title={t('stay')} onPress={() => setQuitting(false)} />
+        <Button variant="secondary" color={colors.red} title={t('quit')} onPress={() => { setQuitting(false); leave(() => (router.canGoBack() ? router.back() : router.replace('/coding'))); }} />
+      </Sheet>
     </Screen>
   );
 }
@@ -149,7 +168,7 @@ const ICON: Record<Kind, 'avanse' | 'vire_goch' | 'vire_dwat' | 'repete' | 'simi
 
 function ProgramList({ blocks, path, cursor, setCursor, onTimes, t }: { blocks: Block[]; path: Path; cursor: Path; setCursor: (p: Path) => void; onTimes: (p: Path, d: number) => void; t: (k: StrKey) => string }) {
   const same = (a: Path, b: Path) => a.length === b.length && a.every((x, i) => x === b[i]);
-  const color: Record<string, string> = { avanse: colors.blueLight, vire_goch: colors.orange, vire_dwat: colors.orange, repete: colors.purple, si_mi: colors.redLight, jiska_zetwal: colors.green };
+  const color: Record<string, string> = { avanse: AVANSE_BLUE, vire_goch: colors.orange, vire_dwat: colors.orange, repete: colors.purple, si_mi: colors.redLight, jiska_zetwal: colors.green };
   return (
     <View style={{ gap: 6 }}>
       {blocks.map((b, i) => {
@@ -159,15 +178,15 @@ function ProgramList({ blocks, path, cursor, setCursor, onTimes, t }: { blocks: 
           <View key={i} style={{ gap: 6 }}>
             <PressScale debounceMs={0} role="button" onPress={() => container && setCursor(here)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: color[b.type], borderRadius: 10, paddingHorizontal: 10, minHeight: 40, borderWidth: 2, borderColor: container && same(cursor, here) ? colors.ink : 'transparent' }}>
               <Icon name={ICON[b.type]} size={22} />
-              <T v="bold" color="#fff">{t(`b_${b.type}` as StrKey)}</T>
+              <T v="bold" color={readableOn(color[b.type])}>{t(`b_${b.type}` as StrKey)}</T>
               {b.type === 'repete' && (
                 <Row gap={4} style={{ marginLeft: 'auto' }}>
-                  <PressScale debounceMs={0} role="button" onPress={() => onTimes(here, -1)} style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.3)', alignItems: 'center', justifyContent: 'center' }}><T v="h3" color="#fff">−</T></PressScale>
-                  <T v="h3" color="#fff">{b.times}×</T>
-                  <PressScale debounceMs={0} role="button" onPress={() => onTimes(here, 1)} style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.3)', alignItems: 'center', justifyContent: 'center' }}><T v="h3" color="#fff">+</T></PressScale>
+                  <PressScale debounceMs={0} role="button" onPress={() => onTimes(here, -1)} style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.45)', alignItems: 'center', justifyContent: 'center' }}><T v="h3" color={colors.ink}>−</T></PressScale>
+                  <T v="h3" color={colors.ink}>{b.times}×</T>
+                  <PressScale debounceMs={0} role="button" onPress={() => onTimes(here, 1)} style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.45)', alignItems: 'center', justifyContent: 'center' }}><T v="h3" color={colors.ink}>+</T></PressScale>
                 </Row>
               )}
-              {container && <T v="small" color="#fff" style={{ marginLeft: b.type === 'repete' ? 6 : 'auto' }}>{same(cursor, here) ? t('here') : '▸'}</T>}
+              {container && <T v="small" color={readableOn(color[b.type])} style={{ marginLeft: b.type === 'repete' ? 6 : 'auto' }}>{same(cursor, here) ? t('here') : '▸'}</T>}
             </PressScale>
             {container && (
               <View style={{ marginLeft: 16, borderLeftWidth: 3, borderLeftColor: color[b.type], paddingLeft: 8, gap: 6 }}>

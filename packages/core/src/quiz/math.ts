@@ -1,5 +1,6 @@
 import { rng } from './engine.js';
 import type { AgeBand } from '../types.js';
+import { mathRunXp } from '../progress/xp.js';
 
 /**
  * Kalkil Mantal — generated mental-math problems, 60 seconds, combo bonus.
@@ -254,7 +255,8 @@ export function skipMath(r: MathRun, now: number): MathRun {
   return { ...r, i: r.i + 1, misses: r.misses + 1, combo: 0, current: next, history: [...r.history, { kind: r.current.kind, ok: false }] };
 }
 
-export const mathXp = (r: MathRun) => r.score * 2;
+/** XP for a finished run (the table lives in progress/xp.ts). */
+export const mathXp = (r: MathRun) => mathRunXp(r.score);
 
 /** Kinds the kid got wrong most, for the "pratike sa" tip at the end. */
 export function weakKinds(r: MathRun, n = 2): MathKind[] {

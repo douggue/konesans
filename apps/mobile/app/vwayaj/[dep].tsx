@@ -1,12 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
-  startSolo, answerSolo, soloSummary, QUESTION_TIME_MS, pickDepartmentRun, departmentById, isUnlocked, pointsMultiplier, runStars,
+  startSolo, answerSolo, soloSummary, pickDepartmentRun, departmentById, isUnlocked, pointsMultiplier, runStars,
   VWAYAJ_PASS, VWAYAJ_CLEAR_XP, DEPARTMENTS, type SoloSession, type DepartmentId, type VwayajRunResult,
 } from '@konesans/core';
 import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Pill, CountPill, Stars, FadeIn, Pop, Drop, SlideSwap, Confetti, Hop, Icon, useCountUp, type MascotMood } from '@/ui';
 import { QuestionView } from '@/ui/QuestionView';
+import { useQuitGuard, useQuestionClock, questionTimeMs, scoredNow } from '@/ui/activity';
 import { colors } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT, useL } from '@/lib/i18n';
@@ -29,40 +30,29 @@ export default function VwayajRun() {
   const [s, setS] = useState<SoloSession>(() => startSolo(questions, Date.now()));
   const [chosen, setChosen] = useState<number | null>(null);
   const [reveal, setReveal] = useState(false);
-  const [left, setLeft] = useState(QUESTION_TIME_MS);
   const [quitting, setQuitting] = useState(false);
   const [result, setResult] = useState<VwayajRunResult | null>(null);
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timeMs = questionTimeMs(profile.age);
+  const clock = useQuestionClock({ timeMs, key: `${s.startedAt}-${s.index}`, running: !s.finished && !reveal, paused: quitting, onTimeout: () => pick(null) });
+  const left = clock.left;
+  const leave = useQuitGuard(!s.finished || reveal, () => setQuitting(true));
   const q = s.questions[s.index];
 
   // a locked (or unknown) department can't be played: back to the map
-  useEffect(() => { if (!dep || !isUnlocked(useVwayaj.getState(), id)) router.replace('/vwayaj'); }, []);
+  useEffect(() => { if (!dep || !isUnlocked(useVwayaj.getState(), id)) leave(() => router.replace('/vwayaj')); }, []);
   useEffect(() => { music(null); }, []);
-
-  // countdown
-  useEffect(() => {
-    if (s.finished || reveal) return;
-    const started = Date.now();
-    timer.current = setInterval(() => {
-      const rem = QUESTION_TIME_MS - (Date.now() - started);
-      setLeft(Math.max(0, rem));
-      if (rem <= 0) pick(null);
-    }, 200);
-    return () => { if (timer.current) clearInterval(timer.current); };
-  }, [s.index, reveal, s.finished]);
 
   useEffect(() => { if (q && settings.voice && profile.age === '6-8') speak(l(q.prompt), profile.lang); }, [s.index]);
 
   function pick(i: number | null) {
     if (reveal) return;
-    if (timer.current) clearInterval(timer.current);
     setChosen(i); setReveal(true);
-    const next = answerSolo(s, i, Date.now());
+    const next = answerSolo(s, i, scoredNow(s, clock.elapsed(), timeMs));
     tap(next.answers[next.answers.length - 1].correct ? 'success' : 'error');
     sfx(answerSfx(next.answers.map((x) => x.correct), i === null));
     setS(next);
   }
-  function go() { setChosen(null); setReveal(false); setLeft(QUESTION_TIME_MS); }
+  function go() { setChosen(null); setReveal(false); }
   function finish() {
     const sum = soloSummary(s);
     const r = useVwayaj.getState().finishRun({ dep: id, correct: sum.correct, total: sum.total, score: sum.score * mult, ids: s.questions.map((x) => x.id) });
@@ -71,7 +61,7 @@ export default function VwayajRun() {
     setTimeout(() => sfx('coin'), 1150); // when the points pill pops
   }
   useEffect(() => { if (s.finished && !reveal && !result) finish(); }, [s.finished, reveal]);
-  function again() { setResult(null); setLeft(QUESTION_TIME_MS); setS(startSolo(build(Date.now() % 1e9), Date.now())); }
+  function again() { setResult(null); setS(startSolo(build(Date.now() % 1e9), Date.now())); }
 
   if (!dep) return <Screen><T>…</T></Screen>;
 
@@ -125,8 +115,8 @@ export default function VwayajRun() {
     <Screen scroll={true}>
       <TopBar close title={l(dep.name)} sub={`${t('question')} ${s.index + (reveal ? 0 : 1)} / ${s.questions.length}`} onBack={() => setQuitting(true)}
         right={<CountPill value={s.score * mult} k={`vwscore-${s.startedAt}`} icon="pwen" color="#5C4600" bg={colors.yellowSoft} />} />
-      <Row>
-        <Progress style={{ flex: 1 }} linear value={left / QUESTION_TIME_MS} color={left < 4000 ? colors.red : colors.yellowDark} />
+      <Row style={{ opacity: reveal ? 0.35 : 1 }}>
+        <Progress style={{ flex: 1 }} linear value={left / timeMs} color={left < 4000 ? colors.red : colors.yellowDark} />
         <T v="small" color={colors.muted} style={{ width: 32, textAlign: 'right' }}>{Math.ceil(left / 1000)} s</T>
       </Row>
       <Progress value={s.index / s.questions.length} color={colors.green} height={6} />
@@ -147,9 +137,10 @@ export default function VwayajRun() {
           <Button small title={t('continue')} color={last.correct ? colors.green : colors.blue} onPress={go} style={{ marginTop: 6 }} />
         </Card></FadeIn>
       )}
-      <Sheet open={quitting} title={t('quit_q')}>
+      <Sheet open={quitting} title={t('quit_q')} onClose={() => setQuitting(false)}>
+        <T v="small" center color={colors.muted}>{t('quit_paused')}</T>
         <Button title={t('stay')} onPress={() => setQuitting(false)} />
-        <Button variant="secondary" color={colors.red} title={t('quit')} onPress={() => { setQuitting(false); router.replace('/vwayaj'); }} />
+        <Button variant="secondary" color={colors.red} title={t('quit')} onPress={() => { setQuitting(false); leave(() => router.replace('/vwayaj')); }} />
       </Sheet>
     </Screen>
   );

@@ -27,13 +27,79 @@ export const both = (c: Country, f: Field): LocalizedText => ({ ht: c[f], fr: c[
 const regionText = (r: Continent): LocalizedText => ({ ht: REGION_LABEL[r].ht, fr: REGION_LABEL[r].fr });
 const langText = (l: string): LocalizedText => ({ ht: l, fr: LANG_FR[l] ?? l });
 
+// ─── things that would make a second option also right ────────────────────────
+/**
+ * Flags a child cannot tell apart (same colours, same layout, or only a small emblem differs).
+ * Two countries of the same group are never options of the same flag question.
+ */
+export const LOOKALIKE_FLAGS: string[][] = [
+  ['TD', 'RO', 'AD', 'MD'], ['ID', 'MC', 'PL'], ['NL', 'LU'], ['ML', 'GN', 'SN', 'CM'], ['IE', 'CI', 'IT'], ['AU', 'NZ'],
+  ['CO', 'EC', 'VE'], ['HN', 'NI', 'SV'], ['IN', 'NE'], ['SI', 'SK', 'RU'], ['NO', 'IS'], ['QA', 'BH'], ['JO', 'PS', 'SD'],
+  ['KW', 'AE'], ['BE', 'DE'], ['GH', 'BO'], ['HT', 'LI'], ['CU', 'PR'], ['FR', 'NL'],
+];
+export const flagsLookAlike = (a: string, b: string) => a !== b && LOOKALIKE_FLAGS.some((g) => g.includes(a) && g.includes(b));
+
+/**
+ * Other languages that are official or spoken by most people in a country (the table keeps only the main one).
+ * They are never offered as the "wrong" answer of "Ki lang yo pale nan …?".
+ */
+export const LANG_ALSO: Record<string, string[]> = {
+  HT: ['Franse'], CA: ['Franse'], US: ['Panyòl'], BE: ['Olandè', 'Alman'], CH: ['Franse', 'Italyen'], LU: ['Franse', 'Alman'],
+  AD: ['Franse', 'Panyòl'], MC: ['Italyen'], MT: ['Angle'], CY: ['Tik'], FI: ['Syedwa'], IE: ['Angle'],
+  BY: ['Ris'], UA: ['Ris'], MD: ['Ris'], KZ: ['Ris'], KG: ['Ris'], TJ: ['Ris'], UZ: ['Ris'], TM: ['Ris'], AM: ['Ris'], GE: ['Ris'], AZ: ['Ris'],
+  XK: ['Sèb'], BA: ['Sèb', 'Kwoat'], ME: ['Sèb'], MK: ['Albanè'], RS: ['Bosnyak'],
+  IN: ['Angle'], PK: ['Angle'], PH: ['Angle'], SG: ['Chinwa', 'Malè', 'Endi'], MY: ['Angle'], BN: ['Angle'], LK: ['Angle'], BD: ['Angle'],
+  IL: ['Arab'], PS: ['Ebre'], AF: ['Pèsan'], TL: ['Pòtigè'], HK: ['Angle'],
+  MA: ['Franse'], DZ: ['Franse'], TN: ['Franse'], LB: ['Franse'], MR: ['Franse'], DJ: ['Arab'], TD: ['Arab'], KM: ['Arab', 'Franse'],
+  CM: ['Angle'], RW: ['Franse', 'Angle', 'Swahili'], BI: ['Franse', 'Angle'], SC: ['Angle', 'Franse'], MU: ['Angle', 'Franse'], MG: ['Franse'],
+  KE: ['Angle'], TZ: ['Angle'], UG: ['Swahili'], ZA: ['Angle'], NA: ['Alman'], SN: ['Franse'], ER: ['Arab', 'Angle'], SO: ['Arab'],
+  SD: ['Angle'], SS: ['Arab'], LS: ['Angle'], SZ: ['Angle'], GQ: ['Franse', 'Pòtigè'], ET: ['Angle'],
+  BZ: ['Panyòl'], PR: ['Angle'], FJ: ['Endi'], PG: ['Angle'], VU: ['Angle', 'Franse'], WS: ['Angle'], TO: ['Angle'], MH: ['Angle'],
+  PW: ['Angle'], NR: ['Angle'], TV: ['Angle'], NZ: [], AU: [],
+};
+export const languagesOf = (c: Country): string[] => [...c.langs, ...(LANG_ALSO[c.iso] ?? [])];
+
+/** Money also legal in a country (beside the one in the table). */
+const CURRENCY_ALSO: Record<string, string[]> = { PA: ['Dola ameriken'], ZW: ['Dola ameriken'], KH: ['Dola ameriken'], SV: [], EC: [], ME: ['Ewo'], XK: ['Ewo'], LI: [], MC: [] };
+/**
+ * Two currency names that a child could both call right: the same word with or without a country
+ * ("Dola" / "Dola ameriken", "Fran" / "Fran CFA", "Liv" / "Liv ejipsyen"), or money also legal there.
+ */
+export function currencyClash(c: Country, other: string): boolean {
+  if (other === c.currency || (CURRENCY_ALSO[c.iso] ?? []).includes(other)) return true;
+  return other.split(' ')[0].toLowerCase() === c.currency.split(' ')[0].toLowerCase();
+}
+
+/**
+ * Regions that overlap: the Caribbean islands are part of North America (and some sit on South America's shelf),
+ * so "Karayib" and "Amerik di Nò / di Sid" are never options of the same region question.
+ */
+const REGION_CLASH: Partial<Record<Continent, Continent[]>> = {
+  'Karayib': ['Amerik di Nò', 'Amerik di Sid'], 'Amerik di Nò': ['Karayib'], 'Amerik di Sid': ['Karayib'],
+};
+export const regionsClash = (a: Continent, b: Continent) => a === b || !!REGION_CLASH[a]?.includes(b);
+
+/** Could `x` also be a right answer when the question is about `c` (for this field)? */
+function clashes(c: Country, x: Country, key: Field | 'iso', flag = false): boolean {
+  if (x.iso === c.iso || (key !== 'iso' && x[key] === c[key])) return true;
+  if (key === 'currency' && currencyClash(c, x.currency)) return true;
+  if (flag && flagsLookAlike(c.iso, x.iso)) return true;
+  return false;
+}
+
 /** Distractors from the same continent when possible (harder), else anywhere. */
-function distractors(c: Country, n: number, rand: () => number, key: Field): LocalizedText[] {
-  const same = byContinent(c.continent).filter((x) => x.iso !== c.iso && x[key] !== c[key]);
-  const others = COUNTRIES.filter((x) => x.iso !== c.iso && x[key] !== c[key]);
+function distractors(c: Country, n: number, rand: () => number, key: Field, flag = false): LocalizedText[] {
+  const same = byContinent(c.continent).filter((x) => !clashes(c, x, key, flag));
+  const others = COUNTRIES.filter((x) => !clashes(c, x, key, flag));
   const src = same.length >= n ? same : others;
   const out: LocalizedText[] = [];
-  for (const x of shuffleArr(src, rand)) { if (out.length >= n) break; if (!out.some((o) => o.ht === x[key])) out.push(both(x, key)); }
+  const picked: Country[] = [];
+  for (const x of shuffleArr(src, rand)) {
+    if (out.length >= n) break;
+    if (out.some((o) => o.ht === x[key])) continue;
+    if (flag && picked.some((p) => flagsLookAlike(p.iso, x.iso))) continue; // no two near-identical flags among the options at all
+    picked.push(x); out.push(both(x, key));
+  }
   return out;
 }
 
@@ -50,7 +116,7 @@ export const flags: GenModule = {
   id: 'drapo', name: { ht: 'Drapo yo', fr: 'Drapeaux' }, category: 'peyi', ages: ['6-8', '9-11', '12-14'],
   generate(age, rand) {
     const c = pickCountry(age, rand);
-    return q(this, age, rand, tx('Ki peyi drapo sa a ye?', 'À quel pays est ce drapeau ?'), [both(c, 'name'), ...distractors(c, 3, rand, 'name')], both(c, 'name'), undefined, { kind: 'flag', ref: c.iso });
+    return q(this, age, rand, tx('Ki peyi drapo sa a ye?', 'À quel pays est ce drapeau ?'), [both(c, 'name'), ...distractors(c, 3, rand, 'name', true)], both(c, 'name'), undefined, { kind: 'flag', ref: c.iso });
   },
 };
 
@@ -67,7 +133,9 @@ export const continents: GenModule = {
   generate(age, rand) {
     const c = pickCountry(age, rand);
     const all: Continent[] = ['Amerik di Nò', 'Karayib', 'Amerik di Sid', 'Ewòp', 'Afrik', 'Azi', 'Oseyani'];
-    return q(this, age, rand, tx(`Nan ki kontinan ${c.name} ye?`, `${c.nameFr} se trouve dans quelle région du monde ?`), [c.continent, ...shuffleArr(all.filter((x) => x !== c.continent), rand).slice(0, 3)].map(regionText), regionText(c.continent));
+    // "region", not "continent": the Caribbean is a region of North America. Overlapping regions are never offered together.
+    const wrong = shuffleArr(all.filter((x) => !regionsClash(c.continent, x)), rand).slice(0, 3);
+    return q(this, age, rand, tx(`Nan ki rejyon nan mond lan ${c.name} ye?`, `Dans quelle région du monde se trouve ${c.nameFr} ?`), [c.continent, ...wrong].map(regionText), regionText(c.continent));
   },
 };
 
@@ -84,7 +152,8 @@ export const languages: GenModule = {
   generate(age, rand) {
     const c = pickCountry(age, rand);
     const lang = c.langs[0];
-    const others = [...new Set(COUNTRIES.flatMap((x) => x.langs))].filter((l) => !c.langs.includes(l));
+    const spoken = languagesOf(c); // a second official language is never offered as a wrong answer
+    const others = [...new Set(COUNTRIES.flatMap((x) => x.langs))].filter((l) => !spoken.includes(l) && !(l.startsWith('Kreyòl') && lang.startsWith('Kreyòl')));
     return q(this, age, rand, tx(`Ki lang yo pale nan ${c.name}?`, `${c.nameFr} : quelle langue y parle-t-on ?`), [lang, ...shuffleArr(others, rand).slice(0, 3)].map(langText), langText(lang));
   },
 };
@@ -125,12 +194,13 @@ export function countryPool(o: CountryQuizOptions): Country[] {
 
 function pickDistractors(c: Country, pool: Country[], o: CountryQuizOptions, key: 'iso' | Field, rand: () => number, n = 3): Country[] {
   // level 1: easy — other famous countries, often from other continents; level 2–3: same continent first
-  const notSame = (x: Country) => x.iso !== c.iso && x[key] !== c[key];
+  const flag = o.mode === 'drapo';
+  const notSame = (x: Country) => !clashes(c, x, key, flag);
   const world = COUNTRIES.filter((x) => notSame(x) && x.tier <= Math.max(o.level, 1));
   const same = pool.filter((x) => notSame(x) && x.continent === c.continent);
   const src = o.level === 1 ? shuffle(world.filter((x) => x.tier === 1), rand) : [...shuffle(same, rand), ...shuffle(world, rand)];
   const out: Country[] = [];
-  for (const x of src) { if (!out.some((o) => o[key] === x[key])) out.push(x); if (out.length === n) break; }
+  for (const x of src) { if (!out.some((o) => o[key] === x[key] || (flag && flagsLookAlike(o.iso, x.iso)))) out.push(x); if (out.length === n) break; }
   return out;
 }
 

@@ -7,8 +7,9 @@ import { colors, fonts } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT } from '@/lib/i18n';
 import { tap, sfx, audioError, audioTest } from '@/lib/audio';
-import { setOnlineAllowed, lastOnlineError, submitChangeRequest, changeRequestError, type ChangeRequest } from '@/lib/online';
-import { GRADES, gradeKey, type GradeId } from '@/lib/strings/requests';
+import { setOnlineAllowed, submitChangeRequest, changeRequestError, type ChangeRequest } from '@/lib/online';
+import { GRADES, gradeKey, gradeBand, type GradeId } from '@/lib/strings/requests';
+import { ParentGate } from '@/ui/ParentGate';
 import { serverConfigured } from '@/lib/remote';
 
 const AGE_BANDS: AgeBand[] = ['6-8', '9-11', '12-14'];
@@ -28,7 +29,7 @@ function Choice({ label, on, current, onPress, tight }: { label: string; on: boo
 export default function Settings() {
   const t = useT();
   const { settings, setSettings, profile, setLang, resetAll, kidSettings, setKidSettings } = useStore();
-  const [gate, setGate] = useState<null | 'reset' | 'online' | 'change'>(null);
+  const [gate, setGate] = useState<null | 'reset' | 'online' | 'change' | 'voice'>(null);
   // ─── age / class change request (Espas Paran; an admin approves it) ───
   const changeReq = useStore((s) => s.changeReq);
   const { height } = useWindowDimensions();
@@ -50,10 +51,20 @@ export default function Settings() {
     setReqAge(null); setReqGrade(null); setReason(''); setReqMsg(null); setForm(true);
     useStore.getState().syncChangeReq().catch(() => setReqMsg('req_offline'));
   };
+  // the age band and the school year must agree (1–3 AF → 6–8, 4–6 AF → 9–11, 7–9 AF → 12–14)
+  const wantAge = reqAge ?? profile.age; const wantGrade = reqGrade ?? profile.grade ?? null;
+  const wantBand = gradeBand(wantGrade);
+  const mismatch = wantBand && wantBand !== wantAge ? t('req_mismatch', { g: gradeText(wantGrade), a: ageText(wantBand) }) : null;
+  const pickGrade = (g: GradeId) => {
+    const next = reqGrade === g ? null : g; setReqGrade(next);
+    const band = gradeBand(next); // choosing a class picks its age band too
+    if (band) setReqAge(band === profile.age ? null : band);
+  };
   const sendRequest = async () => {
     const age = reqAge && reqAge !== profile.age ? reqAge : undefined;
     const grade = reqGrade && reqGrade !== profile.grade ? reqGrade : undefined;
     if (!age && !grade) { setReqMsg('req_pick'); return; }
+    if (mismatch) return;
     setSending(true); setReqMsg(null);
     try {
       const r = await submitChangeRequest({ age, grade, reason: reason.trim() || undefined, current: { age: profile.age, grade: profile.grade ?? null }, name: profile.username });
@@ -77,6 +88,14 @@ export default function Settings() {
     </View>
   );
   const [audioInfo, setAudioInfo] = useState('');
+  const [audioOk, setAudioOk] = useState<boolean | null>(null);
+  const [audioDetails, setAudioDetails] = useState(false);
+  /** Play a ding, then a plain answer for kids and parents; the technical dump only on a long press (for support). */
+  const runSoundTest = async () => {
+    const info = await audioTest();
+    setAudioInfo(info); setAudioDetails(false);
+    setAudioOk(/sfx=1/.test(info) && /ding: loaded=1/.test(info) && !/err=/.test(info) && !audioError);
+  };
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(false);
   /** Tell the server (it refuses duels against strangers without this), then remember it on the phone. */
@@ -97,13 +116,22 @@ export default function Settings() {
       <Card style={{ paddingVertical: 4 }}>
         {toggles.map((x, i) => (
           <Row key={x.key} style={{ minHeight: 56, borderBottomWidth: i < toggles.length - 1 ? 1 : 0, borderBottomColor: colors.line }}>
-            <T v="bold" style={{ flex: 1 }}>{x.label}</T>
-            <Switch value={!!settings[x.key]} disabled={x.locked} onValueChange={(v) => { tap(); setSettings({ [x.key]: v }); if (v && x.key === 'sfx') setTimeout(() => sfx('correct'), 50); }} trackColor={{ true: colors.green, false: '#B9C2D6' }} thumbColor="#fff" />
+            <View style={{ flex: 1, gap: 2, paddingVertical: 6 }}>
+              <T v="bold">{x.label}</T>
+              {x.locked ? <T v="small" color={colors.muted}>{t('voice_68_note')}</T> : null}
+            </View>
+            {/* 6–8: reading aloud stays on unless a parent turns it off (behind the parent gate) */}
+            <Switch value={!!settings[x.key]} onValueChange={(v) => { tap(); if (x.locked && !v) { setGate('voice'); return; } setSettings({ [x.key]: v }); if (v && x.key === 'sfx') setTimeout(() => sfx('correct'), 50); }} trackColor={{ true: colors.green, false: '#B9C2D6' }} thumbColor="#fff" />
           </Row>
         ))}
       </Card>
-      <Button small variant="secondary" title={t('sound_test')} onPress={async () => setAudioInfo(await audioTest())} />
-      {audioInfo || audioError ? <T v="small" color={colors.muted} style={{ fontSize: 11 }}>{audioInfo || audioError}</T> : null}
+      <Button small variant="secondary" title={t('sound_test')} onPress={runSoundTest} />
+      {audioOk !== null ? (
+        <PressScale scaleTo={1} debounceMs={0} accessibilityHint={t('sound_details')} onLongPress={() => setAudioDetails((d) => !d)} delayLongPress={600}>
+          <T v="bold" center color={audioOk ? colors.green : colors.red}>{t(audioOk ? 'sound_ok' : 'sound_bad')}</T>
+          {audioDetails ? <T v="small" color={colors.muted} style={{ fontSize: 11, marginTop: 4 }} selectable>{audioInfo || audioError}</T> : null}
+        </PressScale>
+      ) : null}
       <T v="label" color={colors.muted}>{t('app_lang').toUpperCase()}</T>
       <Row>
         {/* i18n-ok: each language named in its own words */ ([['ht', 'KR', 'Kreyòl ayisyen'], ['fr', 'FR', 'Français']] as [Lang, string, string][]).map(([id, code, label]) => ( // i18n-ok
@@ -129,7 +157,7 @@ export default function Settings() {
             </View>
             {busy ? <ActivityIndicator color={colors.blue} /> : <Switch value={!!kidSettings.randomDuelsAllowed} onValueChange={(v) => { tap(); if (v) setGate('online'); else applyOnline(false); }} trackColor={{ true: colors.green, false: '#B9C2D6' }} thumbColor="#fff" />}
           </Row>
-          {err && <><T v="small" color={colors.red}>{t('online_err')}</T>{lastOnlineError ? <T v="small" color={colors.muted} style={{ fontSize: 11, opacity: 0.7 }}>{lastOnlineError}</T> : null}</>}
+          {err && <T v="small" color={colors.red}>{t('online_err')}</T>}
           <PressScale role="button" scaleTo={0.98} onPress={() => { tap(); setGate('change'); }} style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: 8 }}>
             <View style={{ flex: 1, gap: 2 }}>
               <T v="bold">{t('req_row')}</T>
@@ -143,18 +171,13 @@ export default function Settings() {
         <Button variant="secondary" color={colors.red} title={t('reset')} onPress={() => setGate('reset')} />
       </Card>
       <T v="small" center color={colors.muted}>{t('app_version', { v: '0.1' })}</T>
-      <Sheet open={!!gate} title={gate === 'online' ? t('online_duels') : gate === 'change' ? t('req_row') : t('reset') + '?'}>
-        {gate === 'online' && <T v="small" center color={colors.muted}>{t('online_on_gate')}</T>}
-        <T v="body" center color={colors.muted}>{t('parent_gate')}</T>
-        <Row>
-          {[36, 42, 48].map((n) => <Button key={n} variant="secondary" title={String(n)} style={{ flex: 1 }} onPress={() => {
-            const g = gate; setGate(null);
-            if (n !== 42) return;
-            if (g === 'reset') { resetAll(); router.replace('/onboarding'); } else if (g === 'online') applyOnline(true); else if (g === 'change') setTimeout(openForm, 260);
-          }} />)}
-        </Row>
-        <Button variant="ghost" title={t('stay')} onPress={() => setGate(null)} />
-      </Sheet>
+      <ParentGate open={!!gate} title={gate === 'online' ? t('online_duels') : gate === 'change' ? t('req_row') : gate === 'voice' ? t('pg_voice_off') : t('reset') + '?'}
+        note={gate === 'online' ? t('online_on_gate') : undefined}
+        onClose={() => setGate(null)}
+        onPass={() => {
+          const g = gate; setGate(null);
+          if (g === 'reset') { resetAll(); router.replace('/onboarding'); } else if (g === 'online') applyOnline(true); else if (g === 'change') openForm(); else if (g === 'voice') setSettings({ voice: false });
+        }} />
       <Sheet open={form} title={t('req_row')}>
         <ScrollView style={{ maxHeight: height * 0.66 }} contentContainerStyle={{ gap: 12 }} keyboardShouldPersistTaps="handled">
           {reqPending || reqMsg === 'req_sent' ? (
@@ -172,8 +195,9 @@ export default function Settings() {
               </Row>
               <T v="label" color={colors.muted}>{t('req_new_grade').toUpperCase()}</T>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {GRADES.map((g) => <Choice key={g} label={t(gradeKey(g))} on={reqGrade === g} current={profile.grade === g} onPress={() => setReqGrade(reqGrade === g ? null : g)} />)}
+                {GRADES.map((g) => <Choice key={g} label={t(gradeKey(g))} on={reqGrade === g} current={profile.grade === g} onPress={() => pickGrade(g)} />)}
               </View>
+              {mismatch ? <T v="small" color={colors.red}>{mismatch}</T> : null}
               <T v="label" color={colors.muted}>{t('req_reason').toUpperCase()}</T>
               <TextInput value={reason} onChangeText={setReason} maxLength={140} placeholder={t('req_reason_ph')} placeholderTextColor={colors.muted}
                 style={{ minHeight: 48, borderWidth: 2, borderColor: colors.lineStrong, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10, fontFamily: fonts.bodyRegular, fontSize: 15, color: colors.ink, backgroundColor: colors.card }} />
@@ -182,7 +206,7 @@ export default function Settings() {
             </>
           )}
         </ScrollView>
-        {!reqPending && reqMsg !== 'req_sent' ? (sending ? <ActivityIndicator color={colors.blue} style={{ minHeight: 54 }} /> : <Button title={t('req_send')} disabled={!reqAge && !reqGrade} onPress={sendRequest} />) : null}
+        {!reqPending && reqMsg !== 'req_sent' ? (sending ? <ActivityIndicator color={colors.blue} style={{ minHeight: 54 }} /> : <Button title={t('req_send')} disabled={(!reqAge && !reqGrade) || !!mismatch} onPress={sendRequest} />) : null}
         <Button variant="ghost" title={t('req_close')} onPress={() => setForm(false)} />
       </Sheet>
     </Screen>

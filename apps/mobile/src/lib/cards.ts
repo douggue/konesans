@@ -3,9 +3,11 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { drawCard, grantLegendCard, HERO_CARDS, type CardDraw } from '@konesans/core';
-import { useStore } from './store';
+import { useStore, onResetAll } from './store';
 
 export interface CardWin { id: string; isNew: boolean; coins: number }
+/** Why a card is given. 'defi' is the old per-quiz card (no longer handed out; kept so old saved draws read). */
+export type CardSource = 'chest' | 'rank' | 'legend' | 'defi';
 
 interface CardsState {
   /** owned card ids, in the order they were won */
@@ -17,10 +19,10 @@ interface CardsState {
   /** last draws by key, so a remount or a double render never gives two cards for one defi */
   draws: Record<string, CardWin>;
   /**
-   * The card for a finished defi (`kind: 'defi'`) or a weekly-mission reward (`kind: 'legend'`: an unowned
-   * Lejand card if any is left). Idempotent per `key`. Duplicates become coins (added to the main store).
+   * Cards come only from milestones: the daily chest (`'chest'`), a rank-up (`'rank'`) and the weekly 7/7 reward
+   * (`'legend'`: an unowned Lejand card if any is left). Idempotent per `key`. Duplicates become coins (added to the main store).
    */
-  earn: (key: string, kind?: 'defi' | 'legend') => CardWin;
+  earn: (key: string, kind?: CardSource) => CardWin;
   /** First time the back of a card is read: +5 XP. Returns true when it was the first time. */
   markRead: (id: string) => boolean;
   markSeen: (id: string) => void;
@@ -36,13 +38,13 @@ export const useCards = create<CardsState>()(
       fresh: [],
       read: [],
       draws: {},
-      earn: (key, kind = 'defi') => {
+      earn: (key, kind = 'chest') => {
         const prev = get().draws[key];
         if (prev) return prev;
         const owned = get().owned;
         const d: CardDraw = kind === 'legend' ? grantLegendCard(owned, Math.random) : drawCard(owned, Math.random);
         const win: CardWin = { id: d.card.id, isNew: d.isNew, coins: d.coins };
-        const keys = Object.keys(get().draws).slice(-19); // keep the last 20 keys
+        const keys = Object.keys(get().draws).slice(-39); // keep the last 40 keys
         const draws: Record<string, CardWin> = {};
         for (const k of keys) draws[k] = get().draws[k];
         draws[key] = win;
@@ -79,3 +81,5 @@ export const useCards = create<CardsState>()(
 );
 
 export const CARD_READ_XP = READ_XP;
+
+onResetAll('cards', () => useCards.getState().reset());

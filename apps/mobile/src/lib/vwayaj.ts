@@ -6,10 +6,10 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
-  BADGES, emptyVwayaj, recordRun, departmentsDone, localDay, VWAYAJ_CLEAR_XP, VWAYAJ_CLEAR_COINS,
+  BADGES, emptyVwayaj, mergeDefaults, recordRun, departmentsDone, localDay, VWAYAJ_CLEAR_XP, VWAYAJ_CLEAR_COINS,
   type DepartmentId, type VwayajProgress, type VwayajRunResult,
 } from '@konesans/core';
-import { useStore } from './store';
+import { useStore, onResetAll } from './store';
 
 const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Port-au-Prince';
 /** Today as 'YYYY-MM-DD' on the device clock (events and double points follow the kid's local day). */
@@ -51,7 +51,10 @@ export const useVwayaj = create<VwayajStore>()(
     }),
     {
       name: 'konesans-vwayaj',
+      version: 1,
+      migrate: (persisted) => persisted as never,
       storage: createJSONStorage(() => AsyncStorage),
+      merge: (persisted, current) => mergeDefaults(current, persisted),
       partialize: (s) => ({ ...progressOf(s), selected: s.selected }),
     },
   ),
@@ -63,7 +66,7 @@ export const selectDepartmentsDone = (s: VwayajProgress) => departmentsDone(s);
 /**
  * The trophies only this mode can earn ('vwayaj3', 'vetye', 'drapo'): the main store's awardBadges() has no
  * Vwayaj data, so they are checked here with the same core test and written next to the others
- * (progress.badges + newBadges, so the trophy room and the badge jingle pick them up). store.ts is untouched.
+ * (progress.badges + badgeQueue, so the trophy celebration and the trophy room pick them up).
  */
 const OWN_BADGES = new Set(['vwayaj3', 'vetye', 'drapo']);
 export function awardVwayajBadges(): string[] {
@@ -75,7 +78,9 @@ export function awardVwayajBadges(): string[] {
   const at = new Date().toISOString();
   useStore.setState((st) => ({
     progress: { ...st.progress, badges: { ...st.progress.badges, ...Object.fromEntries(won.map((id) => [id, at])) } },
-    newBadges: [...st.newBadges, ...won],
+    badgeQueue: [...(st.badgeQueue ?? []), ...won],
   }));
   return won;
 }
+
+onResetAll('vwayaj', () => useVwayaj.getState().reset());

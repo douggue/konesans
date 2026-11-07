@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import type { AgeBand, Lang } from '@konesans/core';
 import { Screen, T, Button, Card, Mascot, Icon, Progress, PressScale, FadeIn, SlideSwap, Pop, Avatar } from '@/ui';
 import { AvatarBuilder } from '@/ui/AvatarBuilder';
@@ -9,6 +9,7 @@ import { useStore, useAvatar } from '@/lib/store';
 import { useT } from '@/lib/i18n';
 import { tap } from '@/lib/audio';
 import { serverConfigured } from '@/lib/remote';
+import { onboardingResume } from '@/ui/activity';
 
 const AGES: { id: AgeBand; label: 'age_6_8' | 'age_9_11' | 'age_12_14'; grade: 'grade_6_8' | 'grade_9_11' | 'grade_12_14'; color: string }[] = [
   { id: '6-8', label: 'age_6_8', grade: 'grade_6_8', color: colors.greenSoft },
@@ -20,7 +21,10 @@ export default function Onboarding() {
   const t = useT();
   const { profile, setLang, setAge, rerollName, finishOnboarding, setAvatar } = useStore();
   const avatar = useAvatar();
-  const [step, setStep] = useState(0);
+  const { step: stepParam } = useLocalSearchParams<{ step?: string }>();
+  const [step, setStep] = useState(() => Math.min(3, Math.max(0, Number(stepParam ?? 0) || 0)));
+  // back from the trial quiz: the language is already chosen, carry on at the age step
+  useFocusEffect(useCallback(() => { if (onboardingResume.step) { setStep(onboardingResume.step); onboardingResume.step = 0; } }, []));
   const [nameBump, setNameBump] = useState(0);
   const LAST = 3;
   const pick = <X,>(v: X, cur: X) => (v === cur ? { borderColor: colors.blue, borderWidth: 3, backgroundColor: colors.blueSoft } : {});

@@ -1,21 +1,20 @@
 import React, { useCallback, useEffect } from 'react';
 import { View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import { chestReady, nextLesson, courseById, type QuestState } from '@konesans/core';
+import { chestReady, nextLesson, courseById, courseSummary, type QuestState } from '@konesans/core';
 import { RankUpListener } from '@/ui/RankUp';
 import { AccountHomeCard } from '@/ui/AccountCard';
 import { Screen, T, Card, Row, BottomNav, Pill, CountPill, Progress, Mascot, IconTile, Button, Motif, Avatar, PressScale, FadeIn, Pop, Pulse, Icon } from '@/ui';
 import { colors, fonts } from '@/lib/theme';
 import { categoryInfo } from '@/lib/content';
 import { useAnnouncement, useFeatures, useDailyCount } from '@/lib/remote';
-import { useStore, useLevel, useAvatar } from '@/lib/store';
+import { useStore, useAvatar } from '@/lib/store';
 import { useT, useL } from '@/lib/i18n';
 import { tap, music } from '@/lib/audio';
 
 export default function Home() {
   const t = useT(); const l = useL();
-  const { profile, progress, courses, touch } = useStore();
-  const lvl = useLevel();
+  const { profile, progress, courses, courseLang, touch } = useStore();
   const ann = useAnnouncement();
   const features = useFeatures();
   const daily = useDailyCount();
@@ -26,15 +25,17 @@ export default function Home() {
   const questsDone = quests.filter((q) => q.done).length;
   const chestOpened = useStore((s) => s.missions?.chestDay) === progress.questsDay && !!progress.questsDay;
   const questsReady = chestReady(progress) && !chestOpened;
-  const nextEn = nextLesson('en', courses.en); const nextEs = nextLesson('es', courses.es);
-  const course = nextEn ? { lang: 'en' as const, lesson: nextEn } : nextEs ? { lang: 'es' as const, lesson: nextEs } : null;
+  // the course the kid was last on (Kou's EN/ES switch) first, then the other one
+  const order = courseLang === 'es' ? (['es', 'en'] as const) : (['en', 'es'] as const);
+  const course = order.map((lang) => ({ lang, lesson: nextLesson(lang, courses[lang]) })).find((c) => !!c.lesson) as { lang: 'en' | 'es'; lesson: NonNullable<ReturnType<typeof nextLesson>> } | undefined;
+  const courseSum = course ? courseSummary(course.lang, courses[course.lang]) : null;
 
   return (
     <Screen pad={20} bottom={<BottomNav />}>
       <FadeIn><Row gap={12}>
         <PressScale accessibilityLabel={t('profile')} scaleTo={0.9} onPress={() => { tap(); router.push('/profile'); }}><Avatar a={avatar} size={52} live /></PressScale>
         <View style={{ flex: 1 }}>
-          <T v="h1">{t('hello')}, {profile.username}!</T>
+          <T v="h1">{t('hello_name', { name: profile.username })}</T>
           <T v="small" color={colors.muted}>{t('what_learn')}</T>
         </View>
         <View style={{ alignItems: 'flex-end', gap: 4 }}>
@@ -84,9 +85,9 @@ export default function Home() {
               <IconTile name="lang" bg={colors.blueSoft} size={48} />
               <View style={{ flex: 1 }}>
                 <T v="h3">{l(courseById(course.lang).name)} · {l({ ht: course.lesson.title, fr: course.lesson.titleFr })}</T>
-                <T v="small" color={colors.muted}>{t('level')} {lvl.level} · {progress.xp} XP</T>
+                {courseSum ? <T v="small" color={colors.muted}>{t('lesson_n_of', { n: Math.min(courseSum.lessonsTotal, courseSum.lessonsDone + 1), total: courseSum.lessonsTotal })}</T> : null}
               </View>
-              <T v="small" color={colors.blue}>›</T>
+              <T v="h1" color={colors.blue}>›</T>
             </Row>
           </Card>
         </FadeIn>
@@ -95,18 +96,19 @@ export default function Home() {
       {/* Explore */}
       <FadeIn delay={300}><T v="h2">{t('explore')}</T></FadeIn>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+        {/* the modes the tab bar doesn't reach (Defi / Kou / Enfòmatik are already tabs) */}
         {[
-          { icon: 'kesyon', bg: colors.yellowSoft, label: t('challenge'), href: '/categories', on: true },
           { icon: 'defi', bg: colors.redSoft, label: t('duel_bot'), href: '/duel', on: features.duels },
-          { icon: 'lang', bg: colors.blueSoft, label: t('course'), href: '/course', on: features.courses },
-          { icon: 'robo', bg: colors.purpleSoft, label: t('coding'), href: '/coding', on: features.coding },
           { icon: 'vwayaj', bg: colors.greenSoft, label: t('vw_title'), href: '/vwayaj', on: true },
-          { icon: 'kalkil', bg: colors.greenSoft, label: t('math_title'), href: '/math', on: features.math },
+          { icon: 'kalkil', bg: colors.orangeSoft, label: t('math_title'), href: '/math', on: features.math },
+          { icon: 'drapo', bg: colors.yellowSoft, label: t('peyi_title'), href: '/peyi', on: features.peyi },
+          { icon: 'ewo', bg: colors.purpleSoft, label: t('kt_title'), href: '/cards', on: true },
+          { icon: 'twofe', bg: colors.blueSoft, label: t('trophies'), href: '/trophies', on: true },
         ].filter((x) => x.on).map((x, i) => (
           <FadeIn key={x.href} delay={340 + i * 50} style={{ width: '31%' }}>
             <Card onPress={() => router.push(x.href as never)} soft={x.bg} edge={x.bg} style={{ alignItems: 'center', gap: 6, paddingVertical: 14, paddingHorizontal: 6 }}>
               <IconTile name={x.icon as never} bg="#FFFFFF" size={48} />
-              <T v="small" center numberOfLines={1} adjustsFontSizeToFit>{x.label}</T>
+              <T v="small" center numberOfLines={2} style={{ fontFamily: fonts.bodyHeavy }}>{x.label}</T>
             </Card>
           </FadeIn>
         ))}

@@ -24,15 +24,15 @@ export const REQ_STRINGS = {
   req_wait: ['Yon administratè ap gade l. Chanjman an ap fèt poukont li lè l aksepte.', "Un administrateur va la regarder. Le changement se fera tout seul une fois acceptée."],
   req_note: ['Mesaj: {x}', 'Message : {x}'],
   req_grade_unset: ['klas pa di', 'classe non précisée'],
-  req_g_af1: ['1ye ane', '1re année'],
-  req_g_af2: ['2yèm ane', '2e année'],
-  req_g_af3: ['3yèm ane', '3e année'],
-  req_g_af4: ['4yèm ane', '4e année'],
-  req_g_af5: ['5yèm ane', '5e année'],
-  req_g_af6: ['6yèm ane', '6e année'],
-  req_g_af7: ['7yèm ane', '7e année'],
-  req_g_af8: ['8yèm ane', '8e année'],
-  req_g_af9: ['9yèm ane', '9e année'],
+  req_g_af1: ['1ye AF', '1re AF'],
+  req_g_af2: ['2yèm AF', '2e AF'],
+  req_g_af3: ['3yèm AF', '3e AF'],
+  req_g_af4: ['4yèm AF', '4e AF'],
+  req_g_af5: ['5yèm AF', '5e AF'],
+  req_g_af6: ['6yèm AF', '6e AF'],
+  req_g_af7: ['7yèm AF', '7e AF'],
+  req_g_af8: ['8yèm AF', '8e AF'],
+  req_g_af9: ['9yèm AF', '9e AF'],
   req_g_none: ['Pa lekòl', "Pas à l'école"],
   req_g_other: ['Lòt', 'Autre'],
 } as const;
@@ -41,3 +41,8 @@ export const REQ_STRINGS = {
 export const GRADES = ['af1', 'af2', 'af3', 'af4', 'af5', 'af6', 'af7', 'af8', 'af9', 'none', 'other'] as const;
 export type GradeId = (typeof GRADES)[number];
 export const gradeKey = (g: GradeId) => `req_g_${g}` as `req_g_${GradeId}`;
+/** The age band a school year belongs to (same split as onboarding: 1–3 AF → 6–8, 4–6 AF → 9–11, 7–9 AF → 12–14); null for none/other. */
+export const gradeBand = (g: string | null | undefined): '6-8' | '9-11' | '12-14' | null => {
+  const m = /^af(\d)$/.exec(g ?? ''); if (!m) return null;
+  const n = Number(m[1]); return n <= 3 ? '6-8' : n <= 6 ? '9-11' : '12-14';
+};

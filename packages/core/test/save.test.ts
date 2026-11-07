@@ -63,9 +63,15 @@ describe('cloud save merge — what a kid earned never goes away', () => {
   });
   it('missions, extra (ranks, unlocks), cards, vwayaj', () => {
     const mi = mergePart('missions', rec(1, { chestDay: '2026-11-05', fullDays: ['2026-11-01', '2026-11-05'], legendWeeks: ['2026-10-26'] }), rec(2, { chestDay: '2026-11-03', fullDays: ['2026-11-03'], legendWeeks: [] }))!.data;
-    expect(mi).toEqual({ chestDay: '2026-11-05', fullDays: ['2026-11-01', '2026-11-03', '2026-11-05'], legendWeeks: ['2026-10-26'] });
+    expect(mi).toEqual({ chestDay: '2026-11-05', fullDays: ['2026-11-01', '2026-11-03', '2026-11-05'], legendWeeks: ['2026-10-26'], firstDay: null });
+    // the first play day is the earliest one either phone saw
+    expect(mergePart('missions', rec(1, { firstDay: '2026-10-02' }), rec(2, { firstDay: '2026-10-09' }))!.data.firstDay).toBe('2026-10-02');
     const ex = mergePart('extra', rec(5, { rankSeen: 4, unlocked: ['a', 'b'], seenUnlocks: ['a'], onboarded: true, courseLang: 'en' }), rec(9, { rankSeen: 1, unlocked: ['c'], seenUnlocks: [], onboarded: false, courseLang: 'es' }))!.data;
-    expect(ex).toEqual({ rankSeen: 4, unlocked: ['c', 'a', 'b'], seenUnlocks: ['a'], onboarded: true, courseLang: 'es' });
+    expect(ex).toEqual({ rankSeen: 4, unlocked: ['c', 'a', 'b'], seenUnlocks: ['a'], bought: [], onboarded: true, courseLang: 'es' });
+    // avatar shop items bought on either phone are kept (a union, never newest-wins)
+    const sh = mergePart('extra', rec(5, { bought: ['shirt:9', 'bg:10'] }), rec(9, { bought: ['frame:5'] }))!.data;
+    expect(sh.bought.sort()).toEqual(['bg:10', 'frame:5', 'shirt:9']);
+    expect(mergePart('extra', rec(9, { bought: ['frame:5'] }), rec(5, { bought: ['shirt:9'] }))!.data.bought.sort()).toEqual(['frame:5', 'shirt:9']);
     const ca = mergePart('cards', rec(1, { owned: ['x', 'y'], fresh: ['y'], read: ['x'] }), rec(2, { owned: ['z'], fresh: ['z'], read: ['y'] }))!.data;
     expect(ca.owned).toEqual(['z', 'x', 'y']);
     expect(ca.read.sort()).toEqual(['x', 'y']);

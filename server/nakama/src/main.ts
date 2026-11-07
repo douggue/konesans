@@ -17,6 +17,7 @@ import {
 import * as A from './admin';
 import * as R from './requests';
 import * as K from './account';
+import * as D from './daily';
 
 const TICK_RATE = 5; // 5 ticks/s is plenty for a quiz
 const OP = { STATE: 1, ANSWER: 2, REACT: 3 } as const;
@@ -288,6 +289,10 @@ function rpc_save_put(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkru
 function rpc_save_get(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return K.saveGet(ctx, logger, nk, payload); }
 function rpc_account_info(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return K.accountInfo(ctx, logger, nk, payload); }
 function rpc_account_recover(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return K.accountRecover(ctx, logger, nk, payload); }
+// Defi Jodi a: same questions for an age band, one scored attempt, daily top (daily.ts)
+function rpc_daily_get(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return D.dailyGet(ctx, logger, nk, payload); }
+function rpc_daily_submit(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return D.dailySubmit(ctx, logger, nk, payload); }
+function rpc_daily_top(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return D.dailyTop(ctx, logger, nk, payload); }
 function before_authenticate_google(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, data: nkruntime.AuthenticateGoogleRequest) { return K.beforeAuthenticateGoogle(ctx, logger, nk, data); }
 function before_link_google(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, data: nkruntime.LinkGoogleRequest) { return K.beforeLinkGoogle(ctx, logger, nk, data); }
 function after_authenticate_google(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, data: nkruntime.Session, req: nkruntime.AuthenticateGoogleRequest) { return K.afterAuthenticateGoogle(ctx, logger, nk, data, req); }
@@ -335,6 +340,10 @@ const InitModule: nkruntime.InitModule = (ctx, logger, nk, initializer) => {
   initializer.registerRpc('save_get', rpc_save_get);
   initializer.registerRpc('account_info', rpc_account_info);
   initializer.registerRpc('account_recover', rpc_account_recover);
+  // daily challenge (kid device session) — see daily.ts
+  initializer.registerRpc('daily_get', rpc_daily_get);
+  initializer.registerRpc('daily_submit', rpc_daily_submit);
+  initializer.registerRpc('daily_top', rpc_daily_top);
   // optional Google link / login: only ID tokens made for our client id (runtime env GOOGLE_CLIENT_IDS)
   initializer.registerBeforeAuthenticateGoogle(before_authenticate_google);
   initializer.registerBeforeLinkGoogle(before_link_google);

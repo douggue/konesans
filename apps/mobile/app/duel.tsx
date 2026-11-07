@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
-import { createDuel, reduce, planBotAnswer, planBotReaction, BOT_PROFILES, BOT_NAMES, rng, type DuelState, type ReactionId, type AvatarConfig, type Question } from '@konesans/core';
+import { createDuel, reduce, planBotAnswer, planBotReaction, adaptBot, BOT_PROFILES, BOT_NAMES, rng, type DuelState, type ReactionId, type AvatarConfig, type Question } from '@konesans/core';
 import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Pill, Avatar, avatarFromSeed, Bounce, Drop, FadeIn, Pop, Confetti, SlideSwap, useCountUp } from '@/ui';
 import { Matchmaking } from '@/ui/Matchmaking';
 import { QuestionView } from '@/ui/QuestionView';
-import { CardReveal } from '@/ui/CardReveal';
+import { RankUpListener } from '@/ui/RankUp';
 import { ReactionTray, ReactionBubble, isReaction, reactionSfx } from '@/ui/Reactions';
 import { colors } from '@/lib/theme';
 import { useStore, useAvatar } from '@/lib/store';
@@ -13,7 +13,11 @@ import { useT, type StrKey } from '@/lib/i18n';
 import { buildQuestions } from '@/lib/content';
 import { tap, sfx, music, musicIntensity, answerSfx } from '@/lib/audio';
 import { serverConfigured } from '@/lib/remote';
-import { findDuel, setProfile, lastOnlineError, type OnlineDuel as OnlineCtl, type OnlineView } from '@/lib/online';
+import { usePrefs } from '@/lib/prefs';
+import { useQuitGuard } from '@/ui/activity';
+
+const AGE_KEY = { '6-8': 'age_6_8', '9-11': 'age_9_11', '12-14': 'age_12_14' } as const;
+import { findDuel, setProfile, type OnlineDuel as OnlineCtl, type OnlineView } from '@/lib/online';
 
 const ME = 'me';
 
@@ -34,6 +38,9 @@ export default function Duel() {
 // ─── shared pieces ────────────────────────────────────────────────────────────
 
 interface Side { name: string; avatar: AvatarConfig; score: number; isBot?: boolean }
+/** This duel's answers (true = right), for the "answer correctly" quest. */
+let duelResults: boolean[] = [];
+const duelAnswers = () => ({ correct: duelResults.filter(Boolean).length, total: duelResults.length });
 interface GameVM {
   index: number; total: number; questionMs: number;
   /** time left in ms, or null while waiting for the first question */
@@ -44,13 +51,15 @@ interface GameVM {
   op: Side & { answered: boolean; chosen?: number; reaction?: string; reactSeq?: number };
 }
 
-function DuelGame({ vm, onPick, onReact, onQuit }: { vm: GameVM; onPick: (i: number) => void; onReact: (r: string) => void; onQuit: () => void }) {
+function DuelGame({ vm, onPick, onReact, onQuit, onPause, online }: { vm: GameVM; onPick: (i: number) => void; onReact: (r: string) => void; onQuit: () => void; /** local game: stop the clock while the quit sheet is open */ onPause?: (paused: boolean) => void; /** online: the server clock can't stop */ online?: boolean }) {
   const t = useT();
   const [quitting, setQuitting] = useState(false);
+  useEffect(() => { onPause?.(quitting); }, [quitting]);
+  const leave = useQuitGuard(true, () => setQuitting(true));
   const { me, op, reveal } = vm;
   const waiting = vm.left === null;
   // ── sound: battle loop, hurry + ticks in the last seconds, pings, answer feedback ──
-  const results = useRef<boolean[]>([]);
+  const results = useRef<boolean[]>((duelResults = [])); // also read when the duel is recorded (quests count its answers)
   const lastTick = useRef<number | null>(null);
   useEffect(() => { music('duel_battle'); }, []);
   useEffect(() => { musicIntensity('normal'); lastTick.current = null; }, [vm.index]);
@@ -77,14 +86,21 @@ function DuelGame({ vm, onPick, onReact, onQuit }: { vm: GameVM; onPick: (i: num
   return (
     <Screen>
       <TopBar close title={`${t('question')} ${vm.index + 1} / ${vm.total}`} onBack={() => setQuitting(true)} />
-      <FadeIn from={-12} style={{ zIndex: 10 }}><Card style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10 }}>
-        <Bounce trigger={me.score || null} amount={0.12}><Avatar a={me.avatar} size={42} /></Bounce>
-        <View style={{ flex: 1 }}><T v="small" color={colors.muted}>{t('you')}</T><T v="bold" numberOfLines={1}>{me.name}</T></View>
-        <Bounce trigger={me.score || null} amount={0.25}><ScoreNum n={me.score} color={colors.blue} small /></Bounce>
-        <T v="small" color={colors.muted}>{t('vs')}</T>
-        <Bounce trigger={op.score || null} amount={0.25}><ScoreNum n={op.score} color={colors.red} small /></Bounce>
-        <View style={{ flex: 1, alignItems: 'flex-end' }}><T v="small" color={colors.muted}>{op.isBot ? t('robot') : t('opponent')}</T><T v="bold" numberOfLines={1}>{op.name}</T></View>
-        <Bounce trigger={op.score || null} amount={0.12}><Avatar a={op.avatar} size={42} /></Bounce>
+      {/* each player: avatar over the full name (2 lines if needed, never cut); the score in the middle */}
+      <FadeIn from={-12} style={{ zIndex: 10 }}><Card style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 10 }}>
+        <View style={{ flex: 1, alignItems: 'center', gap: 2 }}>
+          <Bounce trigger={me.score || null} amount={0.12}><Avatar a={me.avatar} size={40} /></Bounce>
+          <T v="small" center color={colors.blue} numberOfLines={2} style={{ fontFamily: 'Nunito_800ExtraBold' }}>{me.name}</T>
+        </View>
+        <Row gap={6}>
+          <Bounce trigger={me.score || null} amount={0.25}><ScoreNum n={me.score} color={colors.blue} small /></Bounce>
+          <T v="small" color={colors.muted}>{t('vs')}</T>
+          <Bounce trigger={op.score || null} amount={0.25}><ScoreNum n={op.score} color={colors.red} small /></Bounce>
+        </Row>
+        <View style={{ flex: 1, alignItems: 'center', gap: 2 }}>
+          <Bounce trigger={op.score || null} amount={0.12}><Avatar a={op.avatar} size={40} /></Bounce>
+          <T v="small" center color={colors.red} numberOfLines={2} style={{ fontFamily: 'Nunito_800ExtraBold' }}>{op.isBot && !/robo/i.test(op.name) ? '🤖 ' : ''}{op.name}</T>
+        </View>
       </Card>
         {/* reaction bubbles, hanging under each player's avatar (over the timer / question for ~2 s) */}
         {(['me', 'op'] as const).map((side) => {
@@ -104,9 +120,10 @@ function DuelGame({ vm, onPick, onReact, onQuit }: { vm: GameVM; onPick: (i: num
       {op.answered && !reveal && <Pop><Pill text={t('already_answered', { name: op.name })} color={colors.muted} bg={colors.line} /></Pop>}
       {vm.question && <SlideSwap id={vm.index}><QuestionView q={vm.question} chosen={me.chosen} reveal={reveal} otherChosen={reveal ? op.chosen : undefined} otherAvatar={op.avatar} onPick={waiting ? undefined : (i) => { tap(); onPick(i); }} /></SlideSwap>}
       <ReactionTray onSend={(id) => { show('me', id); onReact(id); }} />
-      <Sheet open={quitting} title={t('quit_q')}>
+      <Sheet open={quitting} title={t('quit_q')} onClose={() => setQuitting(false)}>
+        <T v="small" center color={online ? colors.red : colors.muted}>{t(online ? 'quit_online' : 'quit_paused')}</T>
         <Button title={t('stay')} onPress={() => setQuitting(false)} />
-        <Button variant="secondary" color={colors.red} title={t('quit')} onPress={() => { setQuitting(false); onQuit(); router.replace('/home'); }} />
+        <Button variant="secondary" color={colors.red} title={t('quit')} onPress={() => { setQuitting(false); onQuit(); leave(() => (router.canGoBack() ? router.back() : router.replace('/home'))); }} />
       </Sheet>
     </Screen>
   );
@@ -125,7 +142,7 @@ function DuelEnd({ won, draw, me, op, note, onReport }: { won: boolean; draw: bo
   return (
     <Screen scroll={false}>
       {won && <Confetti />}
-      <CardReveal delay={2200} />
+      <RankUpListener delayMs={2200} />
       <View style={{ alignItems: 'center', gap: 10, marginTop: 'auto' }}>
         <Drop><Mascot size={140} mood={won ? 'cool' : draw ? 'happy' : 'angry'} /></Drop>
         <Pop delay={450}><T v="display" center>{won ? t('you_win') : draw ? t('draw') : op.isBot ? t('you_lose') : t('they_win', { name: op.name })}</T></Pop>
@@ -140,7 +157,7 @@ function DuelEnd({ won, draw, me, op, note, onReport }: { won: boolean; draw: bo
       </View>
       <View style={{ marginTop: 'auto', gap: 10 }}>
         <Button title={t('again')} onPress={() => router.replace('/duel')} />
-        <Button variant="secondary" title={t('done')} onPress={() => router.replace('/home')} />
+        <Button variant="secondary" title={t('done')} onPress={() => (router.canGoBack() ? router.back() : router.replace('/home'))} />
         {onReport && (reported
           ? <T v="small" center color={colors.muted}>{t('reported')}</T>
           : <Button variant="ghost" color={colors.muted} small title={t('report_player')} onPress={() => { setReported(true); onReport().catch(() => {}); }} />)}
@@ -157,7 +174,7 @@ function ScoreNum({ n, color, small }: { n: number; color: string; small?: boole
 // ─── online ──────────────────────────────────────────────────────────────────
 
 const HAIR = ['afro', 'braids', 'short', 'puffs', 'bun', 'mohawk', 'locs'] as const;
-const EXTRA = ['none', 'glasses', 'cap', 'mask', 'uniform', 'headphones', 'strawhat', 'shades', 'crown', 'flower'] as const;
+const EXTRA = ['none', 'glasses', 'cap', 'mask', 'uniform', 'headphones', 'strawhat', 'shades', 'crown', 'flower', 'bowtie', 'catears', 'headwrap'] as const;
 /** The other phone's avatar comes from the server: only keep values the avatar drawing knows. */
 function safeAvatar(a: unknown, seed: string): AvatarConfig {
   const base = avatarFromSeed(seed);
@@ -220,7 +237,7 @@ function OnlineDuel({ onFallback }: { onFallback: (note: StrKey) => void }) {
   useEffect(() => {
     if (v?.phase === 'ended' && !recorded.current && meP && opP) {
       recorded.current = true;
-      recordDuel(v.winnerId === myId, v.winnerId === null, meP.score);
+      recordDuel(v.winnerId === myId, v.winnerId === null, meP.score, duelAnswers());
     }
   }, [v?.phase]);
 
@@ -231,7 +248,7 @@ function OnlineDuel({ onFallback }: { onFallback: (note: StrKey) => void }) {
     return (
       <Screen scroll={false}>
         <TopBar close title={t('duel_bot')} onBack={() => router.back()} />
-        <Matchmaking me={{ name: profile.username, avatar: myAvatar, sub: `${profile.age} ${t('years')}` }}
+        <Matchmaking me={{ name: profile.username, avatar: myAvatar, sub: t(AGE_KEY[profile.age]) }}
           opponent={op ? { name: op.name, avatar: op.avatar, sub: op.isBot ? t('robot') : t('online_player') } : null}
           hint={t('robo_soon')} onDone={() => setIntro(false)} />
       </Screen>
@@ -257,7 +274,7 @@ function OnlineDuel({ onFallback }: { onFallback: (note: StrKey) => void }) {
       // newer servers also send how many stickers each player sent, so the same sticker twice shows twice
       reactSeq: opP ? (v as OnlineView & { reactSeq?: Record<string, number> }).reactSeq?.[opP.id] : undefined },
   };
-  return <DuelGame vm={vm} onPick={(i) => ctl.current?.answer(i)} onReact={(r) => ctl.current?.react(r)} onQuit={() => ctl.current?.leave()} />;
+  return <DuelGame online vm={vm} onPick={(i) => ctl.current?.answer(i)} onReact={(r) => ctl.current?.react(r)} onQuit={() => ctl.current?.leave()} />;
 }
 
 // ─── local (Robo on the phone) ───────────────────────────────────────────────
@@ -266,10 +283,18 @@ function LocalDuel({ note }: { note: StrKey | null }) {
   const t = useT();
   const { profile, seen, recordDuel } = useStore();
   const myAvatar = useAvatar();
-  const bot = useMemo(() => { const name = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)]; return { id: 'bot', name, profile: BOT_PROFILES[profile.age], avatar: avatarFromSeed(name + Date.now()) }; }, []);
+  const difficulty = usePrefs((p) => p.difficulty);
+  // Robo follows the kid: their difficulty (Fasil / Mwayen / Difisil) and how often they win against it
+  const bot = useMemo(() => {
+    const name = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
+    const st = useStore.getState().stats;
+    const base = adaptBot(BOT_PROFILES[profile.age], st.duels >= 3 ? st.duelWins / st.duels : 0.55);
+    const accuracy = Math.min(0.9, Math.max(0.3, base.accuracy + (difficulty - 2) * 0.08));
+    return { id: 'bot', name, profile: { ...base, accuracy }, avatar: avatarFromSeed(name + Date.now()) };
+  }, []);
   const rand = useMemo(() => rng(Date.now() % 1e9), []);
   const [s, setS] = useState<DuelState>(() => {
-    let d = createDuel('local-' + Date.now().toString(36), buildQuestions('mix', profile.age, 5, Date.now() % 1e9, seen), Date.now());
+    let d = createDuel('local-' + Date.now().toString(36), buildQuestions('mix', profile.age, 5, Date.now() % 1e9, seen, difficulty), Date.now());
     d = reduce(d, { type: 'join', player: { id: ME, username: profile.username, isBot: false } }, Date.now());
     return d;
   });
@@ -289,9 +314,17 @@ function LocalDuel({ note }: { note: StrKey | null }) {
   // the matchmaking sequence ends → the opponent joins and the first question starts
   const startDuel = () => { setLobby(false); setS((d) => reduce(d, { type: 'join', player: { id: bot.id, username: bot.name, isBot: true } }, Date.now())); };
 
-  // game clock
+  // game clock (stops while the quit sheet is open; the question gets the paused time back)
+  const pausedAt = useRef(0);
+  const pause = (p: boolean) => {
+    if (p) { if (!pausedAt.current) pausedAt.current = Date.now(); return; }
+    if (!pausedAt.current) return;
+    const dt = Date.now() - pausedAt.current; pausedAt.current = 0;
+    setS((d) => (d.phase === 'ended' ? d : { ...d, phaseStartedAt: d.phaseStartedAt + dt }));
+  };
   useEffect(() => {
     const id = setInterval(() => {
+      if (pausedAt.current) return;
       const n = Date.now(); setNow(n);
       setS((d) => {
         if (d.phase === 'question') {
@@ -308,7 +341,7 @@ function LocalDuel({ note }: { note: StrKey | null }) {
     if (s.phase === 'ended' && !recorded.current) {
       recorded.current = true;
       const me = s.players.find((p) => p.id === ME)!;
-      recordDuel(s.winnerId === ME, s.winnerId === null, me.score);
+      recordDuel(s.winnerId === ME, s.winnerId === null, me.score, duelAnswers());
     }
   }, [s.phase]);
 
@@ -319,8 +352,10 @@ function LocalDuel({ note }: { note: StrKey | null }) {
     return (
       <Screen scroll={false}>
         <TopBar close title={t('duel_bot')} onBack={() => router.back()} />
-        {note ? <FadeIn><T v="small" center color={colors.muted}>{t(note)}</T>{note === 'robo_offline' && lastOnlineError ? <T v="small" center color={colors.muted} style={{ opacity: 0.6, fontSize: 11 }}>{lastOnlineError}</T> : null}</FadeIn> : null}
-        <Matchmaking me={{ name: profile.username, avatar: myAvatar, sub: `${profile.age} ${t('years')}` }} opponent={{ name: bot.name, avatar: bot.avatar, sub: t('robot') }} onDone={startDuel} />
+        {/* only a friendly line for the kid; the technical reason stays in the logs */}
+        {note ? <FadeIn><T v="small" center color={colors.muted}>{t(note)}</T></FadeIn> : null}
+        {/* Robo is on the phone: no pretend "searching", straight to the face-off */}
+        <Matchmaking instant me={{ name: profile.username, avatar: myAvatar, sub: t(AGE_KEY[profile.age]) }} opponent={{ name: bot.name, avatar: bot.avatar, sub: t('robot') }} onDone={startDuel} />
       </Screen>
     );
   }
@@ -335,7 +370,7 @@ function LocalDuel({ note }: { note: StrKey | null }) {
     me: { ...me, chosen: meP?.answer?.chosen ?? null },
     op: { ...op, answered: !!opP.answer, chosen: opP.answer?.chosen, reaction: s.reactions[bot.id], reactSeq: s.reactSeq?.[bot.id] },
   };
-  return <DuelGame vm={vm}
+  return <DuelGame vm={vm} onPause={pause}
     onPick={(i) => setS((d) => reduce(d, { type: 'answer', playerId: ME, chosen: i }, Date.now()))}
     onReact={(r) => setS((d) => reduce(d, { type: 'react', playerId: ME, reaction: r }, Date.now()))}
     onQuit={() => setS((d) => reduce(d, { type: 'leave', playerId: ME }, Date.now()))} />;

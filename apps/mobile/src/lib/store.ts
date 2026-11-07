@@ -8,9 +8,9 @@ import { changeRequestStatus, type ChangeRequest } from './online';
 import { serverConfigured } from './remote';
 import {
   DEFAULT_SETTINGS, emptyProgress, emptyCourseProgress, recordLesson as coreRecordLesson, applyEvent, ensureQuests,
-  recordActivity, levelFromXp, generateUsername, localDay, noteWrong, checkBadges, courseSummary,
+  recordPlay, levelFromXp, generateUsername, localDay, noteWrong, checkBadges, courseSummary,
   emptyMissionLog, noteFullDay, openChest as coreOpenChest, weeklyLegendEarned as coreWeeklyLegendEarned, claimWeeklyLegend as coreClaimWeeklyLegend,
-  rankForXp, unlocksEarned, type MissionLog, type UnlockCtx,
+  rankForXp, unlocksEarned, noteFirstDay, quizXp, mathRunXp, codingXp, buyShopItem, mergeDefaults, type MissionLog, type UnlockCtx,
   type AgeBand, type AvatarConfig, type KidSettings, type Progress, type CourseProgress, type CourseId, type LessonResult, type GameEvent, type Lang, type CountryQuizOptions,
 } from '@konesans/core';
 
@@ -44,20 +44,36 @@ interface State {
   finishOnboarding: () => void;
   setSettings: (s: Partial<AppSettings>) => void;
   setKidSettings: (s: Partial<KidSettings>) => void;
+  /** Screen opened: rolls today's quests over (never counts a streak day — only a finished activity does). */
   touch: () => void;
+  /** A real activity was finished: streak day (+ freeze every 7 days), today's quests, the kid's first play day. */
+  played: () => void;
   emit: (e: GameEvent) => number;
   award: (xp: number, coins?: number) => void;
   recordQuiz: (r: { category: string; correct: number; total: number; score: number; wrongIds: string[]; ids: string[] }) => void;
-  recordDuel: (won: boolean, draw: boolean, score: number) => void;
+  /** `answers`: the kid's correct / total answers in the duel (they count for the "answer correctly" quest). */
+  recordDuel: (won: boolean, draw: boolean, score: number, answers?: { correct: number; total: number }) => void;
   recordLessonDone: (lang: CourseId, lessonId: string, r: LessonResult) => void;
-  recordCoding: (levelId: number, stars: number, xp: number) => void;
-  recordMath: (score: number, xp: number) => void;
+  /** A solved coding level. Returns the XP paid (first clear: full; replay: only the stars it adds). */
+  recordCoding: (levelId: number, stars: number) => number;
+  /** A finished Kalkil Mantal run: `correct` answers count for the quests. Returns the XP paid. */
+  recordMath: (score: number, correct: number) => number;
   resetAll: () => void;
   /** Award trophies whose condition is now met (called after every activity). */
   awardBadges: () => string[];
-  /** Trophies just won, shown once on the next screen. */
+  /** Trophies already celebrated this visit (the trophy room pops them; cleared when it closes). */
   newBadges: string[];
   clearNewBadges: () => void;
+  /** Trophies won but not celebrated yet: the celebration (ui/RankUp Celebrations) shows them one by one. */
+  badgeQueue: string[];
+  /** The celebration for this trophy is on screen: moves it from the queue to newBadges (which plays the jingle). */
+  celebrateBadge: (id: string) => void;
+
+  // ─── avatar shop (Boutik) ───
+  /** shop item ids bought with coins (core progress/shop.ts) */
+  bought: string[];
+  /** Spend coins on a shop item. Returns false when it can't be bought (not enough coins / already owned). */
+  buyItem: (id: string) => boolean;
   /** Countries recently asked in Peyi, so a replay brings new ones. */
   recentPeyi: string[];
   notePeyi: (isos: string[]) => void;
@@ -93,6 +109,20 @@ const freshProfile = (): Profile => ({ id: newId(), username: generateUsername(D
 const unlockCtx = (s: { progress: Progress; stats: Stats }): UnlockCtx => ({ xp: s.progress.xp, streak: s.progress.streak.count, badges: Object.keys(s.progress.badges).length });
 const freshStats = (): Stats => ({ duels: 0, duelWins: 0, lessons: 0, questionsAnswered: 0, correct: 0, perCategoryCorrect: {} });
 
+/**
+ * "Rekòmanse a zewo" must clear every kid store, not only this one. The other stores (Kat Ewo, Vwayaj, prefs, cloud
+ * meta) import this file, so they register their own reset here (no import cycle); resetAll() runs them all.
+ */
+const resetHooks = new Map<string, () => void>();
+export const onResetAll = (name: string, fn: () => void) => { resetHooks.set(name, fn); };
+/** The other persisted kid stores (cloud meta is reset through its hook only: it must keep the account link). */
+const KID_STORE_KEYS: Record<string, string> = { cards: 'konesans-cards', vwayaj: 'konesans-vwayaj', prefs: 'konesans-prefs' };
+/** Store names that registered a reset (tests / debugging). */
+export const resetHookNames = () => [...resetHooks.keys()];
+
+/** Version of the persisted 'konesans-v1' snapshot. 2: badgeQueue, bought, missions.firstDay; deep merge of defaults. */
+const STORE_VERSION = 2;
+
 export const useStore = create<State>()(
   persist(
     (set, get) => ({
@@ -111,6 +141,8 @@ export const useStore = create<State>()(
       stats: freshStats(),
       seen: [],
       newBadges: [],
+      badgeQueue: [],
+      bought: [],
       recentPeyi: [],
       missions: emptyMissionLog(),
       rankSeen: -1,
@@ -127,13 +159,15 @@ export const useStore = create<State>()(
       setSettings: (p) => set((s) => ({ settings: { ...s.settings, ...p } })),
       setKidSettings: (p) => set((s) => ({ kidSettings: { ...s.kidSettings, ...p } })),
 
-      /** Mark activity: streak + today's quests. */
       touch: () => {
+        set((s) => ({ progress: ensureQuests(s.progress, s.profile.id, localDay(Date.now(), tz), s.profile.age) }));
+        get().awardBadges();
+      },
+      played: () => {
         set((s) => {
-          const now = Date.now();
-          let p = recordActivity(s.progress, s.kidSettings, now, tz);
-          p = ensureQuests(p, s.profile.id, localDay(now, tz));
-          return { progress: p };
+          const now = Date.now(); const day = localDay(now, tz);
+          const p = ensureQuests(recordPlay(s.progress, s.kidSettings, now, tz), s.profile.id, day, s.profile.age);
+          return { progress: p, missions: noteFirstDay(s.missions ?? emptyMissionLog(), day) };
         });
         get().awardBadges();
       },
@@ -141,12 +175,20 @@ export const useStore = create<State>()(
       awardBadges: () => {
         const s = get();
         const words = courseSummary('en', s.courses.en).wordsLearned + courseSummary('es', s.courses.es).wordsLearned;
-        const { progress, awarded } = checkBadges({ p: s.progress, duelWins: s.stats.duelWins, lessonsDone: s.stats.lessons, wordsLearned: words, departmentsUnlocked: 0, eventsPlayed: [] }, new Date().toISOString());
-        if (awarded.length) set({ progress, newBadges: [...s.newBadges, ...awarded] });
+        const { progress, awarded } = checkBadges({ p: s.progress, duelWins: s.stats.duelWins, lessonsDone: s.stats.lessons, wordsLearned: words, departmentsUnlocked: 0, eventsPlayed: [], codingLevels: Object.keys(s.coding).length }, new Date().toISOString());
+        if (awarded.length) set({ progress, badgeQueue: [...(s.badgeQueue ?? []), ...awarded] });
         get().syncUnlocks();
         return awarded;
       },
       clearNewBadges: () => set({ newBadges: [] }),
+      celebrateBadge: (id) => set((s) => ({ badgeQueue: (s.badgeQueue ?? []).filter((x) => x !== id), newBadges: s.newBadges.includes(id) ? s.newBadges : [...s.newBadges, id] })),
+      buyItem: (id) => {
+        const s = get();
+        const r = buyShopItem(s.progress.coins, s.bought ?? [], id);
+        if (!r.ok) return false;
+        set({ progress: { ...s.progress, coins: r.coins }, bought: r.bought });
+        return true;
+      },
       notePeyi: (isos) => set((s) => ({ recentPeyi: [...s.recentPeyi.filter((x) => !isos.includes(x)), ...isos].slice(-60) })),
 
       emit: (e) => {
@@ -198,8 +240,8 @@ export const useStore = create<State>()(
       award: (xp, coins = Math.floor(xp / 2)) => { set((s) => ({ progress: { ...s.progress, xp: s.progress.xp + xp, coins: s.progress.coins + coins } })); get().syncUnlocks(); },
 
       recordQuiz: (r) => {
+        get().played();
         const st = get();
-        st.touch();
         let p = st.progress;
         for (const id of r.wrongIds) p = noteWrong(p, id, Date.now());
         set({ progress: p, seen: [...st.seen, ...r.ids].slice(-400), stats: {
@@ -207,39 +249,70 @@ export const useStore = create<State>()(
           perCategoryCorrect: { ...st.stats.perCategoryCorrect, [r.category]: (st.stats.perCategoryCorrect[r.category] ?? 0) + r.correct },
         } });
         for (let i = 0; i < r.total; i++) get().emit({ type: 'answer', correct: i < r.correct, category: r.category });
-        get().award(Math.round(r.score / 4));
+        get().award(quizXp(r.score));
       },
 
-      recordDuel: (won, draw, score) => {
-        const st = get(); st.touch();
+      recordDuel: (won, draw, score, answers) => {
+        get().played();
+        const st = get();
         set({ stats: { ...st.stats, duels: st.stats.duels + 1, duelWins: st.stats.duelWins + (won ? 1 : 0) } });
         get().emit({ type: 'duel_end', won, draw });
+        for (let i = 0; i < (answers?.total ?? 0); i++) get().emit({ type: 'answer', correct: i < answers!.correct, category: 'duel' });
         get().award(won ? 40 : draw ? 25 : 15);
         get().awardBadges();
       },
 
       recordLessonDone: (lang, lessonId, r) => {
-        const st = get(); st.touch();
+        get().played();
+        const st = get();
         set({ courses: { ...st.courses, [lang]: coreRecordLesson(st.courses[lang], lessonId, r) }, stats: { ...st.stats, lessons: st.stats.lessons + 1 } });
         get().emit({ type: 'lesson_done', course: lang });
         get().award(r.xp, r.coins);
         get().awardBadges();
       },
 
-      recordCoding: (levelId, stars, xp) => {
-        const st = get(); st.touch();
+      recordCoding: (levelId, stars) => {
+        get().played();
+        const st = get();
+        const xp = codingXp(st.coding[levelId] ?? 0, stars);
         set({ coding: { ...st.coding, [levelId]: Math.max(st.coding[levelId] ?? 0, stars) } });
-        get().award(xp);
+        get().emit({ type: 'coding_done', levelId });
+        if (xp) get().award(xp);
+        get().awardBadges();
+        return xp;
       },
 
-      recordMath: (score, xp) => { get().touch(); get().emit({ type: 'math_run', score }); get().award(xp); set((s) => ({ stats: { ...s.stats, mathBest: Math.max(s.stats.mathBest ?? 0, score) } })); },
+      recordMath: (score, correct) => {
+        get().played();
+        const xp = mathRunXp(score);
+        get().emit({ type: 'math_run', score });
+        for (let i = 0; i < correct; i++) get().emit({ type: 'answer', correct: true, category: 'math' });
+        get().award(xp);
+        set((s) => ({ stats: { ...s.stats, mathBest: Math.max(s.stats.mathBest ?? 0, score) } }));
+        return xp;
+      },
 
-      resetAll: () => set({ changeReq: null, missions: emptyMissionLog(), rankSeen: -1, unlocked: [], seenUnlocks: [], recentPeyi: [], newBadges: [], onboarded: false, profile: freshProfile(), progress: emptyProgress(), courses: { en: emptyCourseProgress(), es: emptyCourseProgress() }, coding: {}, stats: freshStats(), seen: [] }),
+      resetAll: () => {
+        set({
+          changeReq: null, missions: emptyMissionLog(), rankSeen: -1, unlocked: [], seenUnlocks: [], bought: [], recentPeyi: [], newBadges: [], badgeQueue: [],
+          onboarded: false, profile: freshProfile(), progress: emptyProgress(), courses: { en: emptyCourseProgress(), es: emptyCourseProgress() }, coding: {}, stats: freshStats(), seen: [],
+          courseLang: 'en', peyi: { mode: 'drapo', level: 1, region: 'Karayib' },
+        });
+        // Kat Ewo, Vwayaj, difficulty, cloud meta (the next upload replaces the account's save), …
+        for (const fn of resetHooks.values()) { try { fn(); } catch { /* one store failing must not stop the others */ } }
+        // a store whose module was never loaded has no hook: its saved copy is dropped instead
+        for (const [name, key] of Object.entries(KID_STORE_KEYS)) if (!resetHooks.has(name)) AsyncStorage.removeItem(key).catch(() => {});
+      },
     }),
     {
       name: 'konesans-v1',
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: (s) => ({ changeReq: s.changeReq, missions: s.missions, rankSeen: s.rankSeen, unlocked: s.unlocked, seenUnlocks: s.seenUnlocks, recentPeyi: s.recentPeyi, onboarded: s.onboarded, profile: s.profile, progress: s.progress, courses: s.courses, courseLang: s.courseLang, peyi: s.peyi, coding: s.coding, settings: s.settings, kidSettings: s.kidSettings, stats: s.stats, seen: s.seen }),
+      version: STORE_VERSION,
+      // v0/v1 → v2: nothing to rename; new fields come from the defaults (deep merge below)
+      migrate: (persisted) => persisted as never,
+      // deep merge: a field added inside settings / kidSettings / missions / progress gets its default on upgrade
+      merge: (persisted, current) => mergeDefaults(current, persisted),
+      partialize: (s) => ({ changeReq: s.changeReq, missions: s.missions, rankSeen: s.rankSeen, unlocked: s.unlocked, seenUnlocks: s.seenUnlocks, bought: s.bought, badgeQueue: s.badgeQueue, recentPeyi: s.recentPeyi, onboarded: s.onboarded, profile: s.profile, progress: s.progress, courses: s.courses, courseLang: s.courseLang, peyi: s.peyi, coding: s.coding, settings: s.settings, kidSettings: s.kidSettings, stats: s.stats, seen: s.seen }),
       onRehydrateStorage: () => (state) => { state?.setHydrated(); checkPendingChangeReq(); },
     },
   ),
@@ -274,6 +347,9 @@ export const useRank = () => { const xp = useStore((s) => s.progress.xp); return
  */
 export const selectWeeklyLegendEarned = (s: { missions?: MissionLog }) => coreWeeklyLegendEarned(s.missions ?? emptyMissionLog(), localDay(Date.now(), tz));
 export const useWeeklyLegendEarned = () => useStore(selectWeeklyLegendEarned);
+
+/** Avatar items the kid owns: unlocked by rank / streak / trophies, plus the ones bought in the shop. */
+export const selectOwnedItems = (s: { unlocked?: string[]; bought?: string[] }) => [...(s.unlocked ?? []), ...(s.bought ?? [])];
 
 /** Context for avatar item locks. */
 export const useUnlockCtx = (): UnlockCtx => {

@@ -70,11 +70,24 @@ export function IconTile({ name, bg, size = 56 }: { name: IconName; bg: string; 
   return <View style={{ width: size, height: size, borderRadius: size * 0.29, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}><Icon name={name} size={size * 0.72} /></View>;
 }
 
+// ─── Contrast (WCAG AA) ──────────────────────────────────────────────────────
+const lum = (hex: string) => {
+  const h = hex.replace('#', ''); if (h.length !== 6) return 1;
+  const c = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+};
+export const contrast = (a: string, b: string) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+/** White text where it reads (≥ 4.5:1), ink otherwise — for labels on coloured fills (yellow, orange, light green…). */
+export const readableOn = (bg: string) => (contrast(bg, '#FFFFFF') >= 4.5 ? '#FFFFFF' : colors.ink);
+/** Our green is 3.45:1 with white: primary buttons use a deeper green so their white labels pass AA. */
+export const DEEP_GREEN = '#1E7A33';
+const fillFor = (c: string) => (c === colors.green ? DEEP_GREEN : c);
+
 // ─── Buttons ─────────────────────────────────────────────────────────────────
 export function Button({ title, onPress, variant = 'primary', color = colors.blue, icon, disabled, style, small }: { title: string; onPress: () => void; variant?: 'primary' | 'secondary' | 'ghost'; color?: string; icon?: IconName; disabled?: boolean; style?: StyleProp<ViewStyle>; small?: boolean }) {
   const primary = variant === 'primary';
-  const bg = primary ? color : variant === 'secondary' ? colors.card : 'transparent';
-  const fg = primary ? '#FFFFFF' : color;
+  const bg = primary ? fillFor(color) : variant === 'secondary' ? colors.card : 'transparent';
+  const fg = primary ? readableOn(bg) : color;
   return (
     <PressScale role="button" disabled={disabled} scaleTo={0.96} onPress={() => { tap(); sfx('tap'); onPress(); }} style={({ pressed }) => [
       { minHeight: small ? 44 : 54, borderRadius: radius.md, paddingHorizontal: 20, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, backgroundColor: bg },
@@ -148,7 +161,7 @@ export function TopBar({ title, sub, right, onBack, close }: { title: string; su
   const t = useT();
   return (
     <Row gap={12}>
-      <PressScale role="button" accessibilityLabel={t('back')} scaleTo={0.9} onPress={() => { tap(); onBack ? onBack() : router.canGoBack() ? router.back() : router.replace('/home'); }} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.card, borderWidth: 2, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' }}>
+      <PressScale role="button" accessibilityLabel={close ? t('close') : t('back')} scaleTo={0.9} onPress={() => { tap(); onBack ? onBack() : router.canGoBack() ? router.back() : router.replace('/home'); }} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.card, borderWidth: 2, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' }}>
         <Icon name={close ? 'femen' : 'retounen'} size={24} />
       </PressScale>
       <View style={{ flex: 1 }}>
@@ -195,7 +208,8 @@ export function BottomNav() {
             style={{ flex: 1, alignItems: 'center', height: 54, justifyContent: 'flex-start' }}>
             {/* a fixed 34px icon row = exactly the sliding highlight's box, so icon and highlight always line up */}
             <View style={{ height: 34, width: 52, alignItems: 'center', justifyContent: 'center', opacity: on ? 1 : 0.55 }}><Icon name={tab.icon} size={28} /></View>
-            <T v="small" color={on ? colors.blue : colors.muted} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} center style={{ width: '100%', paddingHorizontal: 2, marginTop: 2 }}>{t(tab.key)}</T>
+            {/* fixed size: with "Gwo" text the labels would be cut ("Enfòma…"); the icons carry the meaning */}
+            <T v="small" color={on ? colors.blue : colors.muted} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} center style={{ width: '100%', paddingHorizontal: 1, marginTop: 2, fontSize: 12, lineHeight: 16 }}>{t(tab.key)}</T>
           </PressScale>
         );
       })}
@@ -205,7 +219,7 @@ export function BottomNav() {
 
 // ─── Sheet (confirm) ─────────────────────────────────────────────────────────
 /** Bottom sheet: backdrop fades, sheet springs up (mockup sUp/sScrim); both play in reverse on close. */
-export function Sheet({ open, title, children }: { open: boolean; title: string; children: React.ReactNode }) {
+export function Sheet({ open, title, children, onClose }: { open: boolean; title: string; children: React.ReactNode; /** Android back / Escape while open (default: ignored) */ onClose?: () => void }) {
   const insets = useSafeAreaInsets();
   const [mounted, setMounted] = React.useState(open);
   const v = React.useRef(new Animated.Value(0)).current;
@@ -220,7 +234,7 @@ export function Sheet({ open, title, children }: { open: boolean; title: string;
   }, [open]);
   if (!mounted) return null;
   return (
-    <Modal visible transparent animationType="none" statusBarTranslucent navigationBarTranslucent onRequestClose={() => {}}>
+    <Modal visible transparent animationType="none" statusBarTranslucent navigationBarTranslucent onRequestClose={() => onClose?.()}>
       <Animated.View style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: 'rgba(20,33,61,0.45)', opacity: v }} />
       <View style={{ flex: 1, justifyContent: 'flex-end' }}>
         <Animated.View style={{ backgroundColor: colors.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, paddingBottom: 28 + insets.bottom, gap: 12, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [420, 0] }) }] }}>

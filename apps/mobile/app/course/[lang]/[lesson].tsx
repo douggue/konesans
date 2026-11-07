@@ -8,6 +8,14 @@ import { colors, radius } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT, useL } from '@/lib/i18n';
 import { speak, tap, sfx, music, answerSfx } from '@/lib/audio';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useQuitGuard } from '@/ui/activity';
+
+/** The lesson in progress is saved after every answer, so back / the OS closing the app never loses it. */
+const RESUME_KEY = 'konesans-lesson-resume';
+type Snap = Omit<LessonSession, 'requeued'> & { requeued: string[] };
+const saveSnap = (s: LessonSession) => AsyncStorage.setItem(RESUME_KEY, JSON.stringify({ ...s, requeued: [...s.requeued] } satisfies Snap)).catch(() => {});
+const clearSnap = () => AsyncStorage.removeItem(RESUME_KEY).catch(() => {});
 
 const TITLE: Record<Exercise['kind'], 'ex_pick_meaning' | 'ex_pick_word' | 'ex_listen' | 'ex_match' | 'ex_translate' | 'ex_build' | 'ex_fill'> = {
   pick_meaning: 'ex_pick_meaning', pick_word: 'ex_pick_word', listen_pick: 'ex_listen', match_pairs: 'ex_match', translate_pick: 'ex_translate', build_sentence: 'ex_build', fill_blank: 'ex_fill',
@@ -25,7 +33,28 @@ export default function Lesson() {
   const [done, setDone] = useState(false);
   const [quitting, setQuitting] = useState(false);
   const results = useRef<boolean[]>([]);
+  const [resumed, setResumed] = useState(false);
+  const recorded = useRef(false);
   useEffect(() => { music(null); }, []);
+  // pick up where the kid left this lesson (same lesson, same age band, not finished)
+  useEffect(() => {
+    AsyncStorage.getItem(RESUME_KEY).then((v) => {
+      if (!v) return;
+      const snap = JSON.parse(v) as Snap;
+      if (snap.lang !== lang || snap.lessonId !== lesson || snap.age !== profile.age || !snap.queue?.[snap.i]) return;
+      setS((cur) => (cur.i === 0 ? { ...snap, requeued: new Set(snap.requeued) } : cur));
+      setResumed(true);
+    }).catch(() => {});
+  }, []);
+  useEffect(() => { if (s.i > 0 && !done) saveSnap(s); }, [s.i]);
+  // the lesson counts the moment it is finished (not on the result screen's button)
+  useEffect(() => {
+    if (!done || recorded.current) return;
+    recorded.current = true;
+    recordLessonDone(lang!, lesson!, finishLesson(s));
+    clearSnap();
+  }, [done]);
+  const leave = useQuitGuard(!done, () => setQuitting(true));
   // while feedback is showing, the session has already advanced: keep the exercise that was just answered on screen
   const ex = grade ? s.queue[s.i - 1] : currentExercise(s);
 
@@ -45,17 +74,17 @@ export default function Lesson() {
 
   if (done && !grade) {
     const r = finishLesson(s);
-    return <LessonResult r={r} onDone={() => { recordLessonDone(lang!, lesson!, r); router.replace('/course'); }} />;
+    return <LessonResult r={r} onDone={() => router.replace('/course')} />;
   }
   if (!ex) return null;
 
   return (
     <Screen>
       <Row gap={10}>
-        <PressScale debounceMs={0} role="button" onPress={() => setQuitting(true)} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.card, borderWidth: 2, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' }}><Icon name="femen" size={22} /></PressScale>
+        <PressScale debounceMs={0} role="button" accessibilityLabel={t('lesson_quit_label')} onPress={() => setQuitting(true)} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.card, borderWidth: 2, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' }}><Icon name="femen" size={22} /></PressScale>
         <Progress style={{ flex: 1 }} value={lessonProgressPct(s) / 100} color={colors.green} height={14} />
       </Row>
-      <T v="small" color={colors.muted}>{title}</T>
+      <Row gap={8}><T v="small" color={colors.muted} style={{ flexShrink: 1 }}>{title}</T>{resumed ? <Pill text={t('lesson_resume')} color={colors.blue} bg={colors.blueSoft} /> : null}</Row>
       <SlideSwap id={grade ? s.i - 1 : s.i} style={{ gap: 14 }}>
         <T v="h1">{t(TITLE[ex.kind])}</T>
         <ExerciseView ex={ex} resp={resp} setResp={grade ? () => {} : setResp} reveal={!!grade} />
@@ -69,9 +98,10 @@ export default function Lesson() {
       ) : (
         <Button title={t('check')} color={colors.green} disabled={!ready} onPress={check} />
       )}
-      <Sheet open={quitting} title={t('quit_q')}>
+      <Sheet open={quitting} title={t('quit_q')} onClose={() => setQuitting(false)}>
+        {s.i > 0 ? <T v="small" center color={colors.muted}>{t('quit_lesson_saved')}</T> : null}
         <Button title={t('stay')} onPress={() => setQuitting(false)} />
-        <Button variant="secondary" color={colors.red} title={t('quit')} onPress={() => { setQuitting(false); router.replace('/course'); }} />
+        <Button variant="secondary" color={colors.red} title={t('quit')} onPress={() => { setQuitting(false); leave(() => (router.canGoBack() ? router.back() : router.replace('/course'))); }} />
       </Sheet>
     </Screen>
   );

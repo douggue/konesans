@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { startSolo, answerSolo, soloSummary, QUESTION_TIME_MS, generateCountryQuiz, peyiIso, REGION_LABEL, type SoloSession, type CountryQuizOptions } from '@konesans/core';
+import { startSolo, answerSolo, soloSummary, quizXp, generateCountryQuiz, peyiIso, REGION_LABEL, type SoloSession, type CountryQuizOptions } from '@konesans/core';
 import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Pill, CountPill, Stars, FadeIn, Pop, Drop, SlideSwap, Confetti, Bounce, useCountUp } from '@/ui';
 import { QuestionView } from '@/ui/QuestionView';
-import { CardReveal } from '@/ui/CardReveal';
+import { RankUpListener } from '@/ui/RankUp';
+import { useQuitGuard, useQuestionClock, questionTimeMs, scoredNow, onboardingResume } from '@/ui/activity';
 import { colors } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT, useL } from '@/lib/i18n';
@@ -34,38 +35,30 @@ export default function Quiz() {
   const [s, setS] = useState<SoloSession>(() => startSolo(questions, Date.now()));
   const [chosen, setChosen] = useState<number | null>(null);
   const [reveal, setReveal] = useState(false);
-  const [left, setLeft] = useState(QUESTION_TIME_MS);
   const [quitting, setQuitting] = useState(false);
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timeMs = questionTimeMs(profile.age);
+  // the clock pauses behind the quit sheet and freezes during the feedback
+  const clock = useQuestionClock({ timeMs, key: `${s.startedAt}-${s.index}`, running: !s.finished && !reveal, paused: quitting, onTimeout: () => pick(null) });
+  const left = clock.left;
+  // Android back / browser back → the same "Ou vle kite?" sheet as the ✕
+  const leave = useQuitGuard(!s.finished || reveal, () => setQuitting(true));
+  const back = () => leave(() => (router.canGoBack() ? router.back() : router.replace(trial ? '/onboarding' : '/home')));
   const q = s.questions[s.index];
-  const title = cat === 'mix' ? t('daily_title') : peyiOpts ? `${t(`peyi_mode_${peyiOpts.mode}`)} · ${REGION_LABEL[peyiOpts.region][profile.lang]}` : categoryInfo(cat)[profile.lang];
-
-  // countdown
-  useEffect(() => {
-    if (s.finished || reveal) return;
-    const started = Date.now();
-    timer.current = setInterval(() => {
-      const rem = QUESTION_TIME_MS - (Date.now() - started);
-      setLeft(Math.max(0, rem));
-      if (rem <= 0) pick(null);
-    }, 200);
-    return () => { if (timer.current) clearInterval(timer.current); };
-  }, [s.index, reveal, s.finished]);
+  const title = trial ? t('trial_title') : cat === 'mix' ? t('daily_title') : peyiOpts ? `${t(`peyi_mode_${peyiOpts.mode}`)} · ${REGION_LABEL[peyiOpts.region][profile.lang]}` : categoryInfo(cat)[profile.lang];
 
   useEffect(() => { if (q && settings.voice && profile.age === '6-8') speak(l(q.prompt), profile.lang); }, [s.index]);
   useEffect(() => { music(null); }, []);
 
   function pick(i: number | null) {
     if (reveal) return;
-    if (timer.current) clearInterval(timer.current);
     setChosen(i); setReveal(true);
-    const next = answerSolo(s, i, Date.now());
+    const next = answerSolo(s, i, scoredNow(s, clock.elapsed(), timeMs));
     tap(next.answers[next.answers.length - 1].correct ? 'success' : 'error');
     sfx(answerSfx(next.answers.map((x) => x.correct), i === null));
     setS(next);
   }
   function go() {
-    setChosen(null); setReveal(false); setLeft(QUESTION_TIME_MS);
+    setChosen(null); setReveal(false);
   }
   function finish() {
     const sum = soloSummary(s);
@@ -86,21 +79,24 @@ export default function Quiz() {
     return (
       <Screen scroll={false}>
         {good && <Confetti />}
-        {!trial && <CardReveal drawKey={`quiz-${s.startedAt}`} delay={2200} />}
+        {!trial && <RankUpListener delayMs={2200} />}
         <View style={{ alignItems: 'center', gap: 10, marginTop: 'auto' }}>
           <Drop><Mascot size={150} mood={good ? 'cheer' : 'happy'} /></Drop>
           <FadeIn delay={500}><T v="display" center>{t('result')}</T></FadeIn>
           <Stars n={stars} size={44} pop />
           <FadeIn delay={900}><ResultLine correct={sum.correct} total={sum.total} label={t('correct_of')} /></FadeIn>
-          <Pop delay={1150}><CountPill value={sum.score} k={`quiz-${s.startedAt}`} suffix={` ${t('points')}  ·  +${Math.round(sum.score / 4)} XP`} color="#5C4600" bg={colors.yellowSoft} icon="pwen" /></Pop>
+          {/* the trial records nothing, so it shows no XP */}
+          <Pop delay={1150}><CountPill value={sum.score} k={`quiz-${s.startedAt}`} suffix={trial ? ` ${t('points')}` : ` ${t('points')}  ·  +${quizXp(sum.score)} XP`} color="#5C4600" bg={colors.yellowSoft} icon="pwen" /></Pop>
+          {trial ? <FadeIn delay={1300}><T v="small" center color={colors.muted}>{t('trial_note')}</T></FadeIn> : null}
         </View>
         <View style={{ marginTop: 'auto', gap: 10 }}>
           {trial ? (
-            <Button title={t('start')} color={colors.green} onPress={() => router.replace('/onboarding')} />
+            <Button title={t('start')} color={colors.green} onPress={() => { onboardingResume.step = 1; if (router.canGoBack()) router.back(); else router.replace('/onboarding?step=1'); }} />
           ) : (
             <>
-              <Button title={t('again')} onPress={() => { setLeft(QUESTION_TIME_MS); setS(startSolo(build(Date.now() % 1e9), Date.now())); }} />
-              <Button variant="secondary" title={t('done')} onPress={() => router.replace('/home')} />
+              <Button title={t('again')} onPress={() => setS(startSolo(build(Date.now() % 1e9), Date.now()))} />
+              {/* back to where the quiz was started (Defi, Peyi, Lakay…) */}
+              <Button variant="secondary" title={t('done')} onPress={() => (router.canGoBack() ? router.back() : router.replace('/home'))} />
             </>
           )}
         </View>
@@ -113,8 +109,9 @@ export default function Quiz() {
     <Screen scroll={true}>
       <TopBar close title={title} sub={`${t('question')} ${s.index + (reveal ? 0 : 1)} / ${s.questions.length}`} onBack={() => setQuitting(true)}
         right={<CountPill value={s.score} k={`score-${s.startedAt}`} icon="pwen" color="#5C4600" bg={colors.yellowSoft} />} />
-      <Row>
-        <Progress style={{ flex: 1 }} linear value={left / QUESTION_TIME_MS} color={left < 4000 ? colors.red : colors.yellowDark} />
+      {/* frozen (and faded) while the feedback shows */}
+      <Row style={{ opacity: reveal ? 0.35 : 1 }}>
+        <Progress style={{ flex: 1 }} linear value={left / timeMs} color={left < 4000 ? colors.red : colors.yellowDark} />
         <T v="small" color={colors.muted} style={{ width: 32, textAlign: 'right' }}>{Math.ceil(left / 1000)} s</T>
       </Row>
       <Progress value={s.index / s.questions.length} color={colors.blueLight} height={6} />
@@ -133,9 +130,10 @@ export default function Quiz() {
           <Button small title={t('continue')} color={last.correct ? colors.green : colors.blue} onPress={go} style={{ marginTop: 6 }} />
         </Card></FadeIn>
       )}
-      <Sheet open={quitting} title={t('quit_q')}>
+      <Sheet open={quitting} title={t('quit_q')} onClose={() => setQuitting(false)}>
+        <T v="small" center color={colors.muted}>{t('quit_paused')}</T>
         <Button title={t('stay')} onPress={() => setQuitting(false)} />
-        <Button variant="secondary" color={colors.red} title={t('quit')} onPress={() => { setQuitting(false); router.replace(trial ? '/onboarding' : '/home'); }} />
+        <Button variant="secondary" color={colors.red} title={t('quit')} onPress={() => { setQuitting(false); back(); }} />
       </Sheet>
     </Screen>
   );

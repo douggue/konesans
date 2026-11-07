@@ -5,7 +5,8 @@ import { type GenModule, type Rand, int, pick, numericOptions, q, tx } from './b
 export const timesTables: GenModule = {
   id: 'tab', name: { ht: 'Tab miltiplikasyon', fr: 'Tables de multiplication' }, category: 'matematik', ages: ['9-11', '12-14'],
   generate(age, rand) {
-    const a = int(rand, 2, age === '9-11' ? 9 : 12), b = int(rand, 2, 12);
+    // no trivial facts (2 × 2) above 8 years old: 9–11 from 3 × 3, 12–14 from 4 × 3
+    const a = age === '9-11' ? int(rand, 3, 9) : int(rand, 4, 12), b = age === '9-11' ? int(rand, 3, 10) : int(rand, 3, 12);
     if (age === '12-14' && rand() < 0.4) {
       return q(this, age, rand, tx(`? × ${b} = ${a * b}`, `? × ${b} = ${a * b}`), numericOptions(rand, a, 4, 3, 1).map(String), String(a), `${a} × ${b} = ${a * b}`);
     }
@@ -67,7 +68,7 @@ export const clock: GenModule = {
   id: 'le', name: { ht: 'Li lè a', fr: "Lire l'heure" }, category: 'jeneral', ages: ['6-8', '9-11'],
   generate(age, rand) {
     const h = int(rand, 1, 12), m = age === '6-8' ? pick(rand, [0, 30]) : pick(rand, [0, 15, 30, 45]);
-    const fmt = (hh: number, mm: number) => `${((hh - 1) % 12) + 1}:${mm.toString().padStart(2, '0')}`;
+    const fmt = (hh: number, mm: number) => `${((((hh - 1) % 12) + 12) % 12) + 1}:${mm.toString().padStart(2, '0')}`; // 0 → 12, 13 → 1 (never "0:30")
     if (age === '6-8' || rand() < 0.5) {
       const ans = fmt(h, m);
       const opts = [ans, fmt(h + 1, m), fmt(h, (m + 30) % 60), fmt(m === 0 ? h + 2 : h - 1, m)];
@@ -116,7 +117,9 @@ export const numberWords: GenModule = {
   generate(age, rand) {
     const max = age === '6-8' ? 20 : 100;
     const n = int(rand, 0, max);
-    const alts = numericOptions(rand, n, 4, age === '6-8' ? 3 : 12, 0).filter((v) => v <= 100);
+    // wrong numbers stay inside 0…max, so the set always has 4 options ("san" = 100 used to get only one)
+    const alts = numericOptions(rand, n, 4, age === '6-8' ? 3 : 12, 0).filter((v) => v <= max);
+    for (let d = 1; alts.length < 4 && d <= max; d++) for (const v of [n - d, n + d]) if (alts.length < 4 && v >= 0 && v <= max && !alts.includes(v)) alts.push(v);
     // Kreyòl kids read Kreyòl number words, French kids French ones
     const word = (v: number) => ({ ht: kreyolNumber(v), fr: frenchNumber(v) });
     if (rand() < 0.5) return q(this, age, rand, tx(`Ki nonb sa a: «${kreyolNumber(n)}»?`, `Quel est ce nombre : « ${frenchNumber(n)} » ?`), alts.map(String), String(n));
@@ -144,7 +147,7 @@ export const sequence: GenModule = {
     const geo = age === '12-14' && rand() < 0.3;
     const seq = Array.from({ length: 4 }, (_, i) => (geo ? start * 2 ** i : start + step * i));
     const next = geo ? start * 16 : start + step * 4;
-    return q(this, age, rand, tx(`Ki nonb ki vini apre? ${seq.join(', ')}, …`, `Quel nombre vient ensuite ? ${seq.join(', ')}, …`), numericOptions(rand, next, 4, Math.max(2, Math.abs(step)), -50).map(String), String(next), geo ? tx('Chak nonb double.', 'Chaque nombre double.') : tx(`Chak fwa ou ajoute ${step}.`, `À chaque fois, on ajoute ${step}.`));
+    return q(this, age, rand, tx(`Ki nonb ki vini apre? ${seq.join(', ')}, …`, `Quel nombre vient ensuite ? ${seq.join(', ')}, …`), numericOptions(rand, next, 4, Math.max(2, Math.abs(step)), -50).map(String), String(next), geo ? tx('Chak nonb double.', 'Chaque nombre double.') : step < 0 ? tx(`Chak fwa ou retire ${-step}.`, `À chaque fois, on enlève ${-step}.`) : tx(`Chak fwa ou ajoute ${step}.`, `À chaque fois, on ajoute ${step}.`));
   },
 };
 

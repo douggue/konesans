@@ -27,7 +27,7 @@ export default function Course() {
         </View>
         <View style={{ flexDirection: 'row', backgroundColor: colors.card, borderWidth: 2, borderColor: colors.line, borderRadius: 14, padding: 3, gap: 2 }}>
           {(['en', 'es'] as CourseId[]).map((id) => (
-            <PressScale debounceMs={0} role="button" key={id} onPress={() => { tap(); setLang(id); }} style={{ minWidth: 48, minHeight: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: lang === id ? accent : 'transparent' }}>
+            <PressScale debounceMs={0} role="button" key={id} onPress={() => { tap(); setLang(id); }} style={{ minWidth: 48, minHeight: 44, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: lang === id ? accent : 'transparent' }}>
               <T v="h3" color={lang === id ? '#fff' : colors.muted}>{id.toUpperCase()}</T>
             </PressScale>
           ))}
@@ -45,7 +45,7 @@ export default function Course() {
         </Row>
         <Row>
           <Progress style={{ flex: 1 }} value={sum.lessonsTotal ? sum.lessonsDone / sum.lessonsTotal : 0} color="#fff" track="rgba(255,255,255,0.3)" />
-          <T v="small" color="#E6ECFB">{sum.lessonsDone} / {sum.lessonsTotal} {t('lesson')} · {sum.wordsLearned} {t('words')}</T>
+          <T v="small" color="#E6ECFB">{sum.lessonsDone} / {sum.lessonsTotal} {t(sum.lessonsTotal === 1 ? 'lesson' : 'lessons')} · {sum.wordsLearned} {t('words')}</T>
         </Row>
       </View></FadeIn>
 
