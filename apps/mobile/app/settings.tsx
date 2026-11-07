@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Switch, ActivityIndicator, TextInput, ScrollView, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import type { Lang, AgeBand } from '@konesans/core';
-import { Screen, T, Card, Row, TopBar, Button, Sheet, PressScale, Pill } from '@/ui';
+import { Screen, T, Card, Row, TopBar, Button, Sheet, PressScale, Pill, IconTile } from '@/ui';
 import { colors, fonts } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT } from '@/lib/i18n';
@@ -117,6 +117,7 @@ export default function Settings() {
         ))}
       </Row>
       <Card><T v="bold">{t('sample_question')}</T></Card>
+      {serverConfigured() && <Card onPress={() => router.push('/account' as never)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60 }}><IconTile name="pwoteje" bg={colors.greenSoft} size={44} /><View style={{ flex: 1 }}><T v="bold">{t('ac_row')}</T><T v="small" color={colors.muted}>{t('ac_row_sub')}</T></View><T v="h2" color={colors.blue}>›</T></Card>}
       <T v="label" color={colors.muted}>{t('parent').toUpperCase()}</T>
       <Card style={{ gap: 6 }}>
         <T v="small" color={colors.muted}>{t('parent_only')}</T>

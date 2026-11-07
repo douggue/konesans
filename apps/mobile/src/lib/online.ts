@@ -117,6 +117,20 @@ async function rpc<T>(id: string, body: object): Promise<T> {
   return http<T>(`/v2/rpc/${id}?unwrap`, { auth: 'Bearer ' + s.token, body });
 }
 
+// ---------- accounts (cloud save + recovery code: src/lib/cloud.ts, server/nakama/src/account.ts) ----------
+/** Any RPC on this phone's account (throws when offline / refused; see `onlineFailure`). */
+export async function callRpc<T>(id: string, body: object): Promise<T> { return rpc<T>(id, body); }
+/** HTTP status + server message of a failed online call; null when the phone is just offline. */
+export function onlineFailure(e: unknown): { status: number; message: string } | null {
+  return e instanceof OnlineFailure ? { status: e.status, message: e.message } : null;
+}
+/** A fresh device id (same shape as the first one a phone makes). */
+export function newDeviceId(): string { return 'kns-' + Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join(''); }
+/** From now on log in with this device id (it was linked to the kid's account by the server). */
+export async function switchDevice(id: string) { await AsyncStorage.setItem(DEVICE_KEY, id); session = null; }
+/** The account this phone is logged into (null until the first online call). */
+export const currentUserId = () => session?.userId ?? null;
+
 /** Kid's public identity for duels (their kid-safe username and avatar). */
 export async function setProfile(name: string, avatar: unknown) { await rpc('profile_set', { name, avatar }); }
 

@@ -8,14 +8,14 @@
  *  - a short readable recovery code per account ("MANGO-4821"), issued on the first sync (`account_info`);
  *  - `account_recover`: a new phone types the code → that account gets this phone's new device id linked, so the
  *    phone logs into the kid's account from then on, and gets the save back. 5 wrong codes per hour per phone,
- *    30 per hour per network address.
+ *    30 per hour per network address, 600 per hour for the whole server.
  *
  * Storage:
  *   cloud/save           (user)   CloudSave — owner can read, only the server writes
  *   account/code         (user)   { code, at }
  *   account/tries        (user)   { t: number[] } wrong recovery codes typed on this phone (last hour)
  *   recovery/<CODE>      (system) { userId, at } — the code index (unique: written with version '*')
- *   recovery_ip/<ip>     (system) { t: number[] }
+ *   recovery_ip/<ip>     (system) { t: number[] }  ('_all' = every wrong try, for the server-wide brake)
  * Kid-safe: no personal data. The username in a save must be one of the generated ones (core isValidUsername).
  * Contract: docs/API.md ("Accounts: cloud save + recovery code").
  */
@@ -30,6 +30,8 @@ const C = { SAVE: 'cloud', ACCOUNT: 'account', INDEX: 'recovery', IP: 'recovery_
 const HOUR = 3600 * 1000;
 const TRIES_PER_DEVICE = 5;
 const TRIES_PER_IP = 30;
+/** All phones together: a brake on mass guessing with throw-away device accounts (codes are short on purpose). */
+const TRIES_GLOBAL = 600;
 /** Stored save cap (a little over one upload: merged data can be slightly bigger). */
 const STORED_MAX_BYTES = 900 * 1024;
 const PROFILE_KEYS = ['id', 'username', 'age', 'lang', 'avatarColor', 'avatar', 'createdAt', 'grade'];
@@ -82,8 +84,8 @@ function recentTries(nk: nkruntime.Nakama, collection: string, key: string, user
   const t: number[] = o && o.value && Array.isArray(o.value.t) ? o.value.t : [];
   return t.filter((x) => typeof x === 'number' && x > since);
 }
-function noteTry(nk: nkruntime.Nakama, collection: string, key: string, userId: string) {
-  const t = recentTries(nk, collection, key, userId).concat([Date.now()]).slice(-50);
+function noteTry(nk: nkruntime.Nakama, collection: string, key: string, userId: string, keep = 50) {
+  const t = recentTries(nk, collection, key, userId).concat([Date.now()]).slice(-keep);
   nk.storageWrite([{ collection, key, userId, value: { t }, permissionRead: 0, permissionWrite: 0 }]);
 }
 const ipKey = (ctx: nkruntime.Context) => String(ctx.clientIp || 'unknown').replace(/[^0-9A-Za-z.:]/g, '').slice(0, 64) || 'unknown';
@@ -126,6 +128,7 @@ export const savePut: nkruntime.RpcFunction = (ctx, logger, nk, payload) => {
   const b = body(payload);
   const profileId = typeof b.profileId === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(b.profileId) ? b.profileId : fail('profileId required', CODES.INVALID);
   const parts = cleanParts(b.parts);
+  const sent: Record<string, any> = isObj(b.parts) ? b.parts : {};
   const have = isObj(b.have) ? b.have : {};
   const code = ensureCode(nk, logger, ctx.userId);
   const stored = readSave(nk, ctx.userId);
@@ -140,7 +143,7 @@ export const savePut: nkruntime.RpcFunction = (ctx, logger, nk, payload) => {
     if (mine) {
       const m = mergePart(k, theirs, mine)!;
       if (!theirs || stableJson(m) !== stableJson(theirs)) { base.parts[k] = m; changed = true; }
-      if (stableJson(m.data) !== stableJson(mine.data)) pull[k] = m;
+      if (stableJson(m.data) !== stableJson(sent[k].data)) pull[k] = m; // compare with what the phone sent (before cleaning)
     } else if (theirs && (typeof have[k] !== 'number' || have[k] < theirs.at)) pull[k] = theirs;
   }
   if (changed) {
@@ -170,19 +173,21 @@ export const accountInfo: nkruntime.RpcFunction = (ctx, logger, nk) => {
  *  - preview: → { preview: { username, avatar, xp, cards, badges, lessons, updatedAt } | null, hasSave } (nothing changes)
  *  - else (deviceId = a fresh 'kns-' + 32 hex id made by the phone): links that device id to the code's account, so the
  *    phone authenticates as that account from now on → { ok, save, code }.
- * Errors: 404 bad_code (counts as a wrong try), 429 rate_limited (5 wrong per hour per phone, 30 per network address),
+ * Errors: 404 bad_code (counts as a wrong try), 429 rate_limited (5 wrong per hour per phone, 30 per network address, 600 in all),
  *         409 same_account (the code is this phone's own), 400 bad deviceId.
  */
 export const accountRecover: nkruntime.RpcFunction = (ctx, logger, nk, payload) => {
   if (!ctx.userId) fail('login required', CODES.UNAUTH);
   const b = body(payload);
   const ip = ipKey(ctx);
-  if (recentTries(nk, C.ACCOUNT, 'tries', ctx.userId).length >= TRIES_PER_DEVICE || recentTries(nk, C.IP, ip, SYSTEM_USER).length >= TRIES_PER_IP) fail('rate_limited', CODES.LIMIT);
+  if (recentTries(nk, C.ACCOUNT, 'tries', ctx.userId).length >= TRIES_PER_DEVICE || recentTries(nk, C.IP, ip, SYSTEM_USER).length >= TRIES_PER_IP
+    || recentTries(nk, C.IP, '_all', SYSTEM_USER).length >= TRIES_GLOBAL) fail('rate_limited', CODES.LIMIT);
   const code = normalizeRecoveryCode(String(b.code == null ? '' : b.code));
   const owner = code ? codeOwner(nk, code) : null;
   if (!code || !owner) {
     noteTry(nk, C.ACCOUNT, 'tries', ctx.userId);
     noteTry(nk, C.IP, ip, SYSTEM_USER);
+    noteTry(nk, C.IP, '_all', SYSTEM_USER, TRIES_GLOBAL + 10);
     logger.info('wrong recovery code from %s', ctx.userId);
     return fail('bad_code', CODES.NOT_FOUND);
   }

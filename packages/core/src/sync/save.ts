@@ -17,8 +17,11 @@ export interface SavePartRec { at: number; data: Record<string, any> }
 export type SaveParts = Partial<Record<SavePart, SavePartRec>>;
 export interface CloudSave { v: 1; profileId: string; updatedAt: number; parts: SaveParts }
 
-/** Hard cap for one upload (the server refuses more; Nakama's request cap is 1 MB). */
-export const SAVE_MAX_BYTES = 512 * 1024;
+/**
+ * Hard cap for one upload; the server refuses more. Kept under Nakama's default request cap (256 KB; production
+ * allows 1 MB). A real save is ~10–60 KB.
+ */
+export const SAVE_MAX_BYTES = 240 * 1024;
 /** Cap for the spaced-repetition list kept in the cloud (most recently due first). */
 export const SAVE_MAX_REVIEW = 400;
 

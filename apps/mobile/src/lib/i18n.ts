@@ -7,6 +7,7 @@ import { VWAYAJ_STRINGS } from './strings/vwayaj';
 import { REACTIONS_STRINGS } from './strings/reactions';
 import { RANKS_STRINGS } from './strings/ranks';
 import { REQ_STRINGS } from './strings/requests';
+import { ACCOUNT_STRINGS } from './strings/account';
 
 const S = {
   ...VWAYAJ_STRINGS,
@@ -15,6 +16,7 @@ const S = {
   ...REACTIONS_STRINGS,
   ...RANKS_STRINGS,
   ...REQ_STRINGS,
+  ...ACCOUNT_STRINGS,
   // nav
   home: ['Lakay', 'Accueil'], challenge: ['Defi', 'Défis'], course: ['Kou', 'Cours'], coding: ['Enfòmatik', 'Coder'], me: ['Mwen', 'Moi'],
   // onboarding

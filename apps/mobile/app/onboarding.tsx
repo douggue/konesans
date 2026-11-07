@@ -8,6 +8,7 @@ import { colors } from '@/lib/theme';
 import { useStore, useAvatar } from '@/lib/store';
 import { useT } from '@/lib/i18n';
 import { tap } from '@/lib/audio';
+import { serverConfigured } from '@/lib/remote';
 
 const AGES: { id: AgeBand; label: 'age_6_8' | 'age_9_11' | 'age_12_14'; grade: 'grade_6_8' | 'grade_9_11' | 'grade_12_14'; color: string }[] = [
   { id: '6-8', label: 'age_6_8', grade: 'grade_6_8', color: colors.greenSoft },
@@ -81,7 +82,7 @@ export default function Onboarding() {
       <View style={{ marginTop: 'auto', gap: 10 }}>
         <Button title={step < LAST ? t('next') : t('start')} color={step < LAST ? colors.blue : colors.green} onPress={() => { if (step < LAST) { if (step === 2 && !profile.avatar) setAvatar(avatar); setStep(step + 1); } else { finishOnboarding(); router.replace('/home'); } }} />
         {step === 0 ? (
-          <Button variant="ghost" title={t('try_first')} onPress={() => router.push('/quiz/mix?count=3&trial=1')} />
+          <><Button variant="ghost" title={t('try_first')} onPress={() => router.push('/quiz/mix?count=3&trial=1')} />{serverConfigured() && <Button small variant="ghost" title={t('ac_have_code')} onPress={() => router.push('/recover' as never)} />}</>
         ) : (
           <Button variant="ghost" title={t('back')} onPress={() => setStep(step - 1)} />
         )}

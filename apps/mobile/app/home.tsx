@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { chestReady, nextLesson, courseById, type QuestState } from '@konesans/core';
 import { RankUpListener } from '@/ui/RankUp';
+import { AccountHomeCard } from '@/ui/AccountCard';
 import { Screen, T, Card, Row, BottomNav, Pill, CountPill, Progress, Mascot, IconTile, Button, Motif, Avatar, PressScale, FadeIn, Pop, Pulse, Icon } from '@/ui';
 import { colors, fonts } from '@/lib/theme';
 import { categoryInfo } from '@/lib/content';
@@ -49,6 +50,7 @@ export default function Home() {
         </View></FadeIn>
       ) : null}
 
+      <AccountHomeCard />
       {/* Daily challenge */}
       <FadeIn delay={80}><View style={{ backgroundColor: colors.blue, borderRadius: 24, padding: 20, paddingRight: 118, gap: 6, borderBottomWidth: 5, borderBottomColor: '#14307D', overflow: 'hidden' }}>
         <Motif kind="drapo" opacity={0.2} height={170} />

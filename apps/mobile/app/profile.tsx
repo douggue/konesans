@@ -32,6 +32,7 @@ export default function Profile() {
     { icon: 'avata', bg: '#E7F5FF', label: t('pf_av'), sub: fresh ? t('pf_av_new', { n: fresh }) : t('pf_av_sub'), href: '/avatar', dot: fresh > 0 },
     { icon: 'twofe', bg: colors.yellowSoft, label: t('trophies'), sub: t('pf_trophies_sub', { n: badges, m: BADGES.length }), href: '/trophies' },
     { icon: 'ewo', bg: colors.orangeSoft, label: t('pf_cards'), sub: cards ? t('pf_cards_sub', { n: cards }) : t('pf_cards_sub0'), href: '/cards' },
+    { icon: 'pwoteje', bg: colors.greenSoft, label: t('ac_row'), sub: t('ac_row_sub'), href: '/account' },
     { icon: 'paramet', bg: colors.blueSoft, label: t('settings'), sub: t('pf_settings_sub'), href: '/settings' },
   ];
 
