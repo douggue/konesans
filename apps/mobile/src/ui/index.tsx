@@ -84,7 +84,7 @@ export const DEEP_GREEN = '#1E7A33';
 const fillFor = (c: string) => (c === colors.green ? DEEP_GREEN : c);
 
 // ─── Buttons ─────────────────────────────────────────────────────────────────
-export function Button({ title, onPress, variant = 'primary', color = colors.blue, icon, disabled, style, small }: { title: string; onPress: () => void; variant?: 'primary' | 'secondary' | 'ghost'; color?: string; icon?: IconName; disabled?: boolean; style?: StyleProp<ViewStyle>; small?: boolean }) {
+export function Button({ title, onPress, variant = 'primary', color = colors.blue, icon, disabled, style, small, lines = 1 }: { title: string; onPress: () => void; variant?: 'primary' | 'secondary' | 'ghost'; color?: string; icon?: IconName; disabled?: boolean; style?: StyleProp<ViewStyle>; small?: boolean; /** let a long label wrap (narrow places) instead of being cut */ lines?: number }) {
   const primary = variant === 'primary';
   const bg = primary ? fillFor(color) : variant === 'secondary' ? colors.card : 'transparent';
   const fg = primary ? readableOn(bg) : color;
@@ -98,7 +98,7 @@ export function Button({ title, onPress, variant = 'primary', color = colors.blu
       style,
     ]}>
       {icon && <Icon name={icon} size={22} />}
-      <T v="h3" color={fg} numberOfLines={1} adjustsFontSizeToFit style={{ flexShrink: 1, textAlign: 'center' }}>{title}</T>
+      <T v="h3" color={fg} numberOfLines={lines} adjustsFontSizeToFit={lines === 1} style={{ flexShrink: 1, textAlign: 'center' }}>{title}</T>
     </PressScale>
   );
 }

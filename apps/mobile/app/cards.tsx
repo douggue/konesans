@@ -103,14 +103,14 @@ function LockedHint() {
 function EmptyFeature() {
   const t = useT();
   return (
-    <View style={{ height: FEATURE_H, borderRadius: 24, borderWidth: 3, borderBottomWidth: 7, borderColor: colors.lineStrong, backgroundColor: colors.card, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-      <View style={{ width: 110, alignSelf: 'stretch', borderRadius: 16, backgroundColor: '#DCE1EE', alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ minHeight: FEATURE_H, borderRadius: 24, borderWidth: 3, borderBottomWidth: 7, borderColor: colors.lineStrong, backgroundColor: colors.card, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <View style={{ width: 88, alignSelf: 'stretch', borderRadius: 16, backgroundColor: '#DCE1EE', alignItems: 'center', justifyContent: 'center' }}>
         <T style={{ fontFamily: fonts.display, fontSize: 56, lineHeight: 62 }} color="#8A93A8">?</T>
       </View>
       <View style={{ flex: 1, gap: 8 }}>
         <T v="h2">{t('kt_empty_title')}</T>
         <T v="body" color={colors.muted}>{t('ec_cards_empty_sub')}</T>
-        <Button small title={t('ec_cards_go')} onPress={() => router.push('/quests' as never)} />
+        <Button small lines={2} style={{ paddingHorizontal: 12, paddingVertical: 6 }} title={t('ec_cards_go')} onPress={() => router.push('/quests' as never)} />
       </View>
     </View>
   );

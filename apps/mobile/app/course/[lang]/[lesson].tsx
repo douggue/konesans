@@ -2,18 +2,18 @@ import { RankUpListener } from '@/ui/RankUp';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { startLesson, answerLesson, finishLesson, currentExercise, lessonProgressPct, UNITS, type CourseId, type Exercise, type LessonSession, type Response, type Grade } from '@konesans/core';
+import { LESSON_PASS_STARS, startLesson, answerLesson, finishLesson, currentExercise, lessonProgressPct, UNITS, type CourseId, type Exercise, type LessonSession, type Response, type Grade } from '@konesans/core';
 import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Icon, Stars, OptionButton, Pill, PressScale, SlideSwap, FadeIn, Drop, Pop, Confetti, Shake, Bounce } from '@/ui';
 import { Illustration, hasIllustration } from '@/ui/Illustration';
 import { colors, radius } from '@/lib/theme';
-import { useStore } from '@/lib/store';
+import { useStore, LESSON_RESUME_KEY } from '@/lib/store';
 import { useT, useL } from '@/lib/i18n';
 import { speak, tap, sfx, music, answerSfx } from '@/lib/audio';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuitGuard } from '@/ui/activity';
 
 /** The lesson in progress is saved after every answer, so back / the OS closing the app never loses it. */
-const RESUME_KEY = 'konesans-lesson-resume';
+const RESUME_KEY = LESSON_RESUME_KEY; // also cleared by "Rekòmanse a zewo" (store.resetAll)
 type Snap = Omit<LessonSession, 'requeued'> & { requeued: string[] };
 const saveSnap = (s: LessonSession) => AsyncStorage.setItem(RESUME_KEY, JSON.stringify({ ...s, requeued: [...s.requeued] } satisfies Snap)).catch(() => {});
 const clearSnap = () => AsyncStorage.removeItem(RESUME_KEY).catch(() => {});
@@ -75,7 +75,10 @@ export default function Lesson() {
 
   if (done && !grade) {
     const r = finishLesson(s);
-    return <LessonResult r={r} onDone={() => router.replace('/course')} />;
+    return <LessonResult r={r} onDone={() => router.replace('/course')} onRetry={() => {
+      clearSnap(); results.current = []; recorded.current = false; setResumed(false);
+      setS(startLesson(lang!, lesson!, profile.age)); setGrade(null); setResp(null); setDone(false);
+    }} />;
   }
   if (!ex) return null;
 
@@ -238,21 +241,28 @@ function BuildSentence({ ex, resp, setResp, reveal }: { ex: Extract<Exercise, { 
   );
 }
 
-function LessonResult({ r, onDone }: { r: ReturnType<typeof finishLesson>; onDone: () => void }) {
+function LessonResult({ r, onDone, onRetry }: { r: ReturnType<typeof finishLesson>; onDone: () => void; onRetry: () => void }) {
   const t = useT();
-  useEffect(() => { sfx('level'); const k = setTimeout(() => sfx('coin'), 1200); return () => clearTimeout(k); }, []);
+  // 1 star: not passed — the next lesson stays locked until this one gets 2 stars (LESSON_PASS_STARS)
+  const passed = r.stars >= LESSON_PASS_STARS;
+  useEffect(() => { sfx(r.stars >= LESSON_PASS_STARS ? 'level' : 'draw'); const k = setTimeout(() => sfx('coin'), 1200); return () => clearTimeout(k); }, []);
   return (
     <Screen scroll={false}>
       <RankUpListener delayMs={2200} />
       {r.stars >= 2 && <Confetti />}
       <View style={{ alignItems: 'center', gap: 10, marginTop: 'auto' }}>
         <Drop><Mascot size={150} mood={r.perfect ? 'cheer' : 'happy'} /></Drop>
-        <FadeIn delay={450}><T v="display" center>{t('lesson_done')}</T></FadeIn>
+        <FadeIn delay={450}><T v="display" center>{t(passed ? 'lesson_done' : 'lesson_retry_title')}</T></FadeIn>
         <Stars n={r.stars} size={44} pop />
         <FadeIn delay={1000}><T v="h2" center color={colors.blue}>{r.perfect ? t('perfect') : `${r.firstTryCorrect} / ${r.total} ${t('first_try')}`}</T></FadeIn>
+        {!passed && <FadeIn delay={1100}><T v="body" center color={colors.muted}>{t('lesson_retry_sub')}</T></FadeIn>}
         <Pop delay={1200}><Pill text={t('xp_coins', { xp: r.xp, c: r.coins })} color="#5C4600" bg={colors.yellowSoft} icon="pwen" /></Pop>
       </View>
-      <View style={{ marginTop: 'auto' }}><Button title={t('continue')} color={colors.green} onPress={onDone} /></View>
+      <View style={{ marginTop: 'auto', gap: 10 }}>
+        {passed
+          ? <Button title={t('continue')} color={colors.green} onPress={onDone} />
+          : <><Button title={t('lesson_retry_btn')} color={colors.orange} icon="chanje" onPress={onRetry} /><Button variant="secondary" title={t('continue')} onPress={onDone} /></>}
+      </View>
     </Screen>
   );
 }

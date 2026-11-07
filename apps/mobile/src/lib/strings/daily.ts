@@ -17,7 +17,7 @@ export const DAILY_STRINGS = {
   dl_place: ['Plas ou', 'Ta place'],
   dl_you: ['ou', 'toi'],
   dl_first: ['Ou se premye moun ki jwe jodi a!', 'Tu es le premier à jouer aujourd’hui !'],
-  dl_no_rank_parent: ['Pou w parèt nan klasman an, yon paran dwe limen «{x}» nan Paramèt.', 'Pour apparaître dans le classement, un parent doit activer « {x} » dans Réglages.'],
+  dl_no_rank_parent: ['Pou w parèt nan klasman an, yon paran dwe limen «{x}» nan Paramèt.', 'Pour apparaître dans le classement, un parent doit activer « {x} » dans Paramètres.'],
   dl_no_rank_offline: ['Pa gen entènèt: klasman an bezwen entènèt. Nòt ou rete sou telefòn sa a.', 'Pas d’internet : le classement a besoin d’internet. Ton score reste sur ce téléphone.'],
   dl_loading: ['N ap prepare kesyon jodi a…', 'On prépare les questions du jour…'],
   dl_empty: ['Pa gen kesyon pou laj ou jodi a.', 'Pas de questions pour ton âge aujourd’hui.'],

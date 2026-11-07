@@ -40,4 +40,9 @@ export const FIX_UX_STRINGS = {
   robo_ready: ['Robo pare pou jwe avè w!', 'Robo est prêt à jouer avec toi\u00a0!'],
   // lesson picture labels
   lesson_quit_label: ['Kite leson an', 'Quitter la leçon'],
+  // lesson mastery: 2 stars (60 %) open the next lesson
+  lesson_retry_title: ['Eseye ankò!', 'Essaie encore\u00a0!'],
+  lesson_retry_sub: ['Ou prèske la! Fè 2 zetwal pou w debloke pwochen leson an. Chak fwa w eseye, ou aprann plis.', 'Tu y es presque\u00a0! Obtiens 2 étoiles pour débloquer la leçon suivante. Chaque essai t’apprend quelque chose.'],
+  lesson_retry_btn: ['Refè leson an', 'Refaire la leçon'],
+  lesson_retry_path: ['Eseye ankò pou 2 zetwal', 'Réessaie pour 2 étoiles'],
 } as const;

@@ -4,7 +4,7 @@ export const ECON_STRINGS = {
   ec_cards_sub: ['Genyen kat nan kòf jodi a, chak fwa w monte ran, ak misyon semèn nan', 'Gagne des cartes dans le coffre du jour, à chaque nouveau rang et avec la mission de la semaine'],
   ec_cards_locked_hint: ['Louvri kòf jodi a oswa monte ran pou w genyen yon lòt kat!', 'Ouvre le coffre du jour ou monte de rang pour gagner une autre carte !'],
   ec_cards_empty_sub: ['Fini 3 misyon jodi a epi louvri kòf la: gen yon kat ewo ladan l!', 'Termine les 3 missions du jour et ouvre le coffre : il contient une carte héros !'],
-  ec_cards_go: ['Wè misyon jodi a', 'Voir les missions du jour'],
+  ec_cards_go: ['Wè misyon jodi a', 'Voir les missions'],
   ec_chest_hint: ['Fini 3 misyon yo: kòf la gen XP, kòb ak yon kat ewo.', 'Termine les 3 missions : le coffre contient des XP, des pièces et une carte héros.'],
   ec_chest_got: ['Ou jwenn {xp} XP, {c} kòb ak yon kat!', 'Tu gagnes {xp} XP, {c} pièces et une carte !'],
   ec_rank_card: ['Kado pou nouvo ran ou!', 'Un cadeau pour ton nouveau rang !'],

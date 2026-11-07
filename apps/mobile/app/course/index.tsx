@@ -16,7 +16,7 @@ export default function Course() {
   const sum = courseSummary(lang, courses[lang]);
   const accent = lang === 'en' ? colors.blue : colors.teal;
   const course = courseById(lang);
-  const current = path.find((u) => u.lessons.some((x) => x.state === 'open')) ?? path[path.length - 1];
+  const current = path.find((u) => u.lessons.some((x) => x.state === 'open')) ?? path.find((u) => u.lessons.some((x) => x.state === 'retry')) ?? path[path.length - 1];
 
   return (
     <Screen bottom={<BottomNav />}>
@@ -59,15 +59,16 @@ export default function Course() {
           {u.lessons.map((ls, i) => {
             const locked = ls.state === 'locked';
             const done = ls.state === 'done';
+            const retry = ls.state === 'retry'; // played with 1 star: play again for 2 to open the next one
             return (
               <Card key={ls.id} onPress={locked ? undefined : () => router.push(`/course/${lang}/${ls.id}`)}
-                edge={ls.state === 'open' ? accent : colors.line} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, opacity: locked ? 0.55 : 1, marginLeft: (i % 3) * 18 }}>
-                <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: done ? colors.green : ls.state === 'open' ? accent : colors.line, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: done ? '#1E7A33' : ls.state === 'open' ? 'rgba(0,0,0,0.2)' : colors.lineStrong }}>
-                  {done ? <T v="h2" color="#fff">✓</T> : locked ? <Icon name="femen_kle" size={26} /> : <Pulse amount={0.15}><Icon name="zetwal_gri" size={28} /></Pulse>}
+                edge={ls.state === 'open' ? accent : retry ? colors.orange : colors.line} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, opacity: locked ? 0.55 : 1, marginLeft: (i % 3) * 18 }}>
+                <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: done ? colors.green : retry ? colors.orangeSoft : ls.state === 'open' ? accent : colors.line, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: done ? '#1E7A33' : retry ? colors.orange : ls.state === 'open' ? 'rgba(0,0,0,0.2)' : colors.lineStrong }}>
+                  {done ? <T v="h2" color="#fff">✓</T> : retry ? <Icon name="chanje" size={28} /> : locked ? <Icon name="femen_kle" size={26} /> : <Pulse amount={0.15}><Icon name="zetwal_gri" size={28} /></Pulse>}
                 </View>
                 <View style={{ flex: 1 }}>
                   <T v="h3">{l({ ht: ls.title, fr: ls.titleFr })}</T>
-                  {done ? <Stars n={ls.stars} size={14} /> : <T v="small" color={ls.state === 'open' ? accent : colors.muted}>{locked ? t('locked') : t('start_lesson')}</T>}
+                  {done ? <Stars n={ls.stars} size={14} /> : retry ? <Row gap={6}><Stars n={ls.stars} size={14} /><T v="small" color="#A65A00" style={{ flexShrink: 1 }}>{t('lesson_retry_path')}</T></Row> : <T v="small" color={ls.state === 'open' ? accent : colors.muted}>{locked ? t('locked') : t('start_lesson')}</T>}
                 </View>
               </Card>
             );

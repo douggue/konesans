@@ -15,6 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BANK, SAMPLE_QUESTIONS, pickDaily, scoreDaily, haitiDay, clampDailyCount, type AgeBand, type Question, type DailyAnswer } from '@konesans/core';
 import { callRpc, onlineFailure, setProfile } from './online';
 import { useRemote, serverConfigured } from './remote';
+import { onResetAll } from './store';
 
 export interface DailyRow { rank: number; name: string; avatar?: unknown; correct: number; total: number; score: number; me: boolean }
 export interface DailyResult {
@@ -40,6 +41,9 @@ interface DailyState { days: Record<string, DailyDay> }
 export const useDaily = create<DailyState>()(
   persist((): DailyState => ({ days: {} }), { name: 'konesans-daily', version: 1, storage: createJSONStorage(() => AsyncStorage) }),
 );
+
+// "Rekòmanse a zewo": a new kid gets today's one scored try (and no old result on Lakay)
+onResetAll('daily', () => useDaily.setState({ days: {} }));
 
 const keyOf = (day: string, age: AgeBand) => `${day}_${age}`;
 export const todayHaiti = () => haitiDay(Date.now());

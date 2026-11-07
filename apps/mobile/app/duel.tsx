@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
-import { createDuel, reduce, planBotAnswer, planBotReaction, adaptBot, BOT_PROFILES, BOT_NAMES, rng, type DuelState, type ReactionId, type AvatarConfig, type Question } from '@konesans/core';
+import { createDuel, questionTimeMs, reduce, planBotAnswer, planBotReaction, adaptBot, BOT_PROFILES, BOT_NAMES, rng, type DuelState, type ReactionId, type AvatarConfig, type Question } from '@konesans/core';
 import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Pill, Avatar, avatarFromSeed, Bounce, Drop, FadeIn, Pop, Confetti, SlideSwap, useCountUp } from '@/ui';
 import { Matchmaking } from '@/ui/Matchmaking';
 import { QuestionView } from '@/ui/QuestionView';
@@ -38,9 +38,9 @@ export default function Duel() {
 // ─── shared pieces ────────────────────────────────────────────────────────────
 
 interface Side { name: string; avatar: AvatarConfig; score: number; isBot?: boolean }
-/** This duel's answers (true = right), for the "answer correctly" quest. */
-let duelResults: boolean[] = [];
-const duelAnswers = () => ({ correct: duelResults.filter(Boolean).length, total: duelResults.length });
+/** This duel's answers (true = right), for stats and the "answer correctly" quest. Owned by the duel screen (a ref). */
+type Results = React.MutableRefObject<boolean[]>;
+const duelAnswers = (r: boolean[]) => ({ correct: r.filter(Boolean).length, total: r.length });
 interface GameVM {
   index: number; total: number; questionMs: number;
   /** time left in ms, or null while waiting for the first question */
@@ -51,7 +51,7 @@ interface GameVM {
   op: Side & { answered: boolean; chosen?: number; reaction?: string; reactSeq?: number };
 }
 
-function DuelGame({ vm, onPick, onReact, onQuit, onPause, online }: { vm: GameVM; onPick: (i: number) => void; onReact: (r: string) => void; onQuit: () => void; /** local game: stop the clock while the quit sheet is open */ onPause?: (paused: boolean) => void; /** online: the server clock can't stop */ online?: boolean }) {
+function DuelGame({ vm, results, onPick, onReact, onQuit, onPause, online }: { vm: GameVM; /** filled here, read by the parent when the duel is recorded */ results: Results; onPick: (i: number) => void; onReact: (r: string) => void; onQuit: () => void; /** local game: stop the clock while the quit sheet is open */ onPause?: (paused: boolean) => void; /** online: the server clock can't stop */ online?: boolean }) {
   const t = useT();
   const [quitting, setQuitting] = useState(false);
   useEffect(() => { onPause?.(quitting); }, [quitting]);
@@ -59,7 +59,6 @@ function DuelGame({ vm, onPick, onReact, onQuit, onPause, online }: { vm: GameVM
   const { me, op, reveal } = vm;
   const waiting = vm.left === null;
   // ── sound: battle loop, hurry + ticks in the last seconds, pings, answer feedback ──
-  const results = useRef<boolean[]>((duelResults = [])); // also read when the duel is recorded (quests count its answers)
   const lastTick = useRef<number | null>(null);
   useEffect(() => { music('duel_battle'); }, []);
   useEffect(() => { musicIntensity('normal'); lastTick.current = null; }, [vm.index]);
@@ -201,6 +200,7 @@ function OnlineDuel({ onFallback }: { onFallback: (note: StrKey) => void }) {
   const offset = useRef(0);                      // server clock − phone clock
   const started = useRef(false);
   const recorded = useRef(false);
+  const results = useRef<boolean[]>([]);
 
   useEffect(() => {
     let alive = true;
@@ -237,7 +237,7 @@ function OnlineDuel({ onFallback }: { onFallback: (note: StrKey) => void }) {
   useEffect(() => {
     if (v?.phase === 'ended' && !recorded.current && meP && opP) {
       recorded.current = true;
-      recordDuel(v.winnerId === myId, v.winnerId === null, meP.score, duelAnswers());
+      recordDuel(v.winnerId === myId, v.winnerId === null, meP.score, duelAnswers(results.current));
     }
   }, [v?.phase]);
 
@@ -274,7 +274,7 @@ function OnlineDuel({ onFallback }: { onFallback: (note: StrKey) => void }) {
       // newer servers also send how many stickers each player sent, so the same sticker twice shows twice
       reactSeq: opP ? (v as OnlineView & { reactSeq?: Record<string, number> }).reactSeq?.[opP.id] : undefined },
   };
-  return <DuelGame online vm={vm} onPick={(i) => ctl.current?.answer(i)} onReact={(r) => ctl.current?.react(r)} onQuit={() => ctl.current?.leave()} />;
+  return <DuelGame online vm={vm} results={results} onPick={(i) => ctl.current?.answer(i)} onReact={(r) => ctl.current?.react(r)} onQuit={() => ctl.current?.leave()} />;
 }
 
 // ─── local (Robo on the phone) ───────────────────────────────────────────────
@@ -294,7 +294,8 @@ function LocalDuel({ note }: { note: StrKey | null }) {
   }, []);
   const rand = useMemo(() => rng(Date.now() % 1e9), []);
   const [s, setS] = useState<DuelState>(() => {
-    let d = createDuel('local-' + Date.now().toString(36), buildQuestions('mix', profile.age, 5, Date.now() % 1e9, seen, difficulty), Date.now());
+    // 6–8: the same 30 s clock as their quizzes
+    let d = createDuel('local-' + Date.now().toString(36), buildQuestions('mix', profile.age, 5, Date.now() % 1e9, seen, difficulty), Date.now(), { questionMs: questionTimeMs(profile.age) });
     d = reduce(d, { type: 'join', player: { id: ME, username: profile.username, isBot: false } }, Date.now());
     return d;
   });
@@ -302,6 +303,7 @@ function LocalDuel({ note }: { note: StrKey | null }) {
   const [now, setNow] = useState(Date.now());
   const botPlan = useRef<{ index: number; atMs: number; chosen: number } | null>(null);
   const recorded = useRef(false);
+  const results = useRef<boolean[]>([]);
   const botTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   useEffect(() => () => botTimers.current.forEach(clearTimeout), []);
   // Robo reacts now and then (a "good luck" at the start, cheers after the kid's good answers) with the same stickers
@@ -341,7 +343,7 @@ function LocalDuel({ note }: { note: StrKey | null }) {
     if (s.phase === 'ended' && !recorded.current) {
       recorded.current = true;
       const me = s.players.find((p) => p.id === ME)!;
-      recordDuel(s.winnerId === ME, s.winnerId === null, me.score, duelAnswers());
+      recordDuel(s.winnerId === ME, s.winnerId === null, me.score, duelAnswers(results.current));
     }
   }, [s.phase]);
 
@@ -370,7 +372,7 @@ function LocalDuel({ note }: { note: StrKey | null }) {
     me: { ...me, chosen: meP?.answer?.chosen ?? null },
     op: { ...op, answered: !!opP.answer, chosen: opP.answer?.chosen, reaction: s.reactions[bot.id], reactSeq: s.reactSeq?.[bot.id] },
   };
-  return <DuelGame vm={vm} onPause={pause}
+  return <DuelGame vm={vm} results={results} onPause={pause}
     onPick={(i) => setS((d) => reduce(d, { type: 'answer', playerId: ME, chosen: i }, Date.now()))}
     onReact={(r) => setS((d) => reduce(d, { type: 'react', playerId: ME, reaction: r }, Date.now()))}
     onQuit={() => setS((d) => reduce(d, { type: 'leave', playerId: ME }, Date.now()))} />;

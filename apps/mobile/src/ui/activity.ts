@@ -11,9 +11,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { usePreventRemove } from 'expo-router';
-import { QUESTION_TIME_MS, type AgeBand, type SoloSession } from '@konesans/core';
+import { QUESTION_TIME_MS, questionTimeMs, type AgeBand, type SoloSession } from '@konesans/core';
 
-export const questionTimeMs = (age: AgeBand) => (age === '6-8' ? 30_000 : QUESTION_TIME_MS);
+export { questionTimeMs }; // core: the same clock for quizzes and duels (local and online)
 
 export function useQuitGuard(active: boolean, onRequest: () => void) {
   const [leaving, setLeaving] = useState(false);

@@ -64,6 +64,9 @@ export function shuffleOptions(q: Question, rand: () => number): Question {
 // ---------- Scoring ----------
 
 export const QUESTION_TIME_MS = 15_000;
+/** Time per question for an age band: 6–8 get twice as long (the question is read aloud first and they read slowly).
+ *  Used by quizzes, the local Robo duel and the server's online duels (createDuel's questionMs). */
+export const questionTimeMs = (age: AgeBand) => (age === '6-8' ? 2 * QUESTION_TIME_MS : QUESTION_TIME_MS);
 
 export interface ScoreInput { correct: boolean; elapsedMs: number; combo: number; usedHint?: boolean }
 

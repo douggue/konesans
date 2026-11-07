@@ -302,25 +302,40 @@ export function recordLesson(p: CourseProgress, lessonId: string, r: LessonResul
   return { lessons: { ...p.lessons, [lessonId]: rec } };
 }
 
-export type LessonState = 'done' | 'open' | 'locked';
+/** Stars needed to pass a lesson (2 = at least 60 % right the first time). 1 star = "Eseye ankò": the next lesson stays locked. */
+export const LESSON_PASS_STARS = 2;
+export const lessonPassed = (rec: LessonRecord | undefined) => !!rec && rec.stars >= LESSON_PASS_STARS;
+
+/** done = passed · retry = played, not passed yet (playable, next one locked) · open = next to play · locked */
+export type LessonState = 'done' | 'retry' | 'open' | 'locked';
 export interface PathLesson { id: string; title: string; titleFr: string; state: LessonState; stars: 0 | 1 | 2 | 3 }
 export interface PathUnit { id: string; title: string; titleFr: string; emoji: string; lessons: PathLesson[]; done: number; total: number }
 
-/** The lesson path: linear — a lesson opens when the previous one is done; the first is always open. */
+/** The lesson path: linear — a lesson opens when the previous one is passed (≥ 2 stars); the first is always open.
+ *  A lesson passed earlier stays passed (older saves where a 1-star lesson opened the next keep their progress). */
 export function coursePath(lang: CourseId, p: CourseProgress): PathUnit[] {
   let prevDone = true;
   return courseById(lang).units.map(u => {
     const lessons = u.lessons.map(l => {
       const rec = p.lessons[l.id];
-      const state: LessonState = rec ? 'done' : prevDone ? 'open' : 'locked';
-      prevDone = !!rec;
+      const state: LessonState = lessonPassed(rec) ? 'done' : rec && (prevDone || hasLaterPass(lang, p, l.id)) ? 'retry' : prevDone ? 'open' : 'locked';
+      prevDone = lessonPassed(rec);
       return { id: l.id, title: l.title, titleFr: l.titleFr, state, stars: (rec?.stars ?? 0) as 0 | 1 | 2 | 3 };
     });
     return { id: u.id, title: u.title, titleFr: u.titleFr, emoji: u.emoji, lessons, done: lessons.filter(l => l.state === 'done').length, total: lessons.length };
   });
 }
 
-export const nextLesson = (lang: CourseId, p: CourseProgress): PathLesson | undefined => coursePath(lang, p).flatMap(u => u.lessons).find(l => l.state === 'open');
+function hasLaterPass(lang: CourseId, p: CourseProgress, lessonId: string): boolean {
+  const all = courseById(lang).units.flatMap(u => u.lessons);
+  return all.slice(all.findIndex(l => l.id === lessonId) + 1).some(l => lessonPassed(p.lessons[l.id]));
+}
+
+/** The lesson to play next: the first open one, else one to retry for 2 stars. */
+export const nextLesson = (lang: CourseId, p: CourseProgress): PathLesson | undefined => {
+  const all = coursePath(lang, p).flatMap(u => u.lessons);
+  return all.find(l => l.state === 'open') ?? all.find(l => l.state === 'retry');
+};
 
 export function courseSummary(lang: CourseId, p: CourseProgress) {
   const path = coursePath(lang, p);

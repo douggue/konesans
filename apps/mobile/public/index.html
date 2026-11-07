@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="%LANG_ISO_CODE%">
+  <head>
+    <meta charset="utf-8" />
+    <!--
+      Web build only (Android/iOS never read this file). app.json has experiments.baseUrl "." so the export works from
+      any folder, but then the scripts and assets are relative ("./_expo/…"): reloading a nested route such as
+      /coding/1 used to fetch /coding/_expo/… and showed a blank page. This sets <base> to the app's root folder:
+      the path up to the first app route segment (top-level names in app/), or the current folder if there is none.
+      Keep the list in step with app/ when a top-level route is added.
+    -->
+    <script>
+      (function () {
+        var routes = ['account', 'avatar', 'cards', 'categories', 'coding', 'course', 'daily', 'duel', 'home', 'math', 'onboarding', 'peyi', 'profile', 'quests', 'quiz', 'ranks', 'recover', 'settings', 'trophies', 'vwayaj'];
+        var parts = location.pathname.split('/');
+        var i = 1;
+        while (i < parts.length && routes.indexOf(parts[i]) < 0) i++;
+        var root = i < parts.length ? parts.slice(0, i).join('/') + '/' : location.pathname.replace(/[^/]*$/, '');
+        var base = document.createElement('base');
+        base.href = root;
+        document.head.appendChild(base);
+      })();
+    </script>
+    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>%WEB_TITLE%</title>
+    <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
+    <style id="expo-reset">
+      /* These styles make the body full-height */
+      html,
+      body {
+        height: 100%;
+      }
+      /* These styles disable body scrolling if you are using <ScrollView> */
+      body {
+        overflow: hidden;
+      }
+      /* These styles make the root element full-height */
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Use static rendering with Expo Router to support running without JavaScript. -->
+    <noscript> You need to enable JavaScript to run this app. </noscript>
+    <!-- The root element for your Expo app. -->
+    <div id="root"></div>
+  </body>
+</html>

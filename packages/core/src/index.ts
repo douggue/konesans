@@ -6,6 +6,7 @@ export * from './content/shapes.js';
 export * from './content/world.js';
 export * from './quiz/engine.js';
 export * from './quiz/math.js';
+export * from './quiz/media.js';
 export * from './duel/match.js';
 export * from './duel/bot.js';
 export * from './progress/xp.js';

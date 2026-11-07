@@ -162,13 +162,15 @@ export const languages: GenModule = {
 export const bigger: GenModule = {
   id: 'pi-gwo', name: { ht: 'Ki peyi ki pi gwo?', fr: 'Quel pays est le plus grand ?' }, category: 'jewografi', ages: ['9-11', '12-14'],
   generate(age, rand) {
-    const a = pickCountry(age, rand); let b = pickCountry(age, rand);
-    let guard = 0;
-    while ((b.iso === a.iso || Math.max(a.areaKm2, b.areaKm2) / Math.min(a.areaKm2, b.areaKm2) < 1.3) && guard++ < 20) b = pickCountry(age, rand);
+    // both outlines are drawn, so pick countries that have one (micro-states have none)
+    let a = pickCountry(age, rand), guard = 0;
+    while (!hasShape(a.iso) && guard++ < 20) a = pickCountry(age, rand);
+    let b = pickCountry(age, rand); guard = 0;
+    while ((b.iso === a.iso || !hasShape(b.iso) || Math.max(a.areaKm2, b.areaKm2) / Math.min(a.areaKm2, b.areaKm2) < 1.3) && guard++ < 40) b = pickCountry(age, rand);
     if (b.iso === a.iso) return this.generate(age, rand);
     const big = a.areaKm2 > b.areaKm2 ? a : b;
     const km2 = String(big.areaKm2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-    return q(this, age, rand, tx(`Ki peyi ki pi gwo: ${a.name} oswa ${b.name}?`, `Quel pays est le plus grand : ${a.nameFr} ou ${b.nameFr} ?`), [both(a, 'name'), both(b, 'name')], both(big, 'name'), tx(`${big.name}: ${km2} km².`, `${big.nameFr} : ${km2} km².`), { kind: 'shape', ref: `${a.iso},${b.iso}` });
+    return q(this, age, rand, tx(`Ki peyi ki pi gwo: ${a.name} oswa ${b.name}?`, `Quel pays est le plus grand : ${a.nameFr} ou ${b.nameFr} ?`), [both(a, 'name'), both(b, 'name')], both(big, 'name'), tx(`${big.name}: ${km2} km².`, `${big.nameFr} : ${km2} km².`), hasShape(a.iso) && hasShape(b.iso) ? { kind: 'shape', ref: `${a.iso},${b.iso}` } : undefined);
   },
 };
 

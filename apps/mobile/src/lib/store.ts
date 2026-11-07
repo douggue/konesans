@@ -115,8 +115,11 @@ const freshStats = (): Stats => ({ duels: 0, duelWins: 0, lessons: 0, questionsA
  */
 const resetHooks = new Map<string, () => void>();
 export const onResetAll = (name: string, fn: () => void) => { resetHooks.set(name, fn); };
-/** The other persisted kid stores (cloud meta is reset through its hook only: it must keep the account link). */
-const KID_STORE_KEYS: Record<string, string> = { cards: 'konesans-cards', vwayaj: 'konesans-vwayaj', prefs: 'konesans-prefs' };
+/** The lesson in progress (app/course/[lang]/[lesson].tsx), saved after every answer. */
+export const LESSON_RESUME_KEY = 'konesans-lesson-resume';
+/** The other persisted kid stores (cloud meta is reset through its hook only: it must keep the account link).
+ *  A store whose module registered a hook resets itself; for the others the saved copy is removed. */
+const KID_STORE_KEYS: Record<string, string> = { cards: 'konesans-cards', vwayaj: 'konesans-vwayaj', prefs: 'konesans-prefs', daily: 'konesans-daily', lessonResume: LESSON_RESUME_KEY };
 /** Store names that registered a reset (tests / debugging). */
 export const resetHookNames = () => [...resetHooks.keys()];
 
@@ -255,7 +258,8 @@ export const useStore = create<State>()(
       recordDuel: (won, draw, score, answers) => {
         get().played();
         const st = get();
-        set({ stats: { ...st.stats, duels: st.stats.duels + 1, duelWins: st.stats.duelWins + (won ? 1 : 0) } });
+        set({ stats: { ...st.stats, duels: st.stats.duels + 1, duelWins: st.stats.duelWins + (won ? 1 : 0),
+          questionsAnswered: st.stats.questionsAnswered + (answers?.total ?? 0), correct: st.stats.correct + (answers?.correct ?? 0) } });
         get().emit({ type: 'duel_end', won, draw });
         for (let i = 0; i < (answers?.total ?? 0); i++) get().emit({ type: 'answer', correct: i < answers!.correct, category: 'duel' });
         get().award(won ? 40 : draw ? 25 : 15);

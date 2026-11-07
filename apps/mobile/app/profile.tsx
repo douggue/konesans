@@ -31,12 +31,12 @@ export default function Profile() {
   const freezeIn = daysToFreeze(progress);
   const ageKey = profile.age === '6-8' ? 'age_6_8' : profile.age === '9-11' ? 'age_9_11' : 'age_12_14';
 
-  const rows: { icon: IconName; bg: string; label: string; sub: string; href: string; dot?: boolean }[] = [
+  const rows: { icon: IconName; bg: string; label: string; sub: string; href: string; dot?: boolean; /** a long label may take 2 lines */ lines?: number }[] = [
     { icon: 'avata', bg: '#E7F5FF', label: t('pf_av'), sub: fresh ? t('pf_av_new', { n: fresh }) : t('pf_av_sub'), href: '/avatar', dot: fresh > 0 },
     { icon: 'kob', bg: colors.yellowSoft, label: t('ec_shop'), sub: t('ec_shop_spend'), href: '/avatar?tab=shop' },
     { icon: 'twofe', bg: colors.yellowSoft, label: t('trophies'), sub: t('pf_trophies_sub', { n: badges, m: BADGES.length }), href: '/trophies' },
     { icon: 'ewo', bg: colors.orangeSoft, label: t('pf_cards'), sub: cards ? t('pf_cards_sub', { n: cards }) : t('pf_cards_sub0'), href: '/cards' },
-    { icon: 'pwoteje', bg: colors.greenSoft, label: t('ac_row'), sub: t('ac_row_sub'), href: '/account' },
+    { icon: 'pwoteje', bg: colors.greenSoft, label: t('ac_row'), sub: t('ac_row_sub'), href: '/account', lines: 2 },
     { icon: 'paramet', bg: colors.blueSoft, label: t('settings'), sub: t('pf_settings_sub'), href: '/settings' },
   ];
 
@@ -93,8 +93,8 @@ export default function Profile() {
           <FadeIn key={r.href} delay={180 + i * 50}><Card onPress={() => router.push(r.href as never)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, minHeight: 60, borderRadius: 18 }}>
             <IconTile name={r.icon} bg={r.bg} size={44} />
             <View style={{ flex: 1 }}>
-              {/* one line: a short last word ("Avata m", "Twofe m") never wraps alone */}
-              <T v="h3" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{r.label}</T>
+              {/* one line: a short last word ("Avata m", "Twofe m") never wraps alone; the long account label wraps to 2 */}
+              <T v="h3" numberOfLines={r.lines ?? 1} adjustsFontSizeToFit={!r.lines} minimumFontScale={0.75}>{r.label}</T>
               <T v="small" color={r.dot ? colors.red : colors.muted}>{r.sub}</T>
             </View>
             {r.dot && <Pulse><View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.red }} /></Pulse>}

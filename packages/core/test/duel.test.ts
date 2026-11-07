@@ -154,3 +154,26 @@ describe('rating', () => {
     expect(ratingDelta(1000, 1000, 0)).toBe(-12);
   });
 });
+
+describe('duel clock per age band', () => {
+  it('6–8 duels get the same 30 s as 6–8 quizzes; the reveal waits for it and Robo thinks proportionally', async () => {
+    const { questionTimeMs, QUESTION_TIME_MS } = await import('../src/index.js');
+    expect(questionTimeMs('6-8')).toBe(30_000);
+    expect(questionTimeMs('9-11')).toBe(QUESTION_TIME_MS);
+    expect(questionTimeMs('12-14')).toBe(QUESTION_TIME_MS);
+    let s = createDuel('m68', qs(), 0, { questionMs: questionTimeMs('6-8') });
+    s = join(join(s, 'a', 0), 'b', 0);
+    expect(publicView(s, 'a').questionMs).toBe(30_000);  // what (old and new) apps draw the bar from
+    expect(reduce(s, { type: 'tick' }, 20_000).phase).toBe('question'); // 15 s would already be over
+    expect(reduce(s, { type: 'tick' }, 30_000).phase).toBe('reveal');
+    // an answer at 20 s still scores
+    const late = reduce(reduce(reduce(s, { type: 'answer', playerId: 'a', chosen: s.questions[0].answer }, 20_000), { type: 'answer', playerId: 'b', chosen: (s.questions[0].answer + 1) % s.questions[0].options.length }, 21_000), { type: 'tick' }, 21_000);
+    expect(late.players.find((p) => p.id === 'a')!.score).toBeGreaterThan(0);
+    const r = rng(5);
+    for (let i = 0; i < 50; i++) {
+      const plan = planBotAnswer(s, BOT_PROFILES['6-8'], r);
+      expect(plan.atMs).toBeGreaterThanOrEqual(BOT_PROFILES['6-8'].minMs * 2);
+      expect(plan.atMs).toBeLessThanOrEqual(BOT_PROFILES['6-8'].maxMs * 2);
+    }
+  });
+});

@@ -99,7 +99,7 @@ export default function Home() {
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
         {/* the modes the tab bar doesn't reach (Defi / Kou / Enfòmatik are already tabs) */}
         {[
-          { icon: 'defi', bg: colors.redSoft, label: t('duel_bot'), href: '/duel', on: features.duels },
+          { icon: 'batay', bg: colors.redSoft, label: t('duel_bot'), href: '/duel', on: features.duels },
           { icon: 'vwayaj', bg: colors.greenSoft, label: t('vw_title'), href: '/vwayaj', on: true },
           { icon: 'kalkil', bg: colors.orangeSoft, label: t('math_title'), href: '/math', on: features.math },
           { icon: 'drapo', bg: colors.yellowSoft, label: t('peyi_title'), href: '/peyi', on: features.peyi },

@@ -10,7 +10,7 @@
  * Clients never see the answer key during a question (see core `publicView`).
  */
 import {
-  createDuel, reduce, publicView, selectQuestions, SAMPLE_QUESTIONS, planBotAnswer, BOT_PROFILES, BOT_NAMES,
+  createDuel, questionTimeMs, reduce, publicView, selectQuestions, SAMPLE_QUESTIONS, planBotAnswer, BOT_PROFILES, BOT_NAMES,
   rng, ratingDelta, mergeLogs, foldProgress, canMatch, PRESET_REACTIONS,
   type DuelState, type AgeBand, type CategoryId, type SyncEvent,
 } from '@konesans/core';
@@ -35,7 +35,8 @@ const matchInit: nkruntime.MatchInitFunction<MatchState> = (ctx, logger, nk, par
   const category = (params.category as CategoryId | 'mix') ?? 'mix';
   const seed = Math.floor(Math.random() * 2 ** 31);
   const questions = selectQuestions(loadBank(nk), { age, category, count: 10, seed });
-  const duel = createDuel(ctx.matchId, questions, Date.now(), { introMs: INTRO_MS });
+  // 6–8 get the same 30 s per question as in their quizzes (old apps read questionMs from the view, so they follow)
+  const duel = createDuel(ctx.matchId, questions, Date.now(), { introMs: INTRO_MS, questionMs: questionTimeMs(age) });
   const label: MatchLabel = { age, category, open: true, creator: params.creator ? String(params.creator) : undefined };
   return { state: { duel, seed, presences: {} }, tickRate: TICK_RATE, label: JSON.stringify(label) };
 };

@@ -1,5 +1,6 @@
 import type { DuelState, PlayerId, ReactionId } from './match.js';
 import type { AgeBand } from '../types.js';
+import { QUESTION_TIME_MS } from '../quiz/engine.js';
 
 /**
  * Bot opponent used when no human is found within the lobby timeout.
@@ -22,7 +23,9 @@ export const BOT_NAMES = ['Robo Lanbi', 'Robo Kolibri', 'Robo Mango', 'Robo Tanb
  */
 export function planBotAnswer(s: DuelState, profile: BotProfile, rand: () => number): { atMs: number; chosen: number } {
   const q = s.questions[s.index];
-  const atMs = Math.round(profile.minMs + rand() * (profile.maxMs - profile.minMs));
+  // a longer clock (6–8: 30 s) stretches Robo's thinking time the same way, so speed points stay fair
+  const k = s.questionMs / QUESTION_TIME_MS;
+  const atMs = Math.round((profile.minMs + rand() * (profile.maxMs - profile.minMs)) * k);
   if (rand() < profile.accuracy) return { atMs, chosen: q.answer };
   const wrong = q.options.map((_, i) => i).filter((i) => i !== q.answer);
   return { atMs, chosen: wrong[Math.floor(rand() * wrong.length)] };

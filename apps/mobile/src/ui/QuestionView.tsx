@@ -1,7 +1,8 @@
 import React from 'react';
 import { View } from 'react-native';
-import { SHAPES, type Question } from '@konesans/core';
-import { T, Row, OptionButton, Icon, ShapeView, Flag, PressScale, Pop, FadeIn, Avatar } from './index';
+import { parseMedia, type Question } from '@konesans/core';
+import { T, Row, OptionButton, Icon, Flag, PressScale, Pop, FadeIn, Avatar } from './index';
+import { QuestionMedia } from './QuestionMedia';
 import { colors } from '@/lib/theme';
 import { useL, useT } from '@/lib/i18n';
 import { useStore } from '@/lib/store';
@@ -33,13 +34,11 @@ export function QuestionView({ q, chosen, reveal, onPick, otherChosen, otherAvat
   };
   const flagOpts = q.options.map((o) => isoFromFlagEmoji(o.ht));
   const allFlags = flagOpts.every(Boolean);
+  const media = React.useMemo(() => parseMedia(q.media), [q.media]);
   return (
     <View style={{ gap: 12 }}>
-      {q.media?.kind === 'flag' && (
-        <Pop key={q.id} from={0.7} style={{ alignItems: 'center', paddingVertical: 4 }}><Flag iso={q.media.ref} width={232} /></Pop>
-      )}
-      {q.media?.kind === 'shape' && SHAPES[q.media.ref] && (
-        <Pop key={q.id} from={0.7} style={{ alignItems: 'center' }}><ShapeView d={SHAPES[q.media.ref]} /></Pop>
+      {media && (
+        <Pop key={q.id} from={0.7} style={{ alignItems: 'center', paddingVertical: media.type === 'flag' ? 4 : 0 }}><QuestionMedia spec={media} /></Pop>
       )}
       <Row gap={10} center={false}>
         <PressScale accessibilityLabel={t('listen')} scaleTo={0.88} onPress={() => speak(prompt, voiceLang)} style={{ width: 44, height: 44, alignSelf: 'flex-start', borderRadius: 14, backgroundColor: colors.blueLight, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' }}>

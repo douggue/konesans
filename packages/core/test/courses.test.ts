@@ -185,3 +185,28 @@ describe('course path', () => {
     expect(p.lessons.u1l1.stars).toBe(3); expect(p.lessons.u1l1.times).toBe(2);
   });
 });
+
+describe('lesson mastery (2 stars to go on)', () => {
+  it('1 star keeps the next lesson locked ("retry"); 2 stars open it; an older pass is kept', async () => {
+    const { coursePath, recordLesson, emptyCourseProgress, nextLesson, courseSummary, LESSON_PASS_STARS } = await import('../src/index.js');
+    expect(LESSON_PASS_STARS).toBe(2);
+    const res = (stars: 1 | 2 | 3) => ({ total: 10, firstTryCorrect: stars === 1 ? 4 : 7, score: stars === 1 ? 0.4 : 0.7, stars, perfect: false, xp: 10, coins: 5, durationSec: 60 });
+    const flat = (p: ReturnType<typeof emptyCourseProgress>) => coursePath('en', p).flatMap((u) => u.lessons);
+    const first = flat(emptyCourseProgress());
+    expect(first[0].state).toBe('open'); expect(first[1].state).toBe('locked');
+    let p = recordLesson(emptyCourseProgress(), first[0].id, res(1));
+    let l = flat(p);
+    expect(l[0].state).toBe('retry'); expect(l[0].stars).toBe(1); expect(l[1].state).toBe('locked');
+    expect(nextLesson('en', p)?.id).toBe(first[0].id);
+    expect(courseSummary('en', p).lessonsDone).toBe(0);
+    p = recordLesson(p, first[0].id, res(2));
+    l = flat(p);
+    expect(l[0].state).toBe('done'); expect(l[1].state).toBe('open');
+    // an old save: lesson 1 at 1 star, lesson 2 passed back when 1 star was enough → nothing gets locked again
+    let old = recordLesson(emptyCourseProgress(), first[0].id, res(1));
+    old = recordLesson(old, first[1].id, res(3));
+    l = flat(old);
+    expect(l[0].state).toBe('retry'); expect(l[1].state).toBe('done'); expect(l[2].state).toBe('open');
+    expect(nextLesson('en', old)?.id).toBe(first[2].id);
+  });
+});

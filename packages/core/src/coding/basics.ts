@@ -38,11 +38,18 @@ export const basicsGen: GenModule = {
       return q(this, age, rand, tx('Ki modpas ki pi solid?', 'Quel mot de passe est le plus solide ?'), [strong, weak, mid], strong, tx('Yon bon modpas long, li gen lèt, chif ak siy, e li pa yon mo senp.', "Un bon mot de passe est long, avec des lettres, des chiffres et des signes, et ce n'est pas un mot simple."));
     }
     if (kind === 'sort') {
-      const nums = shuffleArr(Array.from({ length: 4 }, () => int(rand, 1, 99)), rand);
-      const sorted = [...nums].sort((a, b) => a - b).join(', ');
-      const wrong1 = [...nums].sort((a, b) => b - a).join(', ');
-      const wrong2 = nums.join(', ');
-      return q(this, age, rand, tx(`Ranje nonb sa yo nan lòd, pi piti an premye: ${nums.join(', ')}`, `Range ces nombres dans l'ordre, du plus petit au plus grand : ${nums.join(', ')}`), [sorted, wrong1, wrong2], sorted, tx('Òdinatè yo «triye» lis tout tan. Ou fèk fè yon tri!', 'Les ordinateurs « trient » des listes tout le temps. Tu viens de faire un tri !'));
+      // 4 different numbers, shown in an order that is neither sorted nor reverse-sorted
+      const pool = new Set<number>();
+      while (pool.size < 4) pool.add(int(rand, 1, 99));
+      const asc = [...pool].sort((a, b) => a - b);
+      let nums = shuffleArr(asc, rand);
+      while (nums.join() === asc.join() || nums.join() === [...asc].reverse().join()) nums = shuffleArr(asc, rand);
+      // distractors: biggest-first, and two "almost sorted" lists (two neighbours swapped) — never just the shown order,
+      // so "don't pick the order you see" is not a trick that works
+      const swapAt = (i: number) => { const b = asc.slice(); [b[i], b[i + 1]] = [b[i + 1], b[i]]; return b.join(', '); };
+      const [s1, s2] = shuffleArr([0, 1, 2], rand);
+      const sorted = asc.join(', ');
+      return q(this, age, rand, tx(`Ranje nonb sa yo nan lòd, pi piti an premye: ${nums.join(', ')}`, `Range ces nombres dans l'ordre, du plus petit au plus grand : ${nums.join(', ')}`), [sorted, [...asc].reverse().join(', '), swapAt(s1), swapAt(s2)], sorted, tx('Òdinatè yo «triye» lis tout tan. Ou fèk fè yon tri!', 'Les ordinateurs « trient » des listes tout le temps. Tu viens de faire un tri !'));
     }
     const x = int(rand, 1, 9), n = int(rand, 2, 4);
     const code = `x = ${x}\nrepete ${n} fwa:\n    x = x + 2\nmontre x`;

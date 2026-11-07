@@ -95,3 +95,29 @@ describe('generated questions (audit)', () => {
     }
   });
 });
+
+describe('question pictures', () => {
+  it('every media a generator, the Peyi quiz or the built-in questions emit has a renderer (parseMedia)', async () => {
+    const { parseMedia, SAMPLE_QUESTIONS, BANK, REGIONS } = await import('../src/index.js');
+    const seen = new Map<string, number>();
+    const check = (where: string, q: Question) => {
+      if (!q.media) return;
+      const spec = parseMedia(q.media);
+      expect(spec, `${where}: ${q.media.kind} ${q.media.ref}`).not.toBeNull();
+      seen.set(spec!.type, (seen.get(spec!.type) ?? 0) + 1);
+    };
+    for (const { mod, q } of all) check(mod, q);
+    for (const mode of ['drapo', 'kapital', 'fom'] as const) for (const level of [1, 2, 3] as const) for (const region of ['mond', ...REGIONS] as const)
+      for (const q of generateCountryQuiz({ mode, level, region }, '9-11', 20, level * 7 + mode.length)) check(`peyi ${mode}`, q);
+    for (const q of [...SAMPLE_QUESTIONS, ...BANK]) check(q.id, q);
+    // the picture questions really are generated (so the renderer is exercised by the audit above)
+    for (const t of ['flag', 'shape', 'shapes', 'fraction', 'clock', 'money', 'polygon']) expect(seen.get(t), t).toBeGreaterThan(0);
+  });
+
+  it('parses fraction and clock pictures', async () => {
+    const { parseMedia } = await import('../src/index.js');
+    expect(parseMedia({ kind: 'image', ref: 'fraction:3/8' })).toEqual({ type: 'fraction', n: 3, d: 8 });
+    expect(parseMedia({ kind: 'image', ref: 'clock:12:45' })).toEqual({ type: 'clock', h: 12, m: 45 });
+    expect(parseMedia({ kind: 'image', ref: 'nope:1' })).toBeNull();
+  });
+});

@@ -80,3 +80,31 @@ describe('Enfòmatik questions', () => {
     }
   });
 });
+
+describe('"Ranje nonb sa yo nan lòd" generator', () => {
+  it('4 different numbers, never shown sorted, 4 distinct options, the shown order is not a built-in distractor', () => {
+    let sortQs = 0, shownIsOption = 0;
+    for (const age of ['9-11', '12-14'] as const) {
+      for (let seed = 1; seed <= 300; seed++) {
+        for (const q of generateSet('enf', age, 10, seed)) {
+          const s = /lòd, pi piti an premye: (.+)$/.exec(q.prompt.ht);
+          if (!s) continue;
+          sortQs++;
+          const shown = s[1].split(', ').map(Number);
+          expect(shown).toHaveLength(4);
+          expect(new Set(shown).size).toBe(4);
+          const asc = [...shown].sort((a, b) => a - b);
+          expect(shown.join()).not.toBe(asc.join());
+          expect(shown.join()).not.toBe([...asc].reverse().join());
+          expect(q.options).toHaveLength(4);
+          expect(new Set(q.options.map((o) => o.ht)).size).toBe(4);
+          expect(q.options[q.answer].ht).toBe(asc.join(', '));
+          if (q.options.some((o) => o.ht === s[1])) shownIsOption++;
+        }
+      }
+    }
+    expect(sortQs).toBeGreaterThan(500);
+    // the order on screen may happen to be an "almost sorted" option, but not as a rule
+    expect(shownIsOption / sortQs).toBeLessThan(0.3);
+  });
+});
