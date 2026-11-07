@@ -5,6 +5,7 @@ import { Screen, T, Row, TopBar, Icon, Progress, FadeIn, Pop } from '@/ui';
 import { colors } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT, formatDate, type StrKey } from '@/lib/i18n';
+import { RankUpListener } from '@/ui/RankUp';
 
 const TIER: Record<string, { bg: string; ring: string; ink: string; key: StrKey }> = {
   bronz: { bg: '#FFE8DC', ring: '#E0915F', ink: '#8A3B12', key: 'tier_bronz' },
@@ -14,14 +15,14 @@ const TIER: Record<string, { bg: string; ring: string; ink: string; key: StrKey 
 
 export default function Trophies() {
   const t = useT();
-  const { profile, progress, stats, courses, newBadges, clearNewBadges } = useStore();
+  const { profile, progress, stats, courses, newBadges, clearNewBadges, coding } = useStore();
   const fr = profile.lang === 'fr';
   useEffect(() => { useStore.getState().awardBadges(); return () => clearNewBadges(); }, []);
   const words = courseSummary('en', courses.en).wordsLearned + courseSummary('es', courses.es).wordsLearned;
   /** How far along each trophy is (null when there is nothing to count). */
   const goal: Record<string, [number, number] | null> = {
     premye: [stats.lessons, 1], seri7: [progress.streak.count, 7], seri30: [progress.streak.count, 30], mo100: [words, 100],
-    duel1: [stats.duelWins, 1], duel10: [stats.duelWins, 10], vwayaj3: null, vetye: null, drapo: null,
+    duel1: [stats.duelWins, 1], duel10: [stats.duelWins, 10], kod5: [Object.keys(coding).length, 5], vwayaj3: null, vetye: null, drapo: null,
   };
   const earned = BADGES.filter((b) => progress.badges[b.id]);
   const locked = BADGES.filter((b) => !progress.badges[b.id]);
@@ -63,6 +64,7 @@ export default function Trophies() {
         <T v="h2">{t('to_earn')}</T>
         <Row gap={10} style={{ flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'stretch' }}>{locked.map((b, i) => <Tile key={b.id} id={b.id} i={i + earned.length} on={false} />)}</Row>
       </>}
+      <RankUpListener />
     </Screen>
   );
 }

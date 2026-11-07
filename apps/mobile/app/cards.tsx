@@ -48,7 +48,7 @@ export default function Cards() {
 
   return (
     <Screen scroll={false}>
-      <TopBar title={t('kt_title')} sub={t('kt_sub')} right={
+      <TopBar title={t('kt_title')} sub={t('ec_cards_sub')} right={
         <View accessible accessibilityLabel={t('kt_count_label', { n: prog.owned, total: prog.total })} style={{ backgroundColor: colors.yellowSoft, borderColor: colors.yellowDark, borderWidth: 2, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4 }}>
           <T style={{ fontFamily: fonts.bodyHeavy, fontSize: 14, lineHeight: 19 }} color="#5C4600">{prog.owned} / {prog.total}</T>
         </View>
@@ -97,7 +97,7 @@ function LockedHint() {
   const [show, setShow] = useState(true);
   useEffect(() => { const id = setTimeout(() => setShow(false), 2600); return () => clearTimeout(id); }, []);
   if (!show) return null;
-  return <FadeIn from={6} duration={220}><T v="small" center color={colors.muted}>{t('kt_locked_hint')}</T></FadeIn>;
+  return <FadeIn from={6} duration={220}><T v="small" center color={colors.muted}>{t('ec_cards_locked_hint')}</T></FadeIn>;
 }
 
 function EmptyFeature() {
@@ -109,8 +109,8 @@ function EmptyFeature() {
       </View>
       <View style={{ flex: 1, gap: 8 }}>
         <T v="h2">{t('kt_empty_title')}</T>
-        <T v="body" color={colors.muted}>{t('kt_empty_sub')}</T>
-        <Button small title={t('kt_play')} onPress={() => router.push('/categories')} />
+        <T v="body" color={colors.muted}>{t('ec_cards_empty_sub')}</T>
+        <Button small title={t('ec_cards_go')} onPress={() => router.push('/quests' as never)} />
       </View>
     </View>
   );

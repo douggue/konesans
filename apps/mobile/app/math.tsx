@@ -6,6 +6,7 @@ import { Screen, T, Button, Card, Row, Progress, Mascot, TopBar, Pill, Sheet, Pr
 import { colors, radius } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT, useL } from '@/lib/i18n';
+import { RankUpListener } from '@/ui/RankUp';
 import { tap, sfx, music, answerSfx } from '@/lib/audio';
 import { useQuitGuard } from '@/ui/activity';
 
@@ -41,7 +42,7 @@ export default function MathRapid() {
     if (pausedAt.current) { const d = Date.now() - pausedAt.current; pausedAt.current = 0; setRun((r) => (r ? { ...r, endsAt: r.endsAt + d } : r)); }
   }, [quitting]);
   const leave = useQuitGuard(!!run && !over, () => setQuitting(true));
-  useEffect(() => { if (over && !saved.current && run) { saved.current = true; recordMath(run.score, mathXp(run)); tap('success'); sfx('level'); setTimeout(() => sfx('coin'), 1200); } }, [over]);
+  useEffect(() => { if (over && !saved.current && run) { saved.current = true; recordMath(run.score, run.history.filter((h) => h.ok).length); // XP: core progress/xp.ts (capped) tap('success'); sfx('level'); setTimeout(() => sfx('coin'), 1200); } }, [over]);
   useEffect(() => { music(null); }, []);
   const results = useRef<boolean[]>([]);
 
@@ -97,6 +98,7 @@ export default function MathRapid() {
           <Button title={t('again')} color={colors.orange} onPress={start} />
           <Button variant="secondary" title={t('done')} onPress={() => (router.canGoBack() ? router.back() : router.replace('/home'))} />
         </View>
+        <RankUpListener delayMs={1800} />
       </Screen>
     );
   }

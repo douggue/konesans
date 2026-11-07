@@ -39,6 +39,8 @@ export default function CodingLevel() {
   /** path into the block tree where new blocks go: [] = top level, [i] = inside container i, [i,'else'] = else-branch */
   const [cursor, setCursor] = useState<(number | 'else')[]>([]);
   const [result, setResult] = useState<RunResult | null>(null);
+  /** XP the last solved run paid (core codingXp: a replay pays only the stars it adds) */
+  const [paid, setPaid] = useState(0);
   const [robot, setRobot] = useState<Robot>({ ...lv.maze.start, dir: lv.maze.startDir });
   const [gems, setGems] = useState<Set<string>>(new Set());
   const [showHint, setShowHint] = useState(false);
@@ -62,7 +64,7 @@ export default function CodingLevel() {
     let k = 0; const got = new Set<string>();
     anim.current = setInterval(() => {
       const step = r.steps[k++];
-      if (!step) { if (anim.current) clearInterval(anim.current); setResult(r); if (r.ok) { const stars = r.blocksUsed <= lv.par ? 3 : r.blocksUsed <= lv.par + 2 ? 2 : 1; recordCoding(lv.id, stars, scoreRun(r, lv)); tap('success'); sfx('level'); } else { tap('error'); sfx('wrong'); } return; }
+      if (!step) { if (anim.current) clearInterval(anim.current); setResult(r); if (r.ok) { const stars = r.blocksUsed <= lv.par ? 3 : r.blocksUsed <= lv.par + 2 ? 2 : 1; setPaid(recordCoding(lv.id, stars)); tap('success'); sfx('level'); } else { tap('error'); sfx('wrong'); } return; }
       if (step.kind === 'move' || step.kind === 'turn') setRobot(step.to);
       if (step.kind === 'gem') { got.add(`${step.at.r},${step.at.c}`); setGems(new Set(got)); sfx('coin'); }
     }, 320);
@@ -125,7 +127,7 @@ export default function CodingLevel() {
       {problems.length > 0 && program.length > 0 && <T v="small" color={colors.red}>{t(problems[0].includes('twò long') ? 'prog_too_long' : 'prog_invalid')}</T>}
       {result && msg && (
         <Card edge={result.ok ? colors.green : colors.red} soft={result.ok ? colors.greenSoft : colors.redSoft} style={{ gap: 6 }}>
-          <Row><Mascot size={56} mood={result.ok ? 'cheer' : 'sad'} /><View style={{ flex: 1 }}><T v="h3" color={result.ok ? '#12632F' : '#8F0A22'}>{t(msg)}</T>{result.ok && <Row><Stars n={stars} /><Pill text={`+${scoreRun(result, lv)} XP`} color="#5C4600" bg={colors.yellowSoft} /></Row>}</View></Row>
+          <Row><Mascot size={56} mood={result.ok ? 'cheer' : 'sad'} /><View style={{ flex: 1 }}><T v="h3" color={result.ok ? '#12632F' : '#8F0A22'}>{t(msg)}</T>{result.ok && <Row><Stars n={stars} />{paid > 0 && <Pill text={`+${paid} XP`} color="#5C4600" bg={colors.yellowSoft} />}</Row>}{result.ok && paid === 0 && <T v="small" color={colors.muted}>{t('ec_code_no_xp')}</T>}</View></Row>
           {result.ok && <Button small title={t('continue')} color={colors.green} onPress={() => leave(() => router.back())} />}
         </Card>
       )}
