@@ -7,7 +7,7 @@ import { colors } from '@/theme';
 
 /** Same labels as the web admin's Istorik page. */
 const LABEL: Record<string, string> = {
-  save: 'Sove', delete: 'Efase', import: 'Enpòte', publish: 'Pibliye', categories: 'Kategori', config: 'Paramèt', strings: 'Tèks',
+  save: 'Anrejistre', delete: 'Efase', import: 'Enpòte', publish: 'Pibliye', categories: 'Kategori', config: 'Paramèt', strings: 'Tèks',
   password: 'Modpas chanje', 'resolve-report': 'Rapò regle', 'request:approve': 'Demann aksepte', 'request:refuse': 'Demann refize', 'status:approved': 'Apwouve', 'status:draft': 'Pwoblèm', 'status:review': 'Pou relekti',
 };
 const TONE: Record<string, [string, string]> = {

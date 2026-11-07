@@ -300,7 +300,7 @@ export function ToastHost() {
 export function OfflineBanner() {
   const offline = useSession((s) => s.offline);
   if (!offline) return null;
-  return <View style={{ backgroundColor: colors.red, paddingVertical: 6, paddingHorizontal: 16 }}><T v="small" color="#FFFFFF" center>Pa gen koneksyon ak sèvè a · chanjman yo pa sove</T></View>;
+  return <View style={{ backgroundColor: colors.red, paddingVertical: 6, paddingHorizontal: 16 }}><T v="small" color="#FFFFFF" center>Pa gen koneksyon ak sèvè a · chanjman yo pa anrejistre</T></View>;
 }
 
 // ─── Bottom tabs ─────────────────────────────────────────────────────────────

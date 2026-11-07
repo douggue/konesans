@@ -32,10 +32,10 @@ export const ECON_STRINGS = {
   pf_frame_5: ['Wonn lakansyèl', 'Cadre arc-en-ciel'], pf_frame_6: ['Wonn flè choublak', 'Cadre hibiscus'],
 
   // avatar editor: leaving with changes
-  ec_av_leave_title: ['Sove chanjman yo?', 'Enregistrer les changements ?'],
-  ec_av_leave_sub: ['Ou chanje avata w. Si w pa sove, chanjman yo ap pèdi.', 'Tu as changé ton avatar. Sans enregistrer, les changements seront perdus.'],
-  ec_av_leave_save: ['Wi, sove avata m', 'Oui, enregistrer'],
-  ec_av_leave_discard: ['Non, kite san sove', 'Non, quitter sans enregistrer'],
+  ec_av_leave_title: ['Anrejistre chanjman yo?', 'Enregistrer les changements ?'],
+  ec_av_leave_sub: ['Ou chanje avata w. Si w pa anrejistre, chanjman yo ap pèdi.', 'Tu as changé ton avatar. Sans enregistrer, les changements seront perdus.'],
+  ec_av_leave_save: ['Wi, anrejistre avata m', 'Oui, enregistrer'],
+  ec_av_leave_discard: ['Non, kite san anrejistre', 'Non, quitter sans enregistrer'],
 
   // trophy celebration
   ec_badge_title: ['Nouvo twofe!', 'Nouveau trophée !'],

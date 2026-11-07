@@ -77,7 +77,7 @@ const S = {
   // avatar
   av_title: ['Fè avata ou', 'Crée ton avatar'], av_hint: ['Chwazi po, cheve ak rad ou. Ou ka chanje l nenpòt lè.', "Choisis ta peau, tes cheveux et tes habits. Tu peux le changer quand tu veux."],
   av_skin: ['Po', 'Peau'], av_hair: ['Cheve', 'Cheveux'], av_hair_color: ['Koulè cheve', 'Couleur'], av_clothes: ['Rad', 'Habits'], av_extra: ['Akseswa', 'Accessoires'], av_bg: ['Fon', 'Fond'],
-  av_random: ['Owaza', 'Au hasard'], av_save: ['Sove avata m', 'Enregistrer mon avatar'], av_edit: ['Chanje avata m', 'Modifier mon avatar'],
+  av_random: ['Owaza', 'Au hasard'], av_save: ['Anrejistre avata m', 'Enregistrer mon avatar'], av_edit: ['Chanje avata m', 'Modifier mon avatar'],
   hair_afro: ['Afwo', 'Afro'], hair_braids: ['Très', 'Tresses'], hair_short: ['Kout', 'Courts'], hair_puffs: ['Pouf', 'Couettes'],
   ex_none: ['Anyen', 'Rien'], ex_glasses: ['Linèt', 'Lunettes'], ex_cap: ['Kaskèt', 'Casquette'], ex_mask: ['Mask Kanaval', 'Masque de carnaval'], ex_uniform: ['Inifòm lekòl', "Uniforme d'école"],
   // ages & school years

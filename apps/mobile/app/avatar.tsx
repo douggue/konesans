@@ -11,7 +11,7 @@ const same = (a: object, b: object) => JSON.stringify(a) === JSON.stringify(b);
 
 /**
  * Edit the avatar from Profile (also opens straight on the Boutik: /avatar?tab=shop).
- * Leaving with unsaved changes — ←, Android back or the browser's back — asks "Sove chanjman yo?" first.
+ * Leaving with unsaved changes — ←, Android back or the browser's back — asks "Anrejistre chanjman yo?" first.
  */
 export default function AvatarScreen() {
   const t = useT();

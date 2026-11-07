@@ -41,16 +41,16 @@ export default function Texts() {
     return next;
   });
   const save = async () => {
-    if (nErr) { haptic('warn'); setGroup('changed'); toast(`Korije ${nErr} tèks anvan ou sove`, 'err'); return; }
+    if (nErr) { haptic('warn'); setGroup('changed'); toast(`Korije ${nErr} tèks anvan ou anrejistre`, 'err'); return; }
     setSaving(true);
-    try { const r = await api.saveStrings(draft); load.setData({ ...load.data!, overrides: r.overrides }); setDraft(JSON.parse(JSON.stringify(r.overrides))); haptic('ok'); bump(); toast('Sove ✓ · Timoun yo pa wè l toutotan ou pa pibliye', 'info', { label: 'Pibliye', run: publishNow(toast, bump) }); }
+    try { const r = await api.saveStrings(draft); load.setData({ ...load.data!, overrides: r.overrides }); setDraft(JSON.parse(JSON.stringify(r.overrides))); haptic('ok'); bump(); toast('Anrejistre ✓ · Timoun yo pa wè l toutotan ou pa pibliye', 'info', { label: 'Pibliye', run: publishNow(toast, bump) }); }
     catch (e) { toast(errText(e), 'err'); } finally { setSaving(false); }
   };
 
   return (
     <Screen onRefresh={load.refresh} refreshing={load.refreshing}
       header={<Header back title="Tèks app la" sub="Kite yon kaz vid pou tounen nan tèks orijinal la" />}
-      bottom={dirty ? <View style={{ padding: 12, gap: 6 }}>{nErr ? <T v="small" color={colors.red} center>{nErr === 1 ? '1 tèks gen yon erè' : `${nErr} tèks gen erè`}: gade sa ki an wouj.</T> : null}<Button title={nErr ? 'Korije erè yo anvan' : 'Sove tèks yo'} big busy={saving} disabled={!!nErr} onPress={save} /></View> : undefined}>
+      bottom={dirty ? <View style={{ padding: 12, gap: 6 }}>{nErr ? <T v="small" color={colors.red} center>{nErr === 1 ? '1 tèks gen yon erè' : `${nErr} tèks gen erè`}: gade sa ki an wouj.</T> : null}<Button title={nErr ? 'Korije erè yo anvan' : 'Anrejistre tèks yo'} big busy={saving} disabled={!!nErr} onPress={save} /></View> : undefined}>
       {load.loading && !load.data ? <Loading /> : null}
       {load.error ? <ErrorBox text={load.error} onRetry={load.reload} /> : null}
       {load.data ? (
