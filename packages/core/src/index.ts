@@ -13,6 +13,7 @@ export * from './progress/xp.js';
 export * from './progress/streak.js';
 export * from './progress/quests.js';
 export * from './progress/srs.js';
+export * from './progress/reminders.js';
 export * from './progress/badges.js';
 export * from './safety/username.js';
 export * from './safety/consent.js';

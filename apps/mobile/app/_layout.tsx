@@ -13,6 +13,7 @@ import { colors } from '@/lib/theme';
 import { MascotArt, MascotRig, reduceMotion, Button, type MascotMood } from '@/ui';
 import { startContentSync, syncContent, useMaintenance } from '@/lib/remote';
 import { tr } from '@/lib/i18n';
+import { startReminders } from '@/lib/reminders';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 SplashScreen.setOptions({ duration: 250, fade: true });
@@ -30,6 +31,8 @@ export default function RootLayout() {
   const maint = useMaintenance();
   const lang = useStore((s) => s.profile.lang);
   useEffect(() => { startContentSync(); }, []);
+  // daily reminders: keep the plan fresh (does nothing without the notifications module)
+  useEffect(() => { if (hydrated) startReminders(); }, [hydrated]);
   useEffect(() => { if (ready) SplashScreen.hideAsync().catch(() => {}); }, [ready]);
   if (!ready) return <View style={{ flex: 1, backgroundColor: colors.blue }} />;
   return (

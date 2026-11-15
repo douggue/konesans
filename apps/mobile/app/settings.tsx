@@ -10,6 +10,7 @@ import { tap, sfx, audioError, audioTest } from '@/lib/audio';
 import { setOnlineAllowed, submitChangeRequest, changeRequestError, type ChangeRequest } from '@/lib/online';
 import { GRADES, gradeKey, gradeBand, type GradeId } from '@/lib/strings/requests';
 import { ParentGate } from '@/ui/ParentGate';
+import { ReminderSetting } from '@/ui/ReminderSetting';
 import { serverConfigured } from '@/lib/remote';
 
 const AGE_BANDS: AgeBand[] = ['6-8', '9-11', '12-14'];
@@ -145,6 +146,8 @@ export default function Settings() {
         ))}
       </Row>
       <Card><T v="bold">{t('sample_question')}</T></Card>
+      {/* daily reminder (hidden when this APK has no notifications module) */}
+      <ReminderSetting />
       {serverConfigured() && <Card onPress={() => router.push('/account' as never)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60 }}><IconTile name="pwoteje" bg={colors.greenSoft} size={44} /><View style={{ flex: 1 }}><T v="bold">{t('ac_row')}</T><T v="small" color={colors.muted}>{t('ac_row_sub')}</T></View><T v="h2" color={colors.blue}>›</T></Card>}
       <T v="label" color={colors.muted}>{t('parent').toUpperCase()}</T>
       <Card style={{ gap: 6 }}>
