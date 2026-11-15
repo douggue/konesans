@@ -1,6 +1,7 @@
 /**
- * "Finding a player" sequence for duels (~3.2 s, tap to skip):
- *  1. radar rings pulse out of the kid's avatar, "N ap chèche yon jwè" with rotating dots
+ * "Finding a player" sequence for duels (~3.2 s, tap to skip), on a full-bleed blue screen (MATCH_BG — the host
+ * screen paints its own background with it so the colour runs edge to edge):
+ *  1. Ti Zwazo sits in radar rings, "N ap chèche yon bon advèsè pou ou…", the kid's chip, a waiting button
  *  2. the kid's card slides in from the left, the opponent's from the right
  *  3. a big "VS" slams down and the screen shakes, then onDone().
  * Online, `opponent` is null while the server is still looking: the radar keeps going until a player is found
@@ -10,13 +11,17 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Animated, Easing, Pressable, StyleSheet } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import type { AvatarConfig } from '@konesans/core';
-import { T } from './index';
+import { T, Mascot } from './index';
 import { Avatar } from './avatar';
-import { reduceMotion } from './motion';
+import { reduceMotion, Bob } from './motion';
 import { colors } from '@/lib/theme';
 import { useT } from '@/lib/i18n';
 import { tap, sfx, music } from '@/lib/audio';
+
+/** The search screen's colour (white text 7.5:1). */
+export const MATCH_BG = colors.blue;
 
 export function Matchmaking({ me, opponent, onDone, hint, instant }: { me: { name: string; avatar: AvatarConfig; sub?: string }; opponent: { name: string; avatar: AvatarConfig; sub?: string } | null; onDone: () => void; hint?: string; instant?: boolean }) {
   const t = useT();
@@ -69,22 +74,28 @@ export function Matchmaking({ me, opponent, onDone, hint, instant }: { me: { nam
   const shakeX = shake.interpolate({ inputRange: [0, 0.2, 0.4, 0.6, 0.8, 1], outputRange: [0, -10, 9, -6, 3, 0] });
   return (
     <Pressable accessibilityLabel={t('tap_skip')} onPress={() => phase === 'found' && finish()} style={{ flex: 1 }}>
+      {/* light status-bar icons on the blue (the root layout's dark style comes back when this unmounts) */}
+      <StatusBar style="light" />
       <Animated.View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 18, transform: [{ translateX: shakeX }] }}>
         {phase === 'search' ? (
           <>
-            <View style={{ width: 260, height: 260, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 250, height: 250, alignItems: 'center', justifyContent: 'center' }}>
               {rings.map((r, i) => (
-                <Animated.View key={i} style={[StyleSheet.absoluteFill, { borderRadius: 130, borderWidth: 4, borderColor: colors.blueLight, opacity: r.interpolate({ inputRange: [0, 0.1, 1], outputRange: [0, 0.7, 0] }), transform: [{ scale: r.interpolate({ inputRange: [0, 1], outputRange: [0.45, 1.05] }) }] }]} />
+                <Animated.View key={i} style={[StyleSheet.absoluteFill, { borderRadius: 125, borderWidth: 4, borderColor: '#FFFFFF', opacity: r.interpolate({ inputRange: [0, 0.1, 1], outputRange: [0, 0.5, 0] }), transform: [{ scale: r.interpolate({ inputRange: [0, 1], outputRange: [0.45, 1.05] }) }] }]} />
               ))}
-              <Avatar a={me.avatar} size={120} live />
+              <View style={{ position: 'absolute', width: 170, height: 170, borderRadius: 85, backgroundColor: 'rgba(255,255,255,0.12)' }} />
+              <Bob amount={6} duration={1800}><Mascot size={150} mood="think" /></Bob>
             </View>
-            <T v="h1" center>{t('finding').replace(/…$/, '')}{'.'.repeat(dots)}<T v="h1" color="transparent">{'.'.repeat(3 - dots)}</T></T>
-            <T v="small" center color={colors.muted}>{me.name}{me.sub ? ` · ${me.sub}` : ''}</T>
-            {hint && longWait ? <T v="small" center color={colors.muted} style={{ paddingHorizontal: 24 }}>{hint}</T> : null}
+            <T v="h1" center color="#FFFFFF" style={{ paddingHorizontal: 20 }}>{t('mm_looking').replace(/…$/, '')}{'.'.repeat(dots)}<T v="h1" color="transparent">{'.'.repeat(3 - dots)}</T></T>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'rgba(255,255,255,0.14)', borderRadius: 999, paddingVertical: 6, paddingLeft: 6, paddingRight: 16 }}>
+              <Avatar a={me.avatar} size={40} />
+              <T v="bold" color="#FFFFFF" style={{ flexShrink: 1 }}>{me.name}{me.sub ? ` · ${me.sub}` : ''}</T>
+            </View>
+            {hint && longWait ? <T v="small" center color="#E6ECFB" style={{ paddingHorizontal: 24 }}>{hint}</T> : null}
           </>
         ) : (
           <>
-            <T v={instant ? 'h2' : 'label'} center color={colors.green}>{instant ? t('robo_ready') : t('found').toUpperCase()}</T>
+            <T v={instant ? 'h2' : 'label'} center color="#FFFFFF">{instant ? t('robo_ready') : t('found').toUpperCase()}</T>
             <View style={{ width: '100%', gap: 8 }}>
               <Animated.View style={{ transform: [{ translateX: slide.interpolate({ inputRange: [0, 1], outputRange: [-360, 0] }) }] }}>
                 <PlayerCard p={me} color={colors.blue} />
@@ -98,10 +109,15 @@ export function Matchmaking({ me, opponent, onDone, hint, instant }: { me: { nam
                 {opponent && <PlayerCard p={opponent} color={colors.red} right />}
               </Animated.View>
             </View>
-            <Animated.View style={{ opacity: vs }}><T v="small" color={colors.muted}>{t('tap_skip')}</T></Animated.View>
+            <Animated.View style={{ opacity: vs }}><T v="small" color="#E6ECFB">{t('tap_skip')}</T></Animated.View>
           </>
         )}
       </Animated.View>
+      {phase === 'search' ? (
+        <View accessibilityRole="progressbar" accessibilityLabel={t('mm_waiting')} style={{ marginHorizontal: 20, marginBottom: 8, minHeight: 54, borderRadius: 16, borderWidth: 2, borderColor: 'rgba(255,255,255,0.45)', alignItems: 'center', justifyContent: 'center' }}>
+          <T v="h3" color="#E6ECFB">{t('mm_waiting')}</T>
+        </View>
+      ) : null}
     </Pressable>
   );
 }

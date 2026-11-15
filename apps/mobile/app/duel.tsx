@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { router } from 'expo-router';
 import { createDuel, questionTimeMs, reduce, planBotAnswer, planBotReaction, adaptBot, BOT_PROFILES, BOT_NAMES, rng, type DuelState, type ReactionId, type AvatarConfig, type Question } from '@konesans/core';
 import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Pill, Avatar, avatarFromSeed, Bounce, Drop, FadeIn, Pop, Confetti, SlideSwap, useCountUp } from '@/ui';
-import { Matchmaking } from '@/ui/Matchmaking';
+import { Matchmaking, MATCH_BG } from '@/ui/Matchmaking';
 import { QuestionView } from '@/ui/QuestionView';
 import { RankUpListener } from '@/ui/RankUp';
 import { ReactionTray, ReactionBubble, isReaction, reactionSfx } from '@/ui/Reactions';
@@ -246,8 +246,8 @@ function OnlineDuel({ onFallback }: { onFallback: (note: StrKey) => void }) {
 
   if (intro || !v || !op || v.phase === 'lobby') {
     return (
-      <Screen scroll={false}>
-        <TopBar close title={t('duel_bot')} onBack={() => router.back()} />
+      <Screen scroll={false} style={{ backgroundColor: MATCH_BG }}>
+        <TopBar close ink="#FFFFFF" title={t('duel_bot')} onBack={() => router.back()} />
         <Matchmaking me={{ name: profile.username, avatar: myAvatar, sub: t(AGE_KEY[profile.age]) }}
           opponent={op ? { name: op.name, avatar: op.avatar, sub: op.isBot ? t('robot') : t('online_player') } : null}
           hint={t('robo_soon')} onDone={() => setIntro(false)} />
@@ -352,10 +352,10 @@ function LocalDuel({ note }: { note: StrKey | null }) {
 
   if (lobby || !opP) {
     return (
-      <Screen scroll={false}>
-        <TopBar close title={t('duel_bot')} onBack={() => router.back()} />
+      <Screen scroll={false} style={{ backgroundColor: MATCH_BG }}>
+        <TopBar close ink="#FFFFFF" title={t('duel_bot')} onBack={() => router.back()} />
         {/* only a friendly line for the kid; the technical reason stays in the logs */}
-        {note ? <FadeIn><T v="small" center color={colors.muted}>{t(note)}</T></FadeIn> : null}
+        {note ? <FadeIn><T v="small" center color="#E6ECFB">{t(note)}</T></FadeIn> : null}
         {/* Robo is on the phone: no pretend "searching", straight to the face-off */}
         <Matchmaking instant me={{ name: profile.username, avatar: myAvatar, sub: t(AGE_KEY[profile.age]) }} opponent={{ name: bot.name, avatar: bot.avatar, sub: t('robot') }} onDone={startDuel} />
       </Screen>

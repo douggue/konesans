@@ -2,11 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
 import { startMath, answerMath, skipMath, mathXp, weakKinds, allowsNegative, KIND_LABEL, type MathRun } from '@konesans/core';
-import { Screen, T, Button, Card, Row, Progress, Mascot, TopBar, Pill, Sheet, PressScale, Shake, Bounce, Burst, Pop, Drop, FadeIn, Confetti, SlideSwap, useCountUp } from '@/ui';
+import { Screen, T, Button, Card, Progress, Mascot, TopBar, Pill, Sheet, PressScale, Shake, Bounce, Burst, Pop, Drop, SlideSwap } from '@/ui';
 import { colors, radius } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT, useL } from '@/lib/i18n';
-import { RankUpListener } from '@/ui/RankUp';
+import { ResultScreen, tierFor, useStdStats } from '@/ui/ResultScreen';
 import { tap, sfx, music, answerSfx } from '@/lib/audio';
 import { useQuitGuard } from '@/ui/activity';
 
@@ -45,6 +45,9 @@ export default function MathRapid() {
   useEffect(() => { if (over && !saved.current && run) { saved.current = true; recordMath(run.score, run.history.filter((h) => h.ok).length); /* XP: core progress/xp.ts (capped) */ tap('success'); sfx('level'); setTimeout(() => sfx('coin'), 1200); } }, [over]);
   useEffect(() => { music(null); }, []);
   const results = useRef<boolean[]>([]);
+  // result cards (a hook: computed every render, shown when the minute is over): XP · Presizyon · Pi bon seri
+  const stats = useStdStats({ xp: run ? mathXp(run) : 0, correct: good, total: good + (run?.misses ?? 0),
+    third: { label: t('rs_best_combo'), value: run?.best ?? 0, icon: 'seri', color: colors.blue, ink: colors.blue } });
 
   const start = () => { results.current = []; setHits(0); setMisses(0); saved.current = false; setTyped(''); setLeft(60_000); setRun(startMath(profile.age, Date.now() % 1e9, Date.now())); };
   const press = (k: string) => {
@@ -84,22 +87,14 @@ export default function MathRapid() {
   }
 
   if (over) {
+    const answered = good + run.misses;
     return (
-      <Screen scroll={false}>
-        {run.score >= 15 && <Confetti />}
-        <View style={{ alignItems: 'center', gap: 10, marginTop: 'auto' }}>
-          <Drop><Mascot size={140} mood={run.score >= 15 ? 'cheer' : 'happy'} /></Drop>
-          <Pop delay={450}><BigScore n={run.score} /></Pop>
-          <T v="body" center color={colors.muted}>{t('math_summary', { good, miss: run.misses, best: run.best })}</T>
-          <Pop delay={900}><Pill text={`+${mathXp(run)} XP`} color="#5C4600" bg={colors.yellowSoft} icon="pwen" /></Pop>
-          {weakKinds(run).length > 0 && <Card soft={colors.yellowSoft} edge={colors.yellowDark} style={{ paddingVertical: 10 }}><T v="small" color="#5C4600">{t('math_practice', { x: weakKinds(run).map((k) => l(KIND_LABEL[k])).join(' · ') })}</T></Card>}
-        </View>
-        <View style={{ marginTop: 'auto', gap: 10 }}>
-          <Button title={t('again')} color={colors.orange} onPress={start} />
-          <Button variant="secondary" title={t('done')} onPress={() => (router.canGoBack() ? router.back() : router.replace('/home'))} />
-        </View>
-        <RankUpListener delayMs={1800} />
-      </Screen>
+      <ResultScreen tier={run.score >= 15 ? (answered && good / answered >= 0.9 ? 'perfect' : 'great') : tierFor(answered ? good / answered : 0)}
+        headline={t('score_points', { n: run.score })} sub={t('math_summary', { good, miss: run.misses, best: run.best })}
+        stats={stats.items} statsA11y={stats.a11y} confetti={run.score >= 15} rankUpDelay={1800}
+        extras={weakKinds(run).length > 0 ? <Card soft={colors.yellowSoft} edge={colors.yellowDark} style={{ paddingVertical: 10 }}><T v="small" color="#5C4600">{t('math_practice', { x: weakKinds(run).map((k) => l(KIND_LABEL[k])).join(' · ') })}</T></Card> : undefined}
+        primary={{ title: t('again'), color: colors.orange, onPress: start }}
+        secondary={{ title: t('done'), onPress: () => (router.canGoBack() ? router.back() : router.replace('/home')) }} />
     );
   }
 
@@ -138,10 +133,4 @@ export default function MathRapid() {
       </Sheet>
     </Screen>
   );
-}
-
-function BigScore({ n }: { n: number }) {
-  const v = useCountUp(n, undefined, 900);
-  const t = useT();
-  return <T v="display" center>{t('score_points', { n: v })}</T>;
 }

@@ -108,7 +108,7 @@ function mergeCourses(n: Record<string, any>, o: Record<string, any>) {
   return out;
 }
 
-const STAT_COUNTERS = ['duels', 'duelWins', 'lessons', 'questionsAnswered', 'correct', 'mathBest'];
+const STAT_COUNTERS = ['duels', 'duelWins', 'lessons', 'questionsAnswered', 'correct', 'mathBest', 'bestStreak'];
 function mergeStats(n: Record<string, any>, o: Record<string, any>) {
   const out: Record<string, any> = { ...o, ...n, perCategoryCorrect: maxMap(n.perCategoryCorrect, o.perCategoryCorrect) };
   for (let i = 0; i < STAT_COUNTERS.length; i++) {

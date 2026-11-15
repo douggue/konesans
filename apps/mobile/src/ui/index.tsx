@@ -157,7 +157,7 @@ export function Stars({ n, size = 18, pop }: { n: number; size?: number; pop?: b
 }
 
 // ─── Top bar / Bottom nav ────────────────────────────────────────────────────
-export function TopBar({ title, sub, right, onBack, close }: { title: string; sub?: string; right?: React.ReactNode; onBack?: () => void; close?: boolean }) {
+export function TopBar({ title, sub, right, onBack, close, ink = colors.ink }: { title: string; sub?: string; right?: React.ReactNode; onBack?: () => void; close?: boolean; /** title colour (white on a coloured screen) */ ink?: string }) {
   const t = useT();
   return (
     <Row gap={12}>
@@ -165,8 +165,8 @@ export function TopBar({ title, sub, right, onBack, close }: { title: string; su
         <Icon name={close ? 'femen' : 'retounen'} size={24} />
       </PressScale>
       <View style={{ flex: 1 }}>
-        <T v="h1">{title}</T>
-        {sub ? <T v="small" color={colors.muted}>{sub}</T> : null}
+        <T v="h1" color={ink}>{title}</T>
+        {sub ? <T v="small" color={ink === colors.ink ? colors.muted : ink}>{sub}</T> : null}
       </View>
       {right}
     </Row>

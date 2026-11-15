@@ -1,5 +1,4 @@
 import { quizXp } from '@konesans/core';
-import { RankUpListener } from '@/ui/RankUp';
 import React, { useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -7,8 +6,10 @@ import {
   startSolo, answerSolo, soloSummary, pickDepartmentRun, departmentById, isUnlocked, pointsMultiplier, runStars,
   VWAYAJ_PASS, VWAYAJ_CLEAR_XP, DEPARTMENTS, type SoloSession, type DepartmentId, type VwayajRunResult,
 } from '@konesans/core';
-import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Pill, CountPill, Stars, FadeIn, Pop, Drop, SlideSwap, Confetti, Hop, Icon, useCountUp, type MascotMood } from '@/ui';
+import { Screen, T, Button, Card, Row, Progress, Sheet, TopBar, Pill, CountPill, Pop, SlideSwap, Icon, type MascotMood } from '@/ui';
 import { QuestionView } from '@/ui/QuestionView';
+import { AnswerFeedbackSheet, StreakLabel, trailingStreak } from '@/ui/feedback';
+import { ResultScreen, tierFor, useStdStats } from '@/ui/ResultScreen';
 import { useQuitGuard, useQuestionClock, questionTimeMs, scoredNow } from '@/ui/activity';
 import { colors } from '@/lib/theme';
 import { useStore } from '@/lib/store';
@@ -76,53 +77,43 @@ export default function VwayajRun() {
     const next = result?.unlocked ? DEPARTMENTS.find((d) => d.id === result.unlocked) : null;
     const xp = quizXp(sum.score * mult); // same rule (and cap) as what the store pays
     return (
-      <Screen scroll={false}>
-        <RankUpListener delayMs={2200} />
-        {passed && <Confetti />}
-        <View style={{ alignItems: 'center', gap: 10, marginTop: 'auto' }}>
-          <Drop>{passed ? <Hop height={10} duration={1100}><Mascot size={150} mood={mood} /></Hop> : <Mascot size={150} mood={mood} />}</Drop>
-          <FadeIn delay={500}><T v="display" center>{passed ? t('vw_passed', { x: l(dep.name) }) : t('result')}</T></FadeIn>
-          <Stars n={stars} size={44} pop />
-          <FadeIn delay={900}><ResultLine correct={sum.correct} total={sum.total} label={t('correct_of')} /></FadeIn>
-          <Pop delay={1150}><CountPill value={sum.score * mult} k={`vw-${s.startedAt}`} suffix={` ${t('points')}  ·  +${xp} XP`} color="#5C4600" bg={colors.yellowSoft} icon="pwen" /></Pop>
+      <VwayajResult s={s} xp={xp} passed={passed} stars={stars} mood={mood}
+        headline={passed ? t('vw_passed', { x: l(dep.name) }) : undefined}
+        extras={<>
+          <Pop delay={1150}><CountPill value={sum.score * mult} k={`vw-${s.startedAt}`} suffix={` ${t('points')}`} color="#5C4600" bg={colors.yellowSoft} icon="pwen" /></Pop>
           {mult > 1 && <Pop delay={1300}><Pill text={`${t('vw_double')} ×${mult}`} color="#FFFFFF" bg={colors.red} icon="drapo" /></Pop>}
           {result?.firstClear && <Pop delay={1400}><Pill text={`${t('vw_bonus')} +${VWAYAJ_CLEAR_XP} XP`} color="#12632F" bg={colors.greenSoft} icon="vwayaj" /></Pop>}
-          {!passed && <FadeIn delay={1300}><T v="bold" center color={colors.muted}>{t('vw_failed')}</T></FadeIn>}
+          {!passed && <T v="bold" center color={colors.muted}>{t('vw_failed')}</T>}
           {next && (
             <Pop delay={1700}><Card soft={colors.blueSoft} edge={colors.blue} style={{ paddingVertical: 10 }}>
-              <Row gap={8}><Icon name="pwen" size={24} /><T v="h3" color={colors.blue}>{t('vw_unlocked', { x: l(next.name) })}</T></Row>
+              <Row gap={8}><Icon name="pwen" size={24} /><T v="h3" color={colors.blue} style={{ flexShrink: 1 }}>{t('vw_unlocked', { x: l(next.name) })}</T></Row>
             </Card></Pop>
           )}
-        </View>
-        <View style={{ marginTop: 'auto', gap: 10 }}>
-          {passed ? (
-            <>
-              <Button title={t('vw_to_map')} color={colors.green} onPress={() => router.replace('/vwayaj')} />
-              <Button variant="secondary" title={t('vw_again')} onPress={again} />
-            </>
-          ) : (
-            <>
-              <Button title={t('vw_try_again')} onPress={again} />
-              <Button variant="secondary" title={t('vw_to_map')} onPress={() => router.replace('/vwayaj')} />
-            </>
-          )}
-        </View>
-      </Screen>
+        </>}
+        primary={passed ? { title: t('vw_to_map'), color: colors.green, onPress: () => router.replace('/vwayaj') } : { title: t('vw_try_again'), onPress: again }}
+        secondary={passed ? { title: t('vw_again'), onPress: again } : { title: t('vw_to_map'), onPress: () => router.replace('/vwayaj') }} />
     );
   }
 
   const shown = reveal ? s.questions[s.index - 1] : q;
   if (!shown) return <Screen><T>…</T></Screen>;
   const last = s.answers[s.answers.length - 1];
+  const streak = trailingStreak(s.answers.map((a) => a.correct));
   return (
-    <Screen scroll={true}>
+    <Screen scroll={true} bottom={reveal && last ? (
+      <AnswerFeedbackSheet key={s.index} seed={`${s.startedAt}-${s.index}`} correct={last.correct} timedOut={chosen === null} points={last.points * mult} streak={streak}
+        answer={l(shown.options[shown.answer])} explain={shown.explain ? l(shown.explain) : undefined} onContinue={go} />
+    ) : undefined}>
       <TopBar close title={l(dep.name)} sub={`${t('question')} ${s.index + (reveal ? 0 : 1)} / ${s.questions.length}`} onBack={() => setQuitting(true)}
         right={<CountPill value={s.score * mult} k={`vwscore-${s.startedAt}`} icon="pwen" color="#5C4600" bg={colors.yellowSoft} />} />
+      <View style={{ gap: 2 }}>
+        <StreakLabel n={streak} />
+        <Progress value={s.index / s.questions.length} color={colors.green} height={14} />
+      </View>
       <Row style={{ opacity: reveal ? 0.35 : 1 }}>
-        <Progress style={{ flex: 1 }} linear value={left / timeMs} color={left < 4000 ? colors.red : colors.yellowDark} />
+        <Progress style={{ flex: 1 }} linear value={left / timeMs} color={left < 4000 ? colors.red : colors.yellowDark} height={8} />
         <T v="small" color={colors.muted} style={{ width: 32, textAlign: 'right' }}>{Math.ceil(left / 1000)} s</T>
       </Row>
-      <Progress value={s.index / s.questions.length} color={colors.green} height={6} />
       {(mult > 1 || isSpecial(shown.id)) && (
         <Row gap={8}>
           {isSpecial(shown.id) && <Pop key={shown.id}><Pill text={t('vw_special')} color="#FFFFFF" bg={colors.ink} icon="pwen" /></Pop>}
@@ -132,14 +123,6 @@ export default function VwayajRun() {
       <SlideSwap id={reveal ? s.index - 1 : s.index}>
         <QuestionView q={shown} chosen={chosen} reveal={reveal} onPick={pick} />
       </SlideSwap>
-      {reveal && last && (
-        <FadeIn from={40} duration={320}><Card edge={last.correct ? colors.green : colors.red} soft={last.correct ? colors.greenSoft : colors.redSoft} style={{ gap: 4 }}>
-          <T v="h3" color={last.correct ? '#12632F' : '#8F0A22'}>{last.correct ? t('correct') : chosen === null ? t('timeout') : t('wrong')} {last.correct ? `+${last.points * mult}` : ''}</T>
-          {!last.correct && <T v="body">{t('answer_was')} <T v="bold">{l(shown.options[shown.answer])}</T></T>}
-          {shown.explain && <T v="small" color={colors.muted}>{l(shown.explain)}</T>}
-          <Button small title={t('continue')} color={last.correct ? colors.green : colors.blue} onPress={go} style={{ marginTop: 6 }} />
-        </Card></FadeIn>
-      )}
       <Sheet open={quitting} title={t('quit_q')} onClose={() => setQuitting(false)}>
         <T v="small" center color={colors.muted}>{t('quit_paused')}</T>
         <Button title={t('stay')} onPress={() => setQuitting(false)} />
@@ -149,7 +132,12 @@ export default function VwayajRun() {
   );
 }
 
-function ResultLine({ correct, total, label }: { correct: number; total: number; label: string }) {
-  const n = useCountUp(correct, undefined, 600);
-  return <T v="h1" center color={colors.blue}>{n} {label} {total}</T>;
+function VwayajResult({ s, xp, passed, stars, mood, headline, extras, primary, secondary }: { s: SoloSession; xp: number; passed: boolean; stars: number; mood: MascotMood; headline?: string; extras: React.ReactNode; primary: React.ComponentProps<typeof ResultScreen>['primary']; secondary: React.ComponentProps<typeof ResultScreen>['secondary'] }) {
+  const t = useT();
+  const sum = soloSummary(s);
+  const ratio = sum.total ? sum.correct / sum.total : 0;
+  const { items, a11y } = useStdStats({ xp, correct: sum.correct, total: sum.total, timeMs: s.answers.reduce((n, a) => n + a.elapsedMs, 0) });
+  // the pass mark (7/10) decides the tone: a pass is never "low"
+  const tier = passed ? (tierFor(ratio) === 'low' ? 'good' : tierFor(ratio)) : 'low';
+  return <ResultScreen tier={tier} mood={mood} headline={headline} sub={t('rs_sub', { c: sum.correct, n: sum.total })} stars={stars} stats={items} statsA11y={a11y} confetti={passed} extras={extras} primary={primary} secondary={secondary} />;
 }

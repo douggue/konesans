@@ -7,9 +7,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { startSolo, answerSolo, soloSummary, quizXp, type SoloSession, type AvatarConfig } from '@konesans/core';
-import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Pill, CountPill, Stars, FadeIn, Pop, Drop, SlideSwap, Confetti, Avatar, Motif, useCountUp, avatarFromSeed } from '@/ui';
+import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Pill, CountPill, FadeIn, Pop, SlideSwap, Confetti, Avatar, Motif, useCountUp, avatarFromSeed } from '@/ui';
 import { HAIRS, EXTRAS } from '@/ui/avatar';
 import { QuestionView } from '@/ui/QuestionView';
+import { AnswerFeedbackSheet, StreakLabel, trailingStreak } from '@/ui/feedback';
+import { ResultHero, StatCards, tierFor, useStdStats } from '@/ui/ResultScreen';
 import { RankUpListener } from '@/ui/RankUp';
 import { useQuitGuard, useQuestionClock, questionTimeMs, scoredNow } from '@/ui/activity';
 import { colors } from '@/lib/theme';
@@ -133,16 +135,13 @@ function ScoredView({ d, online, sending, fresh, onRefresh }: { d: DailyDay; onl
   const stars = ratio >= 0.9 ? 3 : ratio >= 0.6 ? 2 : ratio > 0 ? 1 : 0;
   const ranked = r.synced && d.allowed === true;
   const base = fresh ? 0 : -400; // less waiting when the kid only comes back to look
+  const { items, a11y } = useStdStats({ xp: quizXp(r.score), correct: r.correct, total: r.total, timeMs: r.ms > 0 ? r.ms : undefined });
   return (
     <View style={{ gap: 14 }}>
       {fresh && ratio >= 0.7 && <Confetti />}
-      <View style={{ alignItems: 'center', gap: 8 }}>
-        {fresh ? <Drop><Mascot size={130} mood={ratio >= 0.7 ? 'cheer' : 'happy'} /></Drop> : <Mascot size={96} mood="happy" />}
-        <FadeIn delay={base + 500}><T v="label" color={colors.muted} center>{t('dl_your_score')}</T></FadeIn>
-        <Stars n={stars} size={fresh ? 40 : 30} pop={fresh} />
-        <FadeIn delay={base + 800}><CountLine correct={r.correct} total={r.total} label={t('correct_of')} /></FadeIn>
-        <Pop delay={base + 1000}><CountPill value={r.score} k={`daily-${d.day}`} suffix={fresh ? ` ${t('points')}  ·  +${quizXp(r.score)} XP` : ` ${t('points')}`} color="#5C4600" bg={colors.yellowSoft} icon="pwen" /></Pop>
-      </View>
+      <ResultHero tier={tierFor(ratio)} compact={!fresh} headline={fresh ? undefined : t('dl_your_score')} sub={t('rs_sub', { c: r.correct, n: r.total })} stars={stars} />
+      <StatCards items={items} a11y={a11y} delay={base + 900} />
+      <Pop delay={base + 1000} style={{ alignSelf: 'center' }}><CountPill value={r.score} k={`daily-${d.day}`} suffix={` ${t('points')}`} color="#5C4600" bg={colors.yellowSoft} icon="pwen" /></Pop>
       {sending ? <ActivityIndicator color={colors.blue} /> : ranked ? (
         <Ranking d={d} delay={base + 1300} onRefresh={onRefresh} />
       ) : (
@@ -153,11 +152,6 @@ function ScoredView({ d, online, sending, fresh, onRefresh }: { d: DailyDay; onl
       <FadeIn delay={base + 1600}><T v="small" center color={colors.muted}>{t('dl_tomorrow')}</T></FadeIn>
     </View>
   );
-}
-
-function CountLine({ correct, total, label }: { correct: number; total: number; label: string }) {
-  const n = useCountUp(correct, undefined, 600);
-  return <T v="h1" center color={colors.blue}>{n} {label} {total}</T>;
 }
 
 const MEDAL = ['#F5B700', '#B8C2D6', '#D9895B'];
@@ -277,26 +271,25 @@ function Play({ d, practice, onQuit, onDone, lastPractice }: {
   const last = s.answers[s.answers.length - 1];
   const shown = reveal ? s.questions[s.index - 1] ?? q : q;
   if (!shown) return <Screen><T>…</T></Screen>;
+  const streak = trailingStreak(s.answers.map((a) => a.correct));
   return (
-    <Screen scroll>
+    <Screen scroll bottom={reveal && last ? (
+      <AnswerFeedbackSheet key={s.index} seed={`${s.startedAt}-${s.index}`} correct={last.correct} timedOut={chosen === null} points={last.points} streak={streak}
+        answer={l(shown.options[shown.answer])} explain={shown.explain ? l(shown.explain) : undefined} onContinue={go} />
+    ) : undefined}>
       <TopBar close title={t('dl_title', { n: s.questions.length })} sub={`${t('question')} ${s.index + (reveal ? 0 : 1)} / ${s.questions.length}`} onBack={() => setQuitting(true)}
         right={practice ? <Pill text={t('dl_practice_tag')} color="#5C4600" bg={colors.yellowSoft} /> : <CountPill value={s.score} k={`dscore-${s.startedAt}`} icon="pwen" color="#5C4600" bg={colors.yellowSoft} />} />
+      <View style={{ gap: 2 }}>
+        <StreakLabel n={streak} />
+        <Progress value={s.index / s.questions.length} color={colors.green} height={14} />
+      </View>
       <Row style={{ opacity: reveal ? 0.35 : 1 }}>
-        <Progress style={{ flex: 1 }} linear value={clock.left / timeMs} color={clock.left < 4000 ? colors.red : colors.yellowDark} />
+        <Progress style={{ flex: 1 }} linear value={clock.left / timeMs} color={clock.left < 4000 ? colors.red : colors.yellowDark} height={8} />
         <T v="small" color={colors.muted} style={{ width: 32, textAlign: 'right' }}>{Math.ceil(clock.left / 1000)} s</T>
       </Row>
-      <Progress value={s.index / s.questions.length} color={colors.blueLight} height={6} />
       <SlideSwap id={reveal ? s.index - 1 : s.index}>
         <QuestionView q={shown} chosen={chosen} reveal={reveal} onPick={pick} />
       </SlideSwap>
-      {reveal && last && (
-        <FadeIn from={40} duration={320}><Card edge={last.correct ? colors.green : colors.red} soft={last.correct ? colors.greenSoft : colors.redSoft} style={{ gap: 4 }}>
-          <T v="h3" color={last.correct ? '#12632F' : '#8F0A22'}>{last.correct ? t('correct') : chosen === null ? t('timeout') : t('wrong')} {last.correct ? `+${last.points}` : ''}</T>
-          {!last.correct && <T v="body">{t('answer_was')} <T v="bold">{l(shown.options[shown.answer])}</T></T>}
-          {shown.explain && <T v="small" color={colors.muted}>{l(shown.explain)}</T>}
-          <Button small title={t('continue')} color={last.correct ? colors.green : colors.blue} onPress={go} style={{ marginTop: 6 }} />
-        </Card></FadeIn>
-      )}
       <Sheet open={quitting} title={t('quit_q')} onClose={() => setQuitting(false)}>
         {!practice && s.answers.length > 0 && <T v="small" center color={colors.muted}>{t('dl_quit_scored')}</T>}
         <Button title={t('stay')} onPress={() => setQuitting(false)} />

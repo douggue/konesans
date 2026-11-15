@@ -1,9 +1,10 @@
-import { RankUpListener } from '@/ui/RankUp';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { LESSON_PASS_STARS, startLesson, answerLesson, finishLesson, currentExercise, lessonProgressPct, UNITS, type CourseId, type Exercise, type LessonSession, type Response, type Grade } from '@konesans/core';
-import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Icon, Stars, OptionButton, Pill, PressScale, SlideSwap, FadeIn, Drop, Pop, Confetti, Shake, Bounce } from '@/ui';
+import { Screen, T, Button, Card, Row, Progress, Sheet, Icon, OptionButton, Pill, PressScale, SlideSwap, Pop, Shake, Bounce } from '@/ui';
+import { AnswerFeedbackSheet, ActionFooter, StreakLabel, trailingStreak } from '@/ui/feedback';
+import { ResultScreen, tierFor, useStdStats } from '@/ui/ResultScreen';
 import { Illustration, hasIllustration } from '@/ui/Illustration';
 import { colors, radius } from '@/lib/theme';
 import { useStore, LESSON_RESUME_KEY } from '@/lib/store';
@@ -36,6 +37,7 @@ export default function Lesson() {
   const results = useRef<boolean[]>([]);
   const [resumed, setResumed] = useState(false);
   const recorded = useRef(false);
+  const sittingStart = useRef(Date.now()); // the result's "Tan": this sitting only (a resumed lesson may have started days ago)
   useEffect(() => { music(null); }, []);
   // pick up where the kid left this lesson (same lesson, same age band, not finished)
   useEffect(() => {
@@ -75,33 +77,34 @@ export default function Lesson() {
 
   if (done && !grade) {
     const r = finishLesson(s);
-    return <LessonResult r={r} onDone={() => router.replace('/course')} onRetry={() => {
+    return <LessonResult r={r} timeMs={Date.now() - sittingStart.current} onDone={() => router.replace('/course')} onRetry={() => {
       clearSnap(); results.current = []; recorded.current = false; setResumed(false);
+      sittingStart.current = Date.now();
       setS(startLesson(lang!, lesson!, profile.age)); setGrade(null); setResp(null); setDone(false);
     }} />;
   }
   if (!ex) return null;
 
+  const streak = trailingStreak(results.current);
+  const expected = grade ? (fr ? grade.expectedFr ?? grade.expected : grade.expected) : '';
   return (
-    <Screen>
-      <Row gap={10}>
+    <Screen bottom={grade ? (
+      <AnswerFeedbackSheet key={s.i} seed={`${s.startedAt}-${s.i}`} correct={grade.correct} answer={expected} streak={streak} onContinue={next} />
+    ) : (
+      <ActionFooter><Button title={t('check')} color={colors.green} disabled={!ready} onPress={check} /></ActionFooter>
+    )}>
+      <Row gap={10} center={false}>
         <PressScale debounceMs={0} role="button" accessibilityLabel={t('lesson_quit_label')} onPress={() => setQuitting(true)} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.card, borderWidth: 2, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' }}><Icon name="femen" size={22} /></PressScale>
-        <Progress style={{ flex: 1 }} value={lessonProgressPct(s) / 100} color={colors.green} height={14} />
+        <View style={{ flex: 1, gap: 2, justifyContent: 'flex-end', minHeight: 44, paddingBottom: 7 }}>
+          <StreakLabel n={streak} />
+          <Progress value={lessonProgressPct(s) / 100} color={colors.green} height={14} />
+        </View>
       </Row>
       <Row gap={8}><T v="small" color={colors.muted} style={{ flexShrink: 1 }}>{title}</T>{resumed ? <Pill text={t('lesson_resume')} color={colors.blue} bg={colors.blueSoft} /> : null}</Row>
       <SlideSwap id={grade ? s.i - 1 : s.i} style={{ gap: 14 }}>
         <T v="h1">{t(TITLE[ex.kind])}</T>
         <ExerciseView ex={ex} resp={resp} setResp={grade ? () => {} : setResp} reveal={!!grade} />
       </SlideSwap>
-      {grade ? (
-        <FadeIn from={40} duration={320}><Card edge={grade.correct ? colors.green : colors.red} soft={grade.correct ? colors.greenSoft : colors.redSoft} style={{ gap: 4 }}>
-          <T v="h3" color={grade.correct ? '#12632F' : '#8F0A22'}>{grade.correct ? t('correct') : t('wrong')}</T>
-          {!grade.correct && <T v="body">{t('answer_was')} <T v="bold">{fr ? grade.expectedFr ?? grade.expected : grade.expected}</T></T>}
-          <Button small title={t('continue')} color={grade.correct ? colors.green : colors.blue} onPress={next} style={{ marginTop: 6 }} />
-        </Card></FadeIn>
-      ) : (
-        <Button title={t('check')} color={colors.green} disabled={!ready} onPress={check} />
-      )}
       <Sheet open={quitting} title={t('quit_q')} onClose={() => setQuitting(false)}>
         {s.i > 0 ? <T v="small" center color={colors.muted}>{t('quit_lesson_saved')}</T> : null}
         <Button title={t('stay')} onPress={() => setQuitting(false)} />
@@ -241,28 +244,23 @@ function BuildSentence({ ex, resp, setResp, reveal }: { ex: Extract<Exercise, { 
   );
 }
 
-function LessonResult({ r, onDone, onRetry }: { r: ReturnType<typeof finishLesson>; onDone: () => void; onRetry: () => void }) {
+function LessonResult({ r, timeMs, onDone, onRetry }: { r: ReturnType<typeof finishLesson>; timeMs: number; onDone: () => void; onRetry: () => void }) {
   const t = useT();
   // 1 star: not passed — the next lesson stays locked until this one gets 2 stars (LESSON_PASS_STARS)
   const passed = r.stars >= LESSON_PASS_STARS;
   useEffect(() => { sfx(r.stars >= LESSON_PASS_STARS ? 'level' : 'draw'); const k = setTimeout(() => sfx('coin'), 1200); return () => clearTimeout(k); }, []);
+  const ratio = r.total ? r.firstTryCorrect / r.total : 0;
+  const { items, a11y } = useStdStats({ xp: r.xp, correct: r.firstTryCorrect, total: r.total, timeMs });
+  const tier = r.perfect ? 'perfect' : passed ? (tierFor(ratio) === 'low' ? 'good' : tierFor(ratio)) : 'low';
   return (
-    <Screen scroll={false}>
-      <RankUpListener delayMs={2200} />
-      {r.stars >= 2 && <Confetti />}
-      <View style={{ alignItems: 'center', gap: 10, marginTop: 'auto' }}>
-        <Drop><Mascot size={150} mood={r.perfect ? 'cheer' : 'happy'} /></Drop>
-        <FadeIn delay={450}><T v="display" center>{t(passed ? 'lesson_done' : 'lesson_retry_title')}</T></FadeIn>
-        <Stars n={r.stars} size={44} pop />
-        <FadeIn delay={1000}><T v="h2" center color={colors.blue}>{r.perfect ? t('perfect') : `${r.firstTryCorrect} / ${r.total} ${t('first_try')}`}</T></FadeIn>
-        {!passed && <FadeIn delay={1100}><T v="body" center color={colors.muted}>{t('lesson_retry_sub')}</T></FadeIn>}
-        <Pop delay={1200}><Pill text={t('xp_coins', { xp: r.xp, c: r.coins })} color="#5C4600" bg={colors.yellowSoft} icon="pwen" /></Pop>
-      </View>
-      <View style={{ marginTop: 'auto', gap: 10 }}>
-        {passed
-          ? <Button title={t('continue')} color={colors.green} onPress={onDone} />
-          : <><Button title={t('lesson_retry_btn')} color={colors.orange} icon="chanje" onPress={onRetry} /><Button variant="secondary" title={t('continue')} onPress={onDone} /></>}
-      </View>
-    </Screen>
+    <ResultScreen tier={tier} mood={r.perfect ? 'cheer' : passed ? undefined : 'think'} stars={r.stars} stats={items} statsA11y={a11y} confetti={r.stars >= 2}
+      headline={passed ? (r.perfect ? undefined : t('lesson_done')) : t('lesson_retry_title')}
+      sub={r.perfect ? t('perfect') : `${r.firstTryCorrect} / ${r.total} ${t('first_try')}`}
+      extras={<>
+        {!passed && <T v="body" center color={colors.muted}>{t('lesson_retry_sub')}</T>}
+        <Pop delay={1200}><Pill text={t('pf_coins_chip', { n: r.coins }).replace(/^/, '+')} color="#5C4600" bg={colors.yellowSoft} icon="kob" /></Pop>
+      </>}
+      primary={passed ? { title: t('continue'), color: colors.green, onPress: onDone } : { title: t('lesson_retry_btn'), color: colors.orange, icon: 'chanje', onPress: onRetry }}
+      secondary={passed ? undefined : { title: t('continue'), onPress: onDone }} />
   );
 }

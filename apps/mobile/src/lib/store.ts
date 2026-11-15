@@ -16,7 +16,7 @@ import {
 
 export interface Profile { id: string; username: string; age: AgeBand; lang: Lang; avatarColor: number; avatar?: AvatarConfig; createdAt: string; /** school class (strings/requests.ts GRADES), set by an approved change request */ grade?: string }
 export interface AppSettings { sfx: boolean; music: boolean; voice: boolean; haptic: boolean; textSize: 0 | 1 | 2 }
-export interface Stats { duels: number; duelWins: number; lessons: number; questionsAnswered: number; correct: number; perCategoryCorrect: Record<string, number>; mathBest?: number }
+export interface Stats { duels: number; duelWins: number; lessons: number; questionsAnswered: number; correct: number; perCategoryCorrect: Record<string, number>; mathBest?: number; /** longest streak ever (the profile's "Pi bon seri") */ bestStreak?: number }
 
 interface State {
   hydrated: boolean;
@@ -170,7 +170,8 @@ export const useStore = create<State>()(
         set((s) => {
           const now = Date.now(); const day = localDay(now, tz);
           const p = ensureQuests(recordPlay(s.progress, s.kidSettings, now, tz), s.profile.id, day, s.profile.age);
-          return { progress: p, missions: noteFirstDay(s.missions ?? emptyMissionLog(), day) };
+          const best = Math.max(s.stats.bestStreak ?? 0, p.streak.count);
+          return { progress: p, missions: noteFirstDay(s.missions ?? emptyMissionLog(), day), ...(best !== s.stats.bestStreak ? { stats: { ...s.stats, bestStreak: best } } : {}) };
         });
         get().awardBadges();
       },

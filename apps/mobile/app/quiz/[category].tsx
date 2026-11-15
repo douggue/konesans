@@ -2,9 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { startSolo, answerSolo, soloSummary, quizXp, generateCountryQuiz, peyiIso, REGION_LABEL, type SoloSession, type CountryQuizOptions } from '@konesans/core';
-import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Pill, CountPill, Stars, FadeIn, Pop, Drop, SlideSwap, Confetti, Bounce, useCountUp } from '@/ui';
+import { Screen, T, Button, Row, Progress, Sheet, TopBar, CountPill, SlideSwap } from '@/ui';
 import { QuestionView } from '@/ui/QuestionView';
-import { RankUpListener } from '@/ui/RankUp';
+import { AnswerFeedbackSheet, StreakLabel, trailingStreak } from '@/ui/feedback';
+import { ResultScreen, tierFor, useStdStats } from '@/ui/ResultScreen';
 import { useQuitGuard, useQuestionClock, questionTimeMs, scoredNow, onboardingResume } from '@/ui/activity';
 import { colors } from '@/lib/theme';
 import { useStore } from '@/lib/store';
@@ -71,65 +72,30 @@ export default function Quiz() {
   if (!q && !s.finished) return <Screen><T>…</T></Screen>;
 
   // ─── result ───
-  if (s.finished && !reveal) {
-    const sum = soloSummary(s);
-    const ratio = sum.total ? sum.correct / sum.total : 0;
-    const good = ratio >= 0.7;
-    const stars = ratio >= 0.9 ? 3 : ratio >= 0.6 ? 2 : ratio > 0 ? 1 : 0;
-    return (
-      <Screen scroll={false}>
-        {good && <Confetti />}
-        {!trial && <RankUpListener delayMs={2200} />}
-        <View style={{ alignItems: 'center', gap: 10, marginTop: 'auto' }}>
-          <Drop><Mascot size={150} mood={good ? 'cheer' : 'happy'} /></Drop>
-          <FadeIn delay={500}><T v="display" center>{t('result')}</T></FadeIn>
-          <Stars n={stars} size={44} pop />
-          <FadeIn delay={900}><ResultLine correct={sum.correct} total={sum.total} label={t('correct_of')} /></FadeIn>
-          {/* the trial records nothing, so it shows no XP */}
-          <Pop delay={1150}><CountPill value={sum.score} k={`quiz-${s.startedAt}`} suffix={trial ? ` ${t('points')}` : ` ${t('points')}  ·  +${quizXp(sum.score)} XP`} color="#5C4600" bg={colors.yellowSoft} icon="pwen" /></Pop>
-          {trial ? <FadeIn delay={1300}><T v="small" center color={colors.muted}>{t('trial_note')}</T></FadeIn> : null}
-        </View>
-        <View style={{ marginTop: 'auto', gap: 10 }}>
-          {trial ? (
-            <Button title={t('start')} color={colors.green} onPress={() => { onboardingResume.step = 1; if (router.canGoBack()) router.back(); else router.replace('/onboarding?step=1'); }} />
-          ) : (
-            <>
-              <Button title={t('again')} onPress={() => setS(startSolo(build(Date.now() % 1e9), Date.now()))} />
-              {/* back to where the quiz was started (Defi, Peyi, Lakay…) */}
-              <Button variant="secondary" title={t('done')} onPress={() => (router.canGoBack() ? router.back() : router.replace('/home'))} />
-            </>
-          )}
-        </View>
-      </Screen>
-    );
-  }
+  if (s.finished && !reveal) return <QuizResult s={s} trial={!!trial} onAgain={() => setS(startSolo(build(Date.now() % 1e9), Date.now()))} />;
 
   const last = s.answers[s.answers.length - 1];
+  const shownQ = reveal ? s.questions[s.index - 1] ?? q : q;
+  const streak = trailingStreak(s.answers.map((a) => a.correct));
   return (
-    <Screen scroll={true}>
+    <Screen scroll={true} bottom={reveal && last ? (
+      <AnswerFeedbackSheet key={s.index} seed={`${s.startedAt}-${s.index}`} correct={last.correct} timedOut={chosen === null} points={last.points} streak={streak}
+        answer={l(shownQ.options[shownQ.answer])} explain={shownQ.explain ? l(shownQ.explain) : undefined} onContinue={go} />
+    ) : undefined}>
       <TopBar close title={title} sub={`${t('question')} ${s.index + (reveal ? 0 : 1)} / ${s.questions.length}`} onBack={() => setQuitting(true)}
         right={<CountPill value={s.score} k={`score-${s.startedAt}`} icon="pwen" color="#5C4600" bg={colors.yellowSoft} />} />
+      <View style={{ gap: 2 }}>
+        <StreakLabel n={streak} />
+        <Progress value={s.index / s.questions.length} color={colors.green} height={14} />
+      </View>
       {/* frozen (and faded) while the feedback shows */}
       <Row style={{ opacity: reveal ? 0.35 : 1 }}>
-        <Progress style={{ flex: 1 }} linear value={left / timeMs} color={left < 4000 ? colors.red : colors.yellowDark} />
+        <Progress style={{ flex: 1 }} linear value={left / timeMs} color={left < 4000 ? colors.red : colors.yellowDark} height={8} />
         <T v="small" color={colors.muted} style={{ width: 32, textAlign: 'right' }}>{Math.ceil(left / 1000)} s</T>
       </Row>
-      <Progress value={s.index / s.questions.length} color={colors.blueLight} height={6} />
       <SlideSwap id={reveal ? s.index - 1 : s.index}>
         <QuestionView q={reveal ? s.questions[s.index - 1] ?? q : q} chosen={chosen} reveal={reveal} onPick={pick} />
       </SlideSwap>
-      {reveal && last && (
-        <FadeIn from={40} duration={320}><Card edge={last.correct ? colors.green : colors.red} soft={last.correct ? colors.greenSoft : colors.redSoft} style={{ gap: 4 }}>
-          <T v="h3" color={last.correct ? '#12632F' : '#8F0A22'}>{last.correct ? t('correct') : chosen === null ? t('timeout') : t('wrong')} {last.correct ? `+${last.points}` : ''}</T>
-          {(() => { const qq = s.questions[s.index - 1] ?? q; return (
-            <>
-              {!last.correct && <T v="body">{t('answer_was')} <T v="bold">{l(qq.options[qq.answer])}</T></T>}
-              {qq.explain && <T v="small" color={colors.muted}>{l(qq.explain)}</T>}
-            </>
-          ); })()}
-          <Button small title={t('continue')} color={last.correct ? colors.green : colors.blue} onPress={go} style={{ marginTop: 6 }} />
-        </Card></FadeIn>
-      )}
       <Sheet open={quitting} title={t('quit_q')} onClose={() => setQuitting(false)}>
         <T v="small" center color={colors.muted}>{t('quit_paused')}</T>
         <Button title={t('stay')} onPress={() => setQuitting(false)} />
@@ -139,7 +105,20 @@ export default function Quiz() {
   );
 }
 
-function ResultLine({ correct, total, label }: { correct: number; total: number; label: string }) {
-  const n = useCountUp(correct, undefined, 600);
-  return <T v="h1" center color={colors.blue}>{n} {label} {total}</T>;
+function QuizResult({ s, trial, onAgain }: { s: SoloSession; trial: boolean; onAgain: () => void }) {
+  const t = useT();
+  const sum = soloSummary(s);
+  const ratio = sum.total ? sum.correct / sum.total : 0;
+  const stars = ratio >= 0.9 ? 3 : ratio >= 0.6 ? 2 : ratio > 0 ? 1 : 0;
+  // the trial records nothing, so it shows points, not XP
+  const { items, a11y } = useStdStats({ xp: trial ? sum.score : quizXp(sum.score), xpLabel: trial ? t('points') : undefined, correct: sum.correct, total: sum.total, timeMs: s.answers.reduce((n, a) => n + a.elapsedMs, 0) });
+  return (
+    <ResultScreen tier={tierFor(ratio)} stars={stars} sub={t('rs_sub', { c: sum.correct, n: sum.total })} stats={items} statsA11y={a11y} confetti={ratio >= 0.7} rankUp={!trial}
+      extras={trial ? <T v="small" center color={colors.muted}>{t('trial_note')}</T> : <CountPill value={sum.score} k={`quiz-${s.startedAt}`} suffix={` ${t('points')}`} color="#5C4600" bg={colors.yellowSoft} icon="pwen" />}
+      primary={trial
+        ? { title: t('start'), color: colors.green, onPress: () => { onboardingResume.step = 1; if (router.canGoBack()) router.back(); else router.replace('/onboarding?step=1'); } }
+        : { title: t('again'), onPress: onAgain }}
+      // back to where the quiz was started (Defi, Peyi, Lakay…)
+      secondary={trial ? undefined : { title: t('done'), onPress: () => (router.canGoBack() ? router.back() : router.replace('/home')) }} />
+  );
 }
