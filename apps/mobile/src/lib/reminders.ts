@@ -46,7 +46,9 @@ export const useReminders = create<ReminderStore>()(persist((set) => ({
   merge: (persisted, current) => mergeDefaults(current, persisted),
   partialize: (s) => ({ on: s.on, hour: s.hour, minute: s.minute, explained: s.explained }),
 }));
-onResetAll('reminders', () => { useReminders.setState({ ...DEFAULT_REMINDER, explained: false }); cancelAll(); });
+// "Rekòmanse a zewo" turns reminders off; taking a cloud save (recovery code, or another phone chose its progress)
+// keeps this phone's choice — the plan is simply made again for the restored streak
+onResetAll('reminders', ({ restore }) => { if (restore) { rescheduleReminders(); return; } useReminders.setState({ ...DEFAULT_REMINDER, explained: false }); cancelAll(); });
 
 export type PermissionState = 'granted' | 'denied' | 'undetermined' | 'unavailable';
 export async function permissionState(): Promise<PermissionState> {

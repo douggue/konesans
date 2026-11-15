@@ -65,7 +65,9 @@ interface State {
   recordCoding: (levelId: number, stars: number) => number;
   /** A finished Kalkil Mantal run: `correct` answers count for the quests. Returns the XP paid. */
   recordMath: (score: number, correct: number) => number;
-  resetAll: () => void;
+  /** `restore`: the phone is taking a cloud save (recovery code / another phone chose its progress), not a
+   *  "Rekòmanse a zewo": phone-level choices (daily reminders) stay. */
+  resetAll: (opts?: { restore?: boolean }) => void;
   /** Award trophies whose condition is now met (called after every activity). */
   awardBadges: () => string[];
   /** Trophies already celebrated this visit (the trophy room pops them; cleared when it closes). */
@@ -122,8 +124,9 @@ const freshStats = (): Stats => ({ duels: 0, duelWins: 0, lessons: 0, questionsA
  * "Rekòmanse a zewo" must clear every kid store, not only this one. The other stores (Kat Ewo, Vwayaj, prefs, cloud
  * meta) import this file, so they register their own reset here (no import cycle); resetAll() runs them all.
  */
-const resetHooks = new Map<string, () => void>();
-export const onResetAll = (name: string, fn: () => void) => { resetHooks.set(name, fn); };
+type ResetHook = (o: { restore: boolean }) => void;
+const resetHooks = new Map<string, ResetHook>();
+export const onResetAll = (name: string, fn: ResetHook) => { resetHooks.set(name, fn); };
 /** The lesson in progress (app/course/[lang]/[lesson].tsx), saved after every answer. */
 export const LESSON_RESUME_KEY = 'konesans-lesson-resume';
 /** The other persisted kid stores (cloud meta is reset through its hook only: it must keep the account link).
@@ -334,7 +337,7 @@ export const useStore = create<State>()(
         return xp;
       },
 
-      resetAll: () => {
+      resetAll: (opts) => {
         set({
           changeReq: null, missions: emptyMissionLog(), rankSeen: -1, unlocked: [], seenUnlocks: [], bought: [], recentPeyi: [], newBadges: [], badgeQueue: [],
           onboarded: false, profile: freshProfile(), progress: emptyProgress(), courses: { en: emptyCourseProgress(), es: emptyCourseProgress() }, coding: {}, stats: freshStats(), seen: [],
@@ -342,7 +345,8 @@ export const useStore = create<State>()(
         });
         useMistakeBank.getState().reset();
         // Kat Ewo, Vwayaj, difficulty, cloud meta (the next upload replaces the account's save), …
-        for (const fn of resetHooks.values()) { try { fn(); } catch { /* one store failing must not stop the others */ } }
+        const o = { restore: !!opts?.restore };
+        for (const fn of resetHooks.values()) { try { fn(o); } catch { /* one store failing must not stop the others */ } }
         // a store whose module was never loaded has no hook: its saved copy is dropped instead
         for (const [name, key] of Object.entries(KID_STORE_KEYS)) if (!resetHooks.has(name)) AsyncStorage.removeItem(key).catch(() => {});
       },

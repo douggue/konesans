@@ -90,7 +90,7 @@ function writeParts(parts: SaveParts, replace: boolean) {
   applying = true;
   try {
     if (replace) {
-      useStore.getState().resetAll();
+      useStore.getState().resetAll({ restore: true });
       useCards.getState().reset();
       useVwayaj.getState().reset();
     }
