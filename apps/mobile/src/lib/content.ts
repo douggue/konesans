@@ -66,3 +66,8 @@ export function buildQuestions(category: CatId | 'mix', age: AgeBand, count: num
 /** Does this category have anything to play for this age? */
 export const hasContent = (category: CatId, age: AgeBand) =>
   allQuestions().some((q) => q.category === category && q.ages.includes(age) && servable(q)) || modulesFor(category, age).length > 0;
+
+/** A bank / server-pack question by id (for "Revize erè m" when no saved copy exists). */
+export function findQuestion(id: string): Question | undefined {
+  return allQuestions().find((q) => q.id === id) ?? BUNDLED.find((q) => q.id === id);
+}

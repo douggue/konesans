@@ -7,7 +7,7 @@
  * - Wrong answers are re-queued once at the end of the lesson (no hearts: kids keep going).
  * - XP/stars feed the same Progress/quests/badges as the quiz side (`lesson_done` event).
  */
-import type { AgeBand, LocalizedText } from '../types.js';
+import type { AgeBand, LocalizedText, Question } from '../types.js';
 import { CONCEPTS, SENTENCES, UNITS, conceptById, sentenceById, type Concept, type LessonDef, type Sentence, type TargetLang, type UnitDef } from './content.js';
 
 export type CourseId = TargetLang;
@@ -277,7 +277,7 @@ export function answerLesson(s: LessonSession, response: Response): { session: L
   return { session: next, grade, done: next.i >= queue.length };
 }
 
-export interface LessonResult { total: number; firstTryCorrect: number; score: number; stars: 1 | 2 | 3; perfect: boolean; xp: number; coins: number; durationSec: number }
+export interface LessonResult { total: number; firstTryCorrect: number; score: number; stars: 1 | 2 | 3; perfect: boolean; xp: number; coins: number; durationSec: number; /** exercises missed on the first try (for "Revize erè m") */ missed?: Exercise[] }
 
 export function finishLesson(s: LessonSession, now = Date.now()): LessonResult {
   const ids = Object.keys(s.firstTry);
@@ -287,7 +287,7 @@ export function finishLesson(s: LessonSession, now = Date.now()): LessonResult {
   const perfect = total > 0 && firstTryCorrect === total;
   const stars: 1 | 2 | 3 = score >= 0.9 ? 3 : score >= 0.6 ? 2 : 1;
   const xp = 10 + firstTryCorrect * 2 + (perfect ? 10 : 0);
-  return { total, firstTryCorrect, score, stars, perfect, xp, coins: 5 + (perfect ? 5 : 0), durationSec: Math.max(0, Math.round((now - s.startedAt) / 1000)) };
+  return { total, firstTryCorrect, score, stars, perfect, xp, coins: 5 + (perfect ? 5 : 0), durationSec: Math.max(0, Math.round((now - s.startedAt) / 1000)), missed: lessonMistakes(s) };
 }
 
 // ─── Course progress / path ──────────────────────────────────────────────────
@@ -348,3 +348,38 @@ export function courseSummary(lang: CourseId, p: CourseProgress) {
 
 /** All vocabulary of a course, for the "Mo mwen konnen" list and the review deck. */
 export const courseVocab = (lang: CourseId) => CONCEPTS.map(c => ({ id: c.id, ht: c.ht, fr: c.fr, target: c[lang], img: c.img, audio: tts(lang, c[lang]) }));
+
+// ─── Lesson mistakes → "Revize erè m" ────────────────────────────────────────
+
+const COURSE_LANG_NAME: Record<CourseId, { ht: string; fr: string }> = { en: { ht: 'angle', fr: 'anglais' }, es: { ht: 'panyòl', fr: 'espagnol' } };
+
+/** Exercises the kid got wrong on the first try (each once), in lesson order. */
+export function lessonMistakes(s: LessonSession): Exercise[] {
+  const out: Exercise[] = []; const seen = new Set<string>();
+  for (const ex of s.queue) if (s.firstTry[ex.id] === false && !seen.has(ex.id)) { seen.add(ex.id); out.push(ex); }
+  return out;
+}
+
+/**
+ * A lesson exercise as a plain multiple-choice Question, so a lesson mistake can come back in "Revize erè m"
+ * (same quiz screen). Only the kinds that read well as a 4-choice question with text are converted; listening,
+ * matching and sentence-building return null. The id is stable per exercise kind + word (`lesson:en:pm:apple`),
+ * so missing the same word twice keeps one entry.
+ */
+export function exerciseToQuestion(ex: Exercise, lang: CourseId): Question | null {
+  const L = COURSE_LANG_NAME[lang];
+  const base = { category: 'jeneral' as const, difficulty: 1 as const, ages: ['6-8', '9-11', '12-14'] as AgeBand[], status: 'approved' as const, topic: `kou:${lang}` };
+  const short = ex.kind === 'pick_meaning' ? 'pm' : ex.kind === 'pick_word' ? 'pw' : ex.kind === 'translate_pick' ? 'tp' : ex.kind === 'fill_blank' ? 'fb' : null;
+  if (!short) return null;
+  const id = `lesson:${lang}:${short}:${ex.ref}`;
+  switch (ex.kind) {
+    case 'pick_meaning':
+    case 'translate_pick':
+      return { ...base, id, prompt: { ht: `Kisa « ${ex.prompt.target} » vle di?`, fr: `Que veut dire « ${ex.prompt.target} » ?` }, options: ex.options.map((o) => ({ ht: o.ht, fr: o.fr })), answer: ex.answer };
+    case 'pick_word':
+      return { ...base, id, prompt: { ht: `Kijan yo di « ${ex.prompt.ht} » an ${L.ht}?`, fr: `Comment dit-on « ${ex.prompt.fr} » en ${L.fr} ?` }, options: ex.options.map((o) => ({ ht: o.target, fr: o.target })), answer: ex.answer };
+    case 'fill_blank':
+      return { ...base, id, prompt: { ht: `Konplete fraz la: ${ex.text}`, fr: `Complète la phrase : ${ex.text}` }, options: ex.options.map((o) => ({ ht: o, fr: o })), answer: ex.answer, explain: { ht: ex.translation.ht, fr: ex.translation.fr } };
+  }
+  return null;
+}

@@ -10,6 +10,7 @@ import { categoryInfo } from '@/lib/content';
 import { useAnnouncement, useFeatures, useDailyCount } from '@/lib/remote';
 import { useStore, useAvatar } from '@/lib/store';
 import { useDailyHome } from '@/lib/daily';
+import { useReviewDue } from '@/lib/review';
 import { useT, useL } from '@/lib/i18n';
 import { tap, music } from '@/lib/audio';
 
@@ -20,6 +21,7 @@ export default function Home() {
   const features = useFeatures();
   const daily = useDailyHome(profile.age); // real count + today's result (src/lib/daily.ts)
   const avatar = useAvatar();
+  const reviewDue = useReviewDue(); // "Revize erè w" card only when mistakes are due today
   useEffect(() => { touch(); }, []);
   useFocusEffect(useCallback(() => { music(null); }, [])); // no music in menus (concentration); music only in duels
   const quests: QuestState[] = progress.quests;
@@ -62,6 +64,18 @@ export default function Home() {
         <Button small title={daily.result ? t('dl_see') : t('play_now')} variant="secondary" color={colors.blue} onPress={() => router.push('/daily')} style={{ alignSelf: 'flex-start', marginTop: 6 }} />
         <View style={{ position: 'absolute', right: 2, bottom: 0 }}><Mascot size={118} mood="happy" /></View>
       </View></FadeIn>
+
+      {/* Revize erè w: today's mistakes (only when some are due) */}
+      {reviewDue > 0 && (
+        <FadeIn delay={120}><Card onPress={() => { tap(); router.push('/review' as never); }} soft={colors.yellowSoft} edge="#C99400" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14 }}>
+          <IconTile name="repete" bg="#FFFFFF" size={48} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <T v="h3" style={{ fontFamily: fonts.display, fontSize: 17, lineHeight: 21 }}>{t('rv_home_title')} · {reviewDue === 1 ? t('rv_home_one') : t('rv_home_n', { n: reviewDue })}</T>
+            <T v="small" color="#5C4600" numberOfLines={2}>{t('rv_home_sub')}</T>
+          </View>
+          <T v="h1" color="#C99400">›</T>
+        </Card></FadeIn>
+      )}
 
       {/* Quests → Misyon Jodi a */}
       <FadeIn delay={160}><Card onPress={() => router.push('/quests' as never)} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 16 }}>
@@ -114,6 +128,17 @@ export default function Home() {
           </FadeIn>
         ))}
       </View>
+      {/* Batay ak yon zanmi: a private duel with a 4-digit code (next to the Batay tile above) */}
+      {features.duels && (
+        <FadeIn delay={660}><Card onPress={() => { tap(); router.push('/friend' as never); }} soft={colors.redSoft} edge="#D21034" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14 }}>
+          <IconTile name="fanmi" bg="#FFFFFF" size={48} />
+          <View style={{ flex: 1 }}>
+            <T v="h3" style={{ fontFamily: fonts.display, fontSize: 17, lineHeight: 21 }}>{t('fr_title')}</T>
+            <T v="small" color={colors.muted}>{t('fr_home_sub')}</T>
+          </View>
+          <T v="h1" color="#D21034">›</T>
+        </Card></FadeIn>
+      )}
       <RankUpListener />
     </Screen>
   );

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   emptyProgress, DEFAULT_SETTINGS, levelFromXp, xpForLevel, recordActivity, moodFor, canRemind, localDay,
-  dailyQuests, ensureQuests, applyEvent, chestReady, noteWrong, noteReviewed, dueReviews, checkBadges,
+  dailyQuests, ensureQuests, applyEvent, chestReady, noteWrong, noteReviewed, dueReviews, dueReviewCount, reviewAnswer, dropReviews, REVIEW_MAX_ITEMS, REVIEW_SESSION_SIZE, reviewXp, checkBadges,
   generateUsername, isValidUsername, makeGate, newConsent, canUseOnline, report, canMatch, isBlocked,
   mergeLogs, foldProgress, activityDays, type SyncEvent,
 } from '../src/index.js';
@@ -74,16 +74,53 @@ describe('daily quests', () => {
   });
 });
 
-describe('spaced repetition', () => {
-  it('brings wrong answers back, promotes on correct, graduates after box 4', () => {
-    const t0 = at('2026-11-06T10:00:00Z');
-    let p = noteWrong(emptyProgress(), 'ist-001', t0);
-    expect(dueReviews(p, t0)).toEqual([]);                       // not yet (20 min)
-    expect(dueReviews(p, t0 + 30 * 60_000)).toEqual(['ist-001']);
-    p = noteReviewed(p, 'ist-001', true, t0 + 3_600_000);         // → box 1, due +1d
-    expect(dueReviews(p, t0 + 3_600_000 + 86_400_000 - 1)).toEqual([]);
-    for (let i = 0; i < 4; i++) p = noteReviewed(p, 'ist-001', true, t0 + 10 ** 9);
-    expect(p.review['ist-001']).toBeUndefined();                  // graduated
+describe('spaced repetition (Revize erè m)', () => {
+  const D = (day: string, h = 10) => at(`${day}T${String(h).padStart(2, '0')}:00:00Z`);
+  it('a mistake is due tomorrow, in box 1', () => {
+    const p = noteWrong(emptyProgress(), 'ist-001', D('2026-11-06'));
+    expect(p.review['ist-001']).toMatchObject({ box: 1, due: '2026-11-07', misses: 1 });
+    expect(dueReviews(p, D('2026-11-06', 23))).toEqual([]);
+    expect(dueReviews(p, D('2026-11-07', 0))).toEqual(['ist-001']);
+    expect(dueReviewCount(p, D('2026-11-09'))).toBe(1);
+  });
+  it('leaves the list after two right answers on different days (1 → 2 → metrize)', () => {
+    let p = noteWrong(emptyProgress(), 'q', D('2026-11-06'));
+    let r = reviewAnswer(p, 'q', true, D('2026-11-07'));
+    expect(r.outcome).toBe('promoted'); p = r.progress;
+    expect(p.review.q).toMatchObject({ box: 2, due: '2026-11-10', right: '2026-11-07' });
+    // a second right answer the same day does not count
+    r = reviewAnswer(p, 'q', true, D('2026-11-07', 15));
+    expect(r.outcome).toBe('same_day'); expect(r.progress.review.q.box).toBe(2);
+    expect(dueReviews(p, D('2026-11-09'))).toEqual([]);
+    r = reviewAnswer(p, 'q', true, D('2026-11-10'));
+    expect(r.outcome).toBe('mastered');
+    expect(r.progress.review.q).toBeUndefined();
+  });
+  it('a miss in review goes back to box 1, due tomorrow', () => {
+    let p = noteWrong(emptyProgress(), 'q', D('2026-11-06'));
+    p = reviewAnswer(p, 'q', true, D('2026-11-07')).progress;
+    const r = reviewAnswer(p, 'q', false, D('2026-11-10'));
+    expect(r.outcome).toBe('missed');
+    expect(r.progress.review.q).toMatchObject({ box: 1, due: '2026-11-11', misses: 2 });
+    expect(reviewAnswer(p, 'nope', true, D('2026-11-10')).outcome).toBe('unknown');
+  });
+  it('uses the kid\'s local day', () => {
+    // 2026-11-07 02:00 UTC is still 2026-11-06 in Port-au-Prince
+    const p = noteWrong(emptyProgress(), 'q', at('2026-11-07T02:00:00Z'), 'America/Port-au-Prince');
+    expect(p.review.q.due).toBe('2026-11-07');
+  });
+  it('reads old saves (ISO due, box 0–4), caps the list, sorts most overdue first, drops unknown ids', () => {
+    let p: ReturnType<typeof emptyProgress> = { ...emptyProgress(), review: { old: { box: 0, due: '2026-11-01T10:20:00.000Z', misses: 3 }, older: { box: 4, due: '2026-10-30T10:00:00.000Z', misses: 1 } } };
+    expect(dueReviews(p, D('2026-11-06'))).toEqual(['older', 'old']);
+    expect(reviewAnswer(p, 'older', true, D('2026-11-06')).outcome).toBe('mastered'); // box 4 = past box 2
+    expect(reviewAnswer(p, 'old', true, D('2026-11-06')).outcome).toBe('promoted');
+    for (let i = 0; i < REVIEW_MAX_ITEMS + 5; i++) p = noteWrong(p, 'n' + i, D('2026-11-06'));
+    expect(Object.keys(p.review).length).toBe(REVIEW_MAX_ITEMS);
+    expect(dueReviews(p, D('2026-11-07')).length).toBe(REVIEW_SESSION_SIZE);
+    expect(dropReviews(p, ['n10']).review.n10).toBeUndefined();
+  });
+  it('pays a small, capped XP for a session', () => {
+    expect(reviewXp(0)).toBe(5); expect(reviewXp(3)).toBe(21); expect(reviewXp(10)).toBe(35); expect(reviewXp(50)).toBe(40);
   });
 });
 

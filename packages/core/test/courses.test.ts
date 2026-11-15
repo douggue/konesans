@@ -210,3 +210,33 @@ describe('lesson mastery (2 stars to go on)', () => {
     expect(nextLesson('en', old)?.id).toBe(first[2].id);
   });
 });
+
+describe('lesson mistakes → Revize erè m', () => {
+  it('lists first-try misses once and turns text exercises into quiz questions', async () => {
+    const { startLesson, answerLesson, finishLesson, exerciseToQuestion, UNITS: U } = await import('../src/index.js');
+    let s = startLesson('en', U[0].lessons[0].id, '9-11', {}, 0);
+    const missed = new Set<string>();
+    for (let guard = 0; guard < 60 && s.i < s.queue.length; guard++) {
+      const ex = s.queue[s.i];
+      const wrong = !(ex.id in s.firstTry) && (ex.kind === 'pick_meaning' || ex.kind === 'pick_word' || ex.kind === 'translate_pick' || ex.kind === 'fill_blank');
+      if (wrong) missed.add(ex.id);
+      const resp = ex.kind === 'match_pairs' ? ex.pairs : ex.kind === 'build_sentence' ? ex.answer : wrong ? ((ex as { answer: number }).answer + 1) % 2 : (ex as { answer: number }).answer;
+      s = answerLesson(s, resp as never).session;
+    }
+    const r = finishLesson(s, 1000);
+    expect(r.missed!.map((e) => e.id).sort()).toEqual([...missed].sort());
+    for (const ex of r.missed!) {
+      const q = exerciseToQuestion(ex, 'en')!;
+      expect(q).not.toBeNull();
+      expect(q.id.startsWith('lesson:en:')).toBe(true);
+      expect(q.options.length).toBeGreaterThanOrEqual(2);
+      expect(q.answer).toBeGreaterThanOrEqual(0);
+      expect(q.prompt.ht.length).toBeGreaterThan(3); expect(q.prompt.fr).toBeTruthy();
+      expect(exerciseToQuestion(ex, 'en')!.id).toBe(q.id); // stable
+    }
+  });
+  it('skips listening / matching / sentence building', async () => {
+    const { exerciseToQuestion } = await import('../src/index.js');
+    expect(exerciseToQuestion({ id: 'x', kind: 'listen_pick', ref: 'c', audio: 'a', options: [{ target: 'a' }, { target: 'b' }], answer: 0 }, 'en')).toBeNull();
+  });
+});

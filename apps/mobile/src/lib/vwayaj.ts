@@ -10,6 +10,7 @@ import {
   type DepartmentId, type VwayajProgress, type VwayajRunResult,
 } from '@konesans/core';
 import { useStore, onResetAll } from './store';
+import { recentWrongIds } from './mistakes';
 
 const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Port-au-Prince';
 /** Today as 'YYYY-MM-DD' on the device clock (events and double points follow the kid's local day). */
@@ -22,7 +23,8 @@ interface VwayajStore extends VwayajProgress {
   selected: DepartmentId | null;
   select: (id: DepartmentId) => void;
   clearJustUnlocked: () => void;
-  finishRun: (r: { dep: DepartmentId; correct: number; total: number; score: number; ids: string[] }) => VwayajRunResult;
+  /** `wrongIds`: the questions missed (for "Revize erè m"); when the screen doesn't pass them they come from what QuestionView saw. */
+  finishRun: (r: { dep: DepartmentId; correct: number; total: number; score: number; ids: string[]; wrongIds?: string[] }) => VwayajRunResult;
   reset: () => void;
 }
 
@@ -37,11 +39,11 @@ export const useVwayaj = create<VwayajStore>()(
       select: (selected) => set({ selected }),
       clearJustUnlocked: () => set({ justUnlocked: null }),
 
-      finishRun: ({ dep, correct, total, score, ids }) => {
+      finishRun: ({ dep, correct, total, score, ids, wrongIds }) => {
         const r = recordRun(progressOf(get()), dep, correct, ids, vwayajToday());
         set({ ...r.progress, justUnlocked: r.unlocked ?? get().justUnlocked, selected: r.unlocked ?? dep });
         // activity, streak, quests and quiz XP: same path as every quiz (category 'vwayaj')
-        useStore.getState().recordQuiz({ category: 'vwayaj', correct, total, score, wrongIds: [], ids: [] });
+        useStore.getState().recordQuiz({ category: 'vwayaj', correct, total, score, wrongIds: wrongIds ?? recentWrongIds(ids), ids: [] });
         if (r.firstClear) useStore.getState().award(VWAYAJ_CLEAR_XP, VWAYAJ_CLEAR_COINS);
         awardVwayajBadges();
         return r;

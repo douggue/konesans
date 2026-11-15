@@ -203,3 +203,22 @@ A second submit returns the first result with `already: true`. Errors: `400 dail
 ### `daily_top`
 Body `{ "age": "9-11", "day"?: "2026-11-06" }` → `{ "day", "age", "allowed", "top": TopRow[] (≤ 10), "me": TopRow | null }`, empty when online play is not allowed.
 `TopRow = { "rank": 1, "name": "Malfini Ble", "avatar": {…} | null, "correct": 9, "total": 10, "score": 131, "me": false }` — no user ids.
+
+## Friend duels by code (Batay ak yon zanmi)
+
+Kid device session (Bearer token). Both kids need the parent's online permission (`online_set {on:true}`, same consent
+record as random online duels); otherwise `online_not_allowed`. Errors come back as `{ code, message }` with these messages:
+`bad_code` (unknown / malformed / blocked pair), `code_expired` (older than 10 min, already used, match gone),
+`own_code`, `host_not_allowed` (the host's permission was turned off), `online_not_allowed`, `rate_limited`
+(6 codes or 8 wrong codes per kid per 10 minutes). Server code: `server/nakama/src/friend.ts`; test: `server/test/friend-smoke.mjs`.
+
+| RPC | Body | Returns |
+|---|---|---|
+| `friend_duel_create` | `{ age }` (the HOST's age band: the questions and the clock follow it) | `{ code: '4827', matchId, age, expiresAt }` — a new code replaces the host's previous waiting one |
+| `friend_duel_join` | `{ code }` | `{ matchId, age, hostName }` — the code is now used |
+| `friend_duel_status` | `{ code }` (host only) | `{ state: 'waiting' \| 'joined' \| 'expired', matchId? }` — the host's phone polls this, then joins `matchId` |
+| `friend_duel_cancel` | `{ code }` (host only) | `{ ok: true }` — frees the code, closes the waiting match |
+
+The match is the normal `duel` match (same opcodes as random duels) with a private label (`category: 'friend'`,
+never `open`): `find_duel` never lists it and only the host and the kid who used the code may join it. No Robo:
+the lobby waits for both kids (up to the code's 10 minutes; closed 60 s after the code was used if one never comes).

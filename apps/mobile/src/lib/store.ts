@@ -6,11 +6,13 @@ import { AppState } from 'react-native';
 import { avatarFromSeed } from '@/ui/avatar';
 import { changeRequestStatus, type ChangeRequest } from './online';
 import { serverConfigured } from './remote';
+import { useMistakeBank, savedQuestion } from './mistakes';
 import {
   DEFAULT_SETTINGS, emptyProgress, emptyCourseProgress, recordLesson as coreRecordLesson, applyEvent, ensureQuests,
   recordPlay, levelFromXp, generateUsername, localDay, noteWrong, checkBadges, courseSummary,
   emptyMissionLog, noteFullDay, openChest as coreOpenChest, weeklyLegendEarned as coreWeeklyLegendEarned, claimWeeklyLegend as coreClaimWeeklyLegend,
   rankForXp, unlocksEarned, noteFirstDay, quizXp, mathRunXp, codingXp, buyShopItem, mergeDefaults, type MissionLog, type UnlockCtx,
+  reviewAnswer, reviewXp, dueReviewCount, exerciseToQuestion, type Question, type ReviewOutcome,
   type AgeBand, type AvatarConfig, type KidSettings, type Progress, type CourseProgress, type CourseId, type LessonResult, type GameEvent, type Lang, type CountryQuizOptions,
 } from '@konesans/core';
 
@@ -54,6 +56,10 @@ interface State {
   /** `answers`: the kid's correct / total answers in the duel (they count for the "answer correctly" quest). */
   recordDuel: (won: boolean, draw: boolean, score: number, answers?: { correct: number; total: number }) => void;
   recordLessonDone: (lang: CourseId, lessonId: string, r: LessonResult) => void;
+  /** Wrong answers from a mode that doesn't go through recordQuiz (duels): onto the "Revize erè m" list. */
+  noteMistakes: (qs: Question[]) => void;
+  /** A finished "Revize erè m" session: moves each question through its boxes, pays XP, counts for the quests. */
+  recordReview: (answers: { id: string; correct: boolean }[]) => { mastered: number; xp: number; outcomes: ReviewOutcome[] };
   /** A solved coding level. Returns the XP paid (first clear: full; replay: only the stars it adds). */
   recordCoding: (levelId: number, stars: number) => number;
   /** A finished Kalkil Mantal run: `correct` answers count for the quests. Returns the XP paid. */
@@ -107,6 +113,8 @@ const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Port-au-
 const newId = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 const freshProfile = (): Profile => ({ id: newId(), username: generateUsername(Date.now()), age: '9-11', lang: 'ht', avatarColor: 0, createdAt: new Date().toISOString() });
 const unlockCtx = (s: { progress: Progress; stats: Stats }): UnlockCtx => ({ xp: s.progress.xp, streak: s.progress.streak.count, badges: Object.keys(s.progress.badges).length });
+/** What the quests need to know today: mistakes due ("Revize erè m" quest only on days with some). */
+const questCtx = (p: Progress) => ({ reviewDue: dueReviewCount(p, Date.now(), tz) });
 const freshStats = (): Stats => ({ duels: 0, duelWins: 0, lessons: 0, questionsAnswered: 0, correct: 0, perCategoryCorrect: {} });
 
 /**
@@ -163,13 +171,13 @@ export const useStore = create<State>()(
       setKidSettings: (p) => set((s) => ({ kidSettings: { ...s.kidSettings, ...p } })),
 
       touch: () => {
-        set((s) => ({ progress: ensureQuests(s.progress, s.profile.id, localDay(Date.now(), tz), s.profile.age) }));
+        set((s) => ({ progress: ensureQuests(s.progress, s.profile.id, localDay(Date.now(), tz), s.profile.age, questCtx(s.progress)) }));
         get().awardBadges();
       },
       played: () => {
         set((s) => {
           const now = Date.now(); const day = localDay(now, tz);
-          const p = ensureQuests(recordPlay(s.progress, s.kidSettings, now, tz), s.profile.id, day, s.profile.age);
+          const p = ensureQuests(recordPlay(s.progress, s.kidSettings, now, tz), s.profile.id, day, s.profile.age, questCtx(s.progress));
           const best = Math.max(s.stats.bestStreak ?? 0, p.streak.count);
           return { progress: p, missions: noteFirstDay(s.missions ?? emptyMissionLog(), day), ...(best !== s.stats.bestStreak ? { stats: { ...s.stats, bestStreak: best } } : {}) };
         });
@@ -247,7 +255,9 @@ export const useStore = create<State>()(
         get().played();
         const st = get();
         let p = st.progress;
-        for (const id of r.wrongIds) p = noteWrong(p, id, Date.now());
+        for (const id of r.wrongIds) p = noteWrong(p, id, Date.now(), tz);
+        // a copy of each question (generated ones can't be found again from their id)
+        useMistakeBank.getState().keep(r.wrongIds.map(savedQuestion).filter((q): q is Question => !!q));
         set({ progress: p, seen: [...st.seen, ...r.ids].slice(-400), stats: {
           ...st.stats, questionsAnswered: st.stats.questionsAnswered + r.total, correct: st.stats.correct + r.correct,
           perCategoryCorrect: { ...st.stats.perCategoryCorrect, [r.category]: (st.stats.perCategoryCorrect[r.category] ?? 0) + r.correct },
@@ -270,10 +280,35 @@ export const useStore = create<State>()(
       recordLessonDone: (lang, lessonId, r) => {
         get().played();
         const st = get();
-        set({ courses: { ...st.courses, [lang]: coreRecordLesson(st.courses[lang], lessonId, r) }, stats: { ...st.stats, lessons: st.stats.lessons + 1 } });
+        set({ courses: { ...st.courses, [lang]: coreRecordLesson(st.courses[lang], lessonId, { ...r, missed: undefined }) }, stats: { ...st.stats, lessons: st.stats.lessons + 1 } });
+        // first-try mistakes that read well as a quiz question come back in "Revize erè m"
+        get().noteMistakes((r.missed ?? []).map((ex) => exerciseToQuestion(ex, lang)).filter((q): q is Question => !!q));
         get().emit({ type: 'lesson_done', course: lang });
         get().award(r.xp, r.coins);
         get().awardBadges();
+      },
+
+      noteMistakes: (qs) => {
+        if (!qs.length) return;
+        const now = Date.now();
+        set((s) => { let p = s.progress; for (const q of qs) p = noteWrong(p, q.id, now, tz); return { progress: p }; });
+        useMistakeBank.getState().keep(qs);
+      },
+
+      recordReview: (answers) => {
+        get().played();
+        const now = Date.now();
+        let p = get().progress; const outcomes: ReviewOutcome[] = [];
+        for (const a of answers) { const r = reviewAnswer(p, a.id, a.correct, now, tz); p = r.progress; outcomes.push(r.outcome); }
+        const correct = answers.filter((a) => a.correct).length;
+        set((s) => ({ progress: p, stats: { ...s.stats, questionsAnswered: s.stats.questionsAnswered + answers.length, correct: s.stats.correct + correct } }));
+        useMistakeBank.getState().prune(Object.keys(p.review));
+        for (const a of answers) get().emit({ type: 'answer', correct: a.correct, category: 'review' });
+        get().emit({ type: 'review_done', count: answers.length });
+        const xp = reviewXp(correct);
+        get().award(xp);
+        get().awardBadges();
+        return { mastered: outcomes.filter((o) => o === 'mastered').length, xp, outcomes };
       },
 
       recordCoding: (levelId, stars) => {
@@ -303,6 +338,7 @@ export const useStore = create<State>()(
           onboarded: false, profile: freshProfile(), progress: emptyProgress(), courses: { en: emptyCourseProgress(), es: emptyCourseProgress() }, coding: {}, stats: freshStats(), seen: [],
           courseLang: 'en', peyi: { mode: 'drapo', level: 1, region: 'Karayib' },
         });
+        useMistakeBank.getState().reset();
         // Kat Ewo, Vwayaj, difficulty, cloud meta (the next upload replaces the account's save), …
         for (const fn of resetHooks.values()) { try { fn(); } catch { /* one store failing must not stop the others */ } }
         // a store whose module was never loaded has no hook: its saved copy is dropped instead

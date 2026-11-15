@@ -21,8 +21,33 @@ const finishAll = (p: Progress): Progress => {
 };
 
 describe('daily quests', () => {
-  it('never hand out a quest the app cannot complete (review)', () => {
+  it('hand out the review quest only when the kid has mistakes due, never asking for more than are due', () => {
     for (let i = 0; i < 300; i++) expect(dailyQuests('u' + i, '2026-11-06').some((q) => q.kind === 'review_mistakes')).toBe(false);
+    for (let i = 0; i < 300; i++) expect(dailyQuests('u' + i, '2026-11-06', '9-11', { reviewDue: 0 }).some((q) => q.kind === 'review_mistakes')).toBe(false);
+    const withDue = Array.from({ length: 300 }, (_, i) => dailyQuests('u' + i, '2026-11-06', '9-11', { reviewDue: 3 }));
+    const rev = withDue.flat().filter((q) => q.kind === 'review_mistakes');
+    expect(rev.length).toBeGreaterThan(30);
+    expect(rev.every((q) => q.goal === 3)).toBe(true);
+    expect(dailyQuests('u1', '2026-11-06', '9-11', { reviewDue: 40 }).concat(...withDue).filter((q) => q.kind === 'review_mistakes').every((q) => q.goal <= 5)).toBe(true);
+  });
+  it('keep a review quest while mistakes are due; swap it once nothing is due', () => {
+    const day = '2026-11-06';
+    const qs: QuestState[] = [
+      { id: `${day}:win_duel`, kind: 'win_duel', goal: 1, progress: 0, xp: 20, done: false },
+      { id: `${day}:review_mistakes`, kind: 'review_mistakes', goal: 5, progress: 2, xp: 25, done: false },
+      { id: `${day}:answer_correct`, kind: 'answer_correct', goal: 10, progress: 4, xp: 20, done: false },
+    ];
+    const p = { ...emptyProgress(), questsDay: day, quests: qs };
+    expect(ensureQuests(p, 'u1', day, '9-11', { reviewDue: 3 })).toBe(p);
+    expect(ensureQuests(p, 'u1', day, '9-11', { reviewDue: 0 }).quests[1].kind).not.toBe('review_mistakes');
+    // a review session completes it
+    let q = applyEvent(p, { type: 'review_done', count: 3 }).progress;
+    expect(q.quests[1].done).toBe(true);
+    // finished: kept even when nothing is due any more
+    expect(ensureQuests(q, 'u1', day, '9-11', { reviewDue: 0 }).quests[1].kind).toBe('review_mistakes');
+    // review answers don't count as "play in a category"
+    q = applyEvent({ ...emptyProgress(), questsDay: day, quests: [{ id: 'x', kind: 'play_category', goal: 5, progress: 0, xp: 15, done: false }] }, { type: 'answer', correct: true, category: 'review' }).progress;
+    expect(q.quests[0].progress).toBe(0);
   });
   it('swap an old unfinishable quest on the same day, keeping progress on the others', () => {
     const day = '2026-11-06';

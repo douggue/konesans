@@ -7,6 +7,7 @@ import { colors } from '@/lib/theme';
 import { useL, useT } from '@/lib/i18n';
 import { useStore } from '@/lib/store';
 import { speak } from '@/lib/audio';
+import { rememberQuestion } from '@/lib/mistakes';
 import type { AvatarConfig } from '@konesans/core';
 
 const LETTERS = ['A', 'B', 'C', 'D'];
@@ -26,6 +27,8 @@ export function QuestionView({ q, chosen, reveal, onPick, otherChosen, otherAvat
   const young = useStore((s) => s.profile.age) === '6-8';
   const voiceLang = lang === 'fr' ? 'fr' : 'ht';
   const prompt = l(q.prompt);
+  // "Revize erè m": every mode shows its questions here, so this is where a wrong answer can be found again
+  React.useEffect(() => { rememberQuestion(q, reveal && q.answer >= 0 ? chosen === q.answer : undefined); }, [q, reveal]);
   const state = (i: number): 'idle' | 'picked' | 'right' | 'wrong' | 'dim' => {
     if (!reveal) return chosen === i ? 'picked' : 'idle';
     if (i === q.answer) return 'right';

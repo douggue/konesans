@@ -22,7 +22,7 @@ const QUEST_META: Record<QuestKind, { title: StrKey; color: string; href: (daily
   math_score: { title: 'q_k_math_score', color: '#FF9F43', href: () => '/math' },
   answer_correct: { title: 'q_k_answer_correct', color: '#0E7C86', href: (n) => `/quiz/mix?count=${n}` },
   play_category: { title: 'q_k_play_category', color: '#7048E8', href: () => '/categories' },
-  review_mistakes: { title: 'q_k_review_mistakes', color: '#C99400', href: () => '/categories' },
+  review_mistakes: { title: 'q_k_review_mistakes', color: '#C99400', href: () => '/review' },
   coding_level: { title: 'ec_q_coding', color: '#12632F', href: () => '/coding' },
 };
 

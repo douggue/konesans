@@ -53,6 +53,8 @@ export default function RootLayout() {
         <Stack.Screen name="cards" options={PUSH} />
         <Stack.Screen name="vwayaj" options={PUSH} />
         <Stack.Screen name="vwayaj/[dep]" options={MODAL} />
+        <Stack.Screen name="review" options={MODAL} />
+        <Stack.Screen name="friend" options={PUSH} />
       </Stack>
       {maint && !intro && <Maintenance text={(lang === 'fr' && maint.fr) || maint.ht || maint.fr} lang={lang} />}
       {intro && <Intro onDone={() => setIntro(false)} />}

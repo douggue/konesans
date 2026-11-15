@@ -12,6 +12,7 @@ import { ECON_STRINGS } from './strings/fix-economy';
 import { FIX_UX_STRINGS } from './strings/fix-ux';
 import { DAILY_STRINGS } from './strings/daily';
 import { REDESIGN_STRINGS } from './strings/redesign';
+import { FEATURES2_STRINGS } from './strings/features2';
 
 const S = {
   ...VWAYAJ_STRINGS,
@@ -25,6 +26,7 @@ const S = {
   ...FIX_UX_STRINGS,
   ...DAILY_STRINGS,
   ...REDESIGN_STRINGS,
+  ...FEATURES2_STRINGS,
   // nav
   home: ['Lakay', 'Accueil'], challenge: ['Defi', 'Défis'], course: ['Kou', 'Cours'], coding: ['Enfòmatik', 'Coder'], me: ['Mwen', 'Moi'],
   // onboarding

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { createDuel, questionTimeMs, reduce, planBotAnswer, planBotReaction, adaptBot, BOT_PROFILES, BOT_NAMES, rng, type DuelState, type ReactionId, type AvatarConfig, type Question } from '@konesans/core';
 import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Pill, Avatar, avatarFromSeed, Bounce, Drop, FadeIn, Pop, Confetti, SlideSwap, useCountUp } from '@/ui';
 import { Matchmaking, MATCH_BG } from '@/ui/Matchmaking';
@@ -17,7 +17,7 @@ import { usePrefs } from '@/lib/prefs';
 import { useQuitGuard } from '@/ui/activity';
 
 const AGE_KEY = { '6-8': 'age_6_8', '9-11': 'age_9_11', '12-14': 'age_12_14' } as const;
-import { findDuel, setProfile, type OnlineDuel as OnlineCtl, type OnlineView } from '@/lib/online';
+import { findDuel, joinDuel, setProfile, type OnlineDuel as OnlineCtl, type OnlineView } from '@/lib/online';
 
 const ME = 'me';
 
@@ -26,11 +26,14 @@ const ME = 'me';
  * - Online (a parent turned on "Defi sou entènèt" in Settings): the server pairs kids of the same age; after
  *   10 s alone it sends Robo. The server runs the game; the phone only shows it and sends answers.
  * - Otherwise, or when there is no internet: against Robo, on the device, with the same rules.
+ * - `?match=<id>&age=<band>`: a friend duel (app/friend.tsx): joins that private match, no Robo.
  */
 export default function Duel() {
+  const { match, age: matchAge } = useLocalSearchParams<{ match?: string; age?: string }>();
   const allowed = useStore((s) => s.kidSettings.randomDuelsAllowed);
   const online = allowed && serverConfigured();
   const [fallback, setFallback] = useState<StrKey | null>(null);
+  if (match) return <OnlineDuel match={match} matchAge={matchAge} onFallback={() => router.replace('/friend?lost=1' as never)} />;
   if (online && !fallback) return <OnlineDuel onFallback={setFallback} />;
   return <LocalDuel note={fallback ?? (serverConfigured() && !allowed ? 'robo_parent' : null)} />;
 }
@@ -80,6 +83,7 @@ function DuelGame({ vm, results, onPick, onReact, onQuit, onPause, online }: { v
     musicIntensity('normal');
     const timedOut = me.chosen === null;
     results.current.push(!timedOut && me.chosen === vm.question.answer);
+    if (results.current[results.current.length - 1] === false && vm.question.answer >= 0) useStore.getState().noteMistakes([vm.question]); // "Revize erè m"
     sfx(answerSfx(results.current, timedOut));
   }, [reveal, vm.index]);
   return (
@@ -128,7 +132,7 @@ function DuelGame({ vm, results, onPick, onReact, onQuit, onPause, online }: { v
   );
 }
 
-function DuelEnd({ won, draw, me, op, note, onReport }: { won: boolean; draw: boolean; me: Side; op: Side; note?: StrKey | null; onReport?: () => Promise<void> }) {
+function DuelEnd({ won, draw, me, op, note, onReport, again }: { won: boolean; draw: boolean; me: Side; op: Side; note?: StrKey | null; onReport?: () => Promise<void>; /** "Ankò" goes here (a friend duel: back to the code screen) */ again?: string }) {
   const t = useT();
   const stats = useStore((s) => s.stats);
   const [reported, setReported] = useState(false);
@@ -155,7 +159,7 @@ function DuelEnd({ won, draw, me, op, note, onReport }: { won: boolean; draw: bo
         <FadeIn delay={1250}><T v="small" color={colors.muted}>{t('wins')}: {stats.duelWins} / {stats.duels}</T></FadeIn>
       </View>
       <View style={{ marginTop: 'auto', gap: 10 }}>
-        <Button title={t('again')} onPress={() => router.replace('/duel')} />
+        <Button title={t('again')} onPress={() => router.replace((again ?? '/duel') as never)} />
         <Button variant="secondary" title={t('done')} onPress={() => (router.canGoBack() ? router.back() : router.replace('/home'))} />
         {onReport && (reported
           ? <T v="small" center color={colors.muted}>{t('reported')}</T>
@@ -188,7 +192,7 @@ function safeAvatar(a: unknown, seed: string): AvatarConfig {
   };
 }
 
-function OnlineDuel({ onFallback }: { onFallback: (note: StrKey) => void }) {
+function OnlineDuel({ onFallback, match, matchAge }: { onFallback: (note: StrKey) => void; /** friend duel: this match, questions for this age band */ match?: string; matchAge?: string }) {
   const t = useT();
   const { profile, recordDuel } = useStore();
   const myAvatar = useAvatar();
@@ -207,8 +211,8 @@ function OnlineDuel({ onFallback }: { onFallback: (note: StrKey) => void }) {
     (async () => {
       try { await setProfile(profile.username, myAvatar); } catch { /* findDuel reports the real problem */ }
       if (!alive) return;
-      const c = await findDuel({
-        age: profile.age,
+      const c = await (match ? joinDuel : findDuel)({
+        matchId: match ?? '', age: profile.age,
         onView: (view) => {
           if (!alive) return;
           const sn = (view as OnlineView & { serverNow?: number }).serverNow;
@@ -247,10 +251,10 @@ function OnlineDuel({ onFallback }: { onFallback: (note: StrKey) => void }) {
   if (intro || !v || !op || v.phase === 'lobby') {
     return (
       <Screen scroll={false} style={{ backgroundColor: MATCH_BG }}>
-        <TopBar close ink="#FFFFFF" title={t('duel_bot')} onBack={() => router.back()} />
+        <TopBar close ink="#FFFFFF" title={match ? t('fr_title') : t('duel_bot')} onBack={() => router.back()} />
         <Matchmaking me={{ name: profile.username, avatar: myAvatar, sub: t(AGE_KEY[profile.age]) }}
           opponent={op ? { name: op.name, avatar: op.avatar, sub: op.isBot ? t('robot') : t('online_player') } : null}
-          hint={t('robo_soon')} onDone={() => setIntro(false)} />
+          hint={match ? t('fr_wait_host', { age: t(AGE_KEY[(matchAge && matchAge in AGE_KEY ? matchAge : profile.age) as keyof typeof AGE_KEY]) }) : t('robo_soon')} onDone={() => setIntro(false)} />
       </Screen>
     );
   }
@@ -258,7 +262,7 @@ function OnlineDuel({ onFallback }: { onFallback: (note: StrKey) => void }) {
   if (v.phase === 'ended' || lost) {
     const won = !lost && v.winnerId === myId; const draw = !lost && v.winnerId === null;
     const note: StrKey | null = lost ? 'online_err' : v.endReason === 'forfeit' && won ? 'player_left' : null;
-    return <DuelEnd won={won} draw={draw} me={me} op={op} note={note}
+    return <DuelEnd won={won} draw={draw} me={me} op={op} note={note} again={match ? '/friend' : undefined}
       onReport={!op.isBot && opP ? () => ctl.current?.report(opP.id, 'name') ?? Promise.resolve() : undefined} />;
   }
 

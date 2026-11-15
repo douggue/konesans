@@ -84,7 +84,11 @@ export interface Progress {
   quests: QuestState[];
 }
 
-export interface ReviewItem { box: 0 | 1 | 2 | 3 | 4; due: string; misses: number }
+/**
+ * One mistake in the "Revize erè m" list (progress/srs.ts). `box` 1–2 (0/3/4 only in old saves), `due` = local day
+ * 'YYYY-MM-DD' it comes back (old saves: an ISO time), `right` = local day of the last right review.
+ */
+export interface ReviewItem { box: 0 | 1 | 2 | 3 | 4; due: string; misses: number; right?: string }
 
 export interface QuestState { id: string; kind: QuestKind; goal: number; progress: number; xp: number; done: boolean }
 export type QuestKind = 'win_duel' | 'finish_lessons' | 'math_score' | 'answer_correct' | 'play_category' | 'review_mistakes' | 'coding_level';

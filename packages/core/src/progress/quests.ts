@@ -14,11 +14,12 @@ export type GameEvent =
   | { type: 'coding_done'; levelId: number };
 
 /** Answers from these modes count for "answer correctly" but not for "play a category". */
-const NOT_A_CATEGORY = ['mix', 'math', 'duel'];
+const NOT_A_CATEGORY = ['mix', 'math', 'duel', 'review'];
 
 type Goal = number | Record<AgeBand, number>;
 /**
  * weight 0 = not handed out (the app has no screen that can complete it yet).
+ * `review_mistakes` is only handed out on a day the kid has mistakes due ("Revize erè m"): see `QuestCtx`.
  * Goals scale with the age band where the effort differs (a 6-year-old types answers slowly on the keypad).
  */
 const TEMPLATES: { kind: QuestKind; goal: Goal; xp: number; weight: number }[] = [
@@ -28,22 +29,32 @@ const TEMPLATES: { kind: QuestKind; goal: Goal; xp: number; weight: number }[] =
   { kind: 'answer_correct', goal: { '6-8': 8, '9-11': 10, '12-14': 12 }, xp: 20, weight: 3 },
   { kind: 'play_category', goal: { '6-8': 4, '9-11': 5, '12-14': 5 }, xp: 15, weight: 2 },
   { kind: 'coding_level', goal: { '6-8': 1, '9-11': 2, '12-14': 2 }, xp: 20, weight: 2 },
-  { kind: 'review_mistakes', goal: 5, xp: 25, weight: 0 },
+  { kind: 'review_mistakes', goal: 5, xp: 25, weight: 3 },
 ];
 const goalFor = (g: Goal, age: AgeBand) => (typeof g === 'number' ? g : g[age] ?? g['9-11']);
-const ACTIVE = TEMPLATES.filter((t) => t.weight > 0);
-export const questKindActive = (k: QuestKind) => ACTIVE.some((t) => t.kind === k);
+
+/** What the app knows when it hands out quests. `reviewDue`: mistakes due today (0 → no review quest). */
+export interface QuestCtx { reviewDue?: number }
+/** Quests that need something the kid may not have today. */
+const CONDITIONAL: Partial<Record<QuestKind, (c: QuestCtx) => boolean>> = {
+  review_mistakes: (c) => (c.reviewDue ?? 0) > 0,
+};
+const activeTemplates = (c: QuestCtx = {}) => TEMPLATES.filter((t) => t.weight > 0 && (CONDITIONAL[t.kind]?.(c) ?? true));
+/** Goal for this kid today: the review quest never asks for more mistakes than are due. */
+const goalOf = (t: (typeof TEMPLATES)[number], age: AgeBand, c: QuestCtx) =>
+  t.kind === 'review_mistakes' ? Math.max(1, Math.min(goalFor(t.goal, age), c.reviewDue ?? 0)) : goalFor(t.goal, age);
+export const questKindActive = (k: QuestKind, c: QuestCtx = {}) => activeTemplates(c).some((t) => t.kind === k);
 
 const seed = (s: string) => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
 
 /** Three quests per day, deterministic for (userId, day) so devices agree offline. Goals follow the age band. */
-export function dailyQuests(userId: string, day: string, age: AgeBand = '9-11'): QuestState[] {
+export function dailyQuests(userId: string, day: string, age: AgeBand = '9-11', ctx: QuestCtx = {}): QuestState[] {
   const rand = rng(seed(userId + day));
-  const pool = ACTIVE.flatMap((t) => Array(t.weight).fill(t));
+  const pool = activeTemplates(ctx).flatMap((t) => Array(t.weight).fill(t));
   const picked: QuestState[] = [];
   while (picked.length < 3) {
     const t = pool[Math.floor(rand() * pool.length)];
-    if (!picked.some((q) => q.kind === t.kind)) picked.push({ id: `${day}:${t.kind}`, kind: t.kind, goal: goalFor(t.goal, age), progress: 0, xp: t.xp, done: false });
+    if (!picked.some((q) => q.kind === t.kind)) picked.push({ id: `${day}:${t.kind}`, kind: t.kind, goal: goalOf(t, age, ctx), progress: 0, xp: t.xp, done: false });
   }
   return picked;
 }
@@ -51,19 +62,20 @@ export function dailyQuests(userId: string, day: string, age: AgeBand = '9-11'):
 /**
  * Ensure today's quests exist (rolls over at local midnight).
  * Same day: keeps progress, but swaps out any unfinished quest the app can no longer complete
- * (a kind that was retired after the quests were handed out), so the chest stays reachable.
+ * (a kind that was retired after the quests were handed out, or a review quest once nothing is due), so the chest
+ * stays reachable.
  */
-export function ensureQuests(p: Progress, userId: string, day: string, age: AgeBand = '9-11'): Progress {
-  if (p.questsDay !== day) return { ...p, questsDay: day, quests: dailyQuests(userId, day, age) };
-  if (p.quests.every((q) => q.done || questKindActive(q.kind))) return p;
+export function ensureQuests(p: Progress, userId: string, day: string, age: AgeBand = '9-11', ctx: QuestCtx = {}): Progress {
+  if (p.questsDay !== day) return { ...p, questsDay: day, quests: dailyQuests(userId, day, age, ctx) };
+  if (p.quests.every((q) => q.done || questKindActive(q.kind, ctx))) return p;
   const rand = rng(seed(userId + day + ':swap'));
   const quests = [...p.quests];
   for (let i = 0; i < quests.length; i++) {
     const q = quests[i];
-    if (q.done || questKindActive(q.kind)) continue;
-    const free = ACTIVE.filter((t) => !quests.some((x) => x.kind === t.kind));
+    if (q.done || questKindActive(q.kind, ctx)) continue;
+    const free = activeTemplates(ctx).filter((t) => !quests.some((x) => x.kind === t.kind));
     const t = free[Math.floor(rand() * free.length)];
-    if (t) quests[i] = { id: `${day}:${t.kind}`, kind: t.kind, goal: goalFor(t.goal, age), progress: 0, xp: t.xp, done: false };
+    if (t) quests[i] = { id: `${day}:${t.kind}`, kind: t.kind, goal: goalOf(t, age, ctx), progress: 0, xp: t.xp, done: false };
   }
   return { ...p, quests };
 }

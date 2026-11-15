@@ -59,7 +59,7 @@ describe('end-to-end: kid vs bot, then progress', () => {
     expect(p.streak.count).toBe(1);
     expect(p.quests.length).toBe(3);
     expect(Object.keys(p.review)).toEqual([...new Set(kidWrong)]);
-    expect(dueReviews(p, now + 30 * 60_000).length).toBe(new Set(kidWrong).size);
+    expect(dueReviews(p, now + 86_400_000).length).toBe(Math.min(10, new Set(kidWrong).size));
     expect(levelFromXp(p.xp).level).toBeGreaterThanOrEqual(1);
   });
 });

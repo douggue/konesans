@@ -7,6 +7,7 @@
  * - RPC `consent_confirm`: parent clicked the confirmation link.
  * - Admin + content RPCs: see admin.ts and docs/API.md.
  * - Age / class change requests (kid asks, admin approves): requests.ts.
+ * - "Batay ak yon zanmi": private duels joined with a 4-digit code (friend.ts); same match handler, `private` param.
  * Clients never see the answer key during a question (see core `publicView`).
  */
 import {
@@ -18,15 +19,20 @@ import * as A from './admin';
 import * as R from './requests';
 import * as K from './account';
 import * as D from './daily';
+import * as F from './friend';
 
 const TICK_RATE = 5; // 5 ticks/s is plenty for a quiz
 const OP = { STATE: 1, ANSWER: 2, REACT: 3 } as const;
 const COLL = { PROGRESS: 'progress', LOG: 'eventlog', CONSENT: 'consent', MOD: 'moderation', RATING: 'rating' } as const;
 
-interface MatchLabel { age: AgeBand; category: CategoryId | 'mix'; open: boolean; creator?: string }
+interface MatchLabel { age: AgeBand; category: CategoryId | 'mix' | 'friend'; open: boolean; creator?: string; private?: boolean }
 /** "VS" pause on both phones before question 1 (the app's Matchmaking reveal takes ~1.7 s). */
 const INTRO_MS = 3000;
-interface MatchState { duel: DuelState; botPlan?: { atMs: number; chosen: number }; botId?: string; seed: number; presences: Record<string, nkruntime.Presence> }
+/** Private (friend code) match: only the host and the kid who used the code may join; no Robo. */
+interface PrivateInfo { host: string; allow: string[]; cancelled?: boolean; joinedAt?: number }
+interface MatchState { duel: DuelState; botPlan?: { atMs: number; chosen: number }; botId?: string; seed: number; presences: Record<string, nkruntime.Presence>; priv?: PrivateInfo }
+/** A friend match where the guest got in but the host never came (or the reverse) closes after this. */
+const PRIVATE_NO_SHOW_MS = 60_000;
 
 // ---------- Match handler ----------
 
@@ -36,13 +42,18 @@ const matchInit: nkruntime.MatchInitFunction<MatchState> = (ctx, logger, nk, par
   const seed = Math.floor(Math.random() * 2 ** 31);
   const questions = selectQuestions(loadBank(nk), { age, category, count: 10, seed });
   // 6–8 get the same 30 s per question as in their quizzes (old apps read questionMs from the view, so they follow)
-  const duel = createDuel(ctx.matchId, questions, Date.now(), { introMs: INTRO_MS, questionMs: questionTimeMs(age) });
-  const label: MatchLabel = { age, category, open: true, creator: params.creator ? String(params.creator) : undefined };
-  return { state: { duel, seed, presences: {} }, tickRate: TICK_RATE, label: JSON.stringify(label) };
+  const isPrivate = !!params.private && !!params.creator;
+  // a friend match waits as long as its code lives (10 min) instead of 10 s before Robo
+  const duel = createDuel(ctx.matchId, questions, Date.now(), { introMs: INTRO_MS, questionMs: questionTimeMs(age), ...(isPrivate ? { lobbyTimeoutMs: F.FRIEND_CODE_TTL_MS + 30_000 } : {}) });
+  // private: a category find_duel never asks for, and never open
+  const label: MatchLabel = isPrivate ? { age, category: 'friend', open: false, private: true } : { age, category, open: true, creator: params.creator ? String(params.creator) : undefined };
+  const priv: PrivateInfo | undefined = isPrivate ? { host: String(params.creator), allow: [] } : undefined;
+  return { state: { duel, seed, presences: {}, priv }, tickRate: TICK_RATE, label: JSON.stringify(label) };
 };
 
 const matchJoinAttempt: nkruntime.MatchJoinAttemptFunction<MatchState> = (ctx, logger, nk, dispatcher, tick, state, presence) => {
   if (state.duel.phase !== 'lobby' || state.duel.players.length >= 2) return { state, accept: false, rejectMessage: 'full' };
+  if (state.priv && (state.priv.cancelled || (presence.userId !== state.priv.host && state.priv.allow.indexOf(presence.userId) < 0))) return { state, accept: false, rejectMessage: 'private' };
   return { state, accept: true };
 };
 
@@ -79,8 +90,11 @@ const matchLoop: nkruntime.MatchLoopFunction<MatchState> = (ctx, logger, nk, dis
     else if (m.opCode === OP.REACT && typeof data?.reaction === 'string') d = reduce(d, { type: 'react', playerId: m.sender.userId, reaction: data.reaction }, now);
   }
 
-  // 2. bot fallback: nobody joined within the lobby timeout → add a bot instead of ending
-  if (d.phase === 'lobby' && d.players.length === 1 && now - d.phaseStartedAt >= d.lobbyTimeoutMs - 500 && !state.botId) {
+  // friend match: the host cancelled, or one of the two never came after the code was used
+  if (state.priv && d.phase === 'lobby' && (state.priv.cancelled || (state.priv.joinedAt && now - state.priv.joinedAt > PRIVATE_NO_SHOW_MS))) return null;
+
+  // 2. bot fallback: nobody joined within the lobby timeout → add a bot instead of ending (never in a friend match)
+  if (!state.priv && d.phase === 'lobby' && d.players.length === 1 && now - d.phaseStartedAt >= d.lobbyTimeoutMs - 500 && !state.botId) {
     const rand = rng(state.seed);
     state.botId = 'bot:' + ctx.matchId;
     d = reduce(d, { type: 'join', player: { id: state.botId, username: BOT_NAMES[Math.floor(rand() * BOT_NAMES.length)], isBot: true } }, now);
@@ -108,12 +122,24 @@ const matchLoop: nkruntime.MatchLoopFunction<MatchState> = (ctx, logger, nk, dis
     settle(nk, logger, d);
   }
   if (d.phase === 'ended' && now - d.phaseStartedAt > 10_000) return null; // close match
-  if (d.phase === 'lobby' && Object.keys(state.presences).length === 0 && !state.botId && tick > TICK_RATE) return null; // everyone left the waiting room
+  // everyone left the waiting room (a friend match waits for its two kids: the host joins only once the code is used)
+  if (!state.priv && d.phase === 'lobby' && Object.keys(state.presences).length === 0 && !state.botId && tick > TICK_RATE) return null;
   return { state };
 };
 
 const matchTerminate: nkruntime.MatchTerminateFunction<MatchState> = (ctx, logger, nk, dispatcher, tick, state) => ({ state });
-const matchSignal: nkruntime.MatchSignalFunction<MatchState> = (ctx, logger, nk, dispatcher, tick, state, data) => ({ state, data });
+/** friend.ts → { allow: userId } (the code was used: 'ok' or 'full') or { cancel: true } (host cancelled). */
+const matchSignal: nkruntime.MatchSignalFunction<MatchState> = (ctx, logger, nk, dispatcher, tick, state, data) => {
+  const msg = safeJson(data);
+  if (!state.priv || !msg) return { state, data: '' };
+  if (msg.cancel) { state.priv.cancelled = true; return { state, data: 'ok' }; }
+  if (typeof msg.allow === 'string') {
+    if (state.priv.cancelled || state.duel.phase !== 'lobby' || state.priv.allow.length) return { state, data: 'full' };
+    state.priv.allow.push(msg.allow); state.priv.joinedAt = Date.now();
+    return { state, data: 'ok' };
+  }
+  return { state, data: '' };
+};
 
 function broadcast(dispatcher: nkruntime.MatchDispatcher, state: MatchState) {
   // Each player gets their own projection (their own choice visible, opponent's hidden until reveal).
@@ -126,6 +152,7 @@ function broadcast(dispatcher: nkruntime.MatchDispatcher, state: MatchState) {
 
 /** Persist results: ratings, XP events, and a match record for the parent report. */
 function settle(nk: nkruntime.Nakama, logger: nkruntime.Logger, d: DuelState) {
+  if (d.players.length < 2) return; // a friend match that ended in its waiting room: nobody played
   const humans = d.players.filter((p) => !p.isBot);
   for (const p of humans) {
     const opp = d.players.find((x) => x.id !== p.id)!;
@@ -154,7 +181,7 @@ const rpcFindDuel: nkruntime.RpcFunction = (ctx, logger, nk, payload) => {
   const mod = readModeration(nk);
   for (const m of open) {
     const label = JSON.parse((m.label as unknown as string) || '{}');
-    if (!label.open) continue;
+    if (!label.open || label.private) continue; // friend matches are joined only with their code
     // the match creator's id is stored in the label by rpc below; skip blocked pairs
     if (label.creator === ctx.userId || m.matchId === waitingIn) continue; // your own waiting game
     if (label.creator && !canMatch(mod, candidate(nk, ctx.userId, age), candidate(nk, label.creator, age))) continue;
@@ -293,6 +320,11 @@ function rpc_account_recover(ctx: nkruntime.Context, logger: nkruntime.Logger, n
 // Defi Jodi a: same questions for an age band, one scored attempt, daily top (daily.ts)
 function rpc_daily_get(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return D.dailyGet(ctx, logger, nk, payload); }
 function rpc_daily_submit(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return D.dailySubmit(ctx, logger, nk, payload); }
+// Batay ak yon zanmi: private duel by 4-digit code (friend.ts)
+function rpc_friend_duel_create(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return F.friendDuelCreate(ctx, logger, nk, payload); }
+function rpc_friend_duel_join(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return F.friendDuelJoin(ctx, logger, nk, payload); }
+function rpc_friend_duel_status(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return F.friendDuelStatus(ctx, logger, nk, payload); }
+function rpc_friend_duel_cancel(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return F.friendDuelCancel(ctx, logger, nk, payload); }
 function rpc_daily_top(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string) { return D.dailyTop(ctx, logger, nk, payload); }
 function before_authenticate_google(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, data: nkruntime.AuthenticateGoogleRequest) { return K.beforeAuthenticateGoogle(ctx, logger, nk, data); }
 function before_link_google(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, data: nkruntime.LinkGoogleRequest) { return K.beforeLinkGoogle(ctx, logger, nk, data); }
@@ -345,6 +377,11 @@ const InitModule: nkruntime.InitModule = (ctx, logger, nk, initializer) => {
   initializer.registerRpc('daily_get', rpc_daily_get);
   initializer.registerRpc('daily_submit', rpc_daily_submit);
   initializer.registerRpc('daily_top', rpc_daily_top);
+  // friend duels by code (kid device session) — see friend.ts
+  initializer.registerRpc('friend_duel_create', rpc_friend_duel_create);
+  initializer.registerRpc('friend_duel_join', rpc_friend_duel_join);
+  initializer.registerRpc('friend_duel_status', rpc_friend_duel_status);
+  initializer.registerRpc('friend_duel_cancel', rpc_friend_duel_cancel);
   // optional Google link / login: only ID tokens made for our client id (runtime env GOOGLE_CLIENT_IDS)
   initializer.registerBeforeAuthenticateGoogle(before_authenticate_google);
   initializer.registerBeforeLinkGoogle(before_link_google);

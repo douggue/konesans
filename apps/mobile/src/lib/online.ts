@@ -261,3 +261,60 @@ export async function findDuel(opts: { age: AgeBand; category?: string; onView: 
     return null;
   }
 }
+
+// ---------- friend duels by code ("Batay ak yon zanmi": app/friend.tsx; server/nakama/src/friend.ts) ----------
+export type FriendError = 'not_allowed' | 'host_not_allowed' | 'bad_code' | 'expired' | 'own_code' | 'limit' | 'offline' | 'server';
+/** Why a friend-duel call failed. */
+export function friendError(e: unknown): FriendError {
+  if (!(e instanceof OnlineFailure)) return 'offline';
+  const m = e.message;
+  if (/host_not_allowed/.test(m)) return 'host_not_allowed';
+  if (/online_not_allowed/.test(m)) return 'not_allowed';
+  if (/own_code/.test(m)) return 'own_code';
+  if (/code_expired/.test(m)) return 'expired';
+  if (/bad_code/.test(m)) return 'bad_code';
+  if (/rate_limited/.test(m) || e.status === 429) return 'limit';
+  return 'server';
+}
+export interface FriendInvite { code: string; matchId: string; age: AgeBand; expiresAt: number }
+/** A 4-digit code for a private duel with the host's age band (lives 10 minutes). */
+export async function createFriendDuel(age: AgeBand): Promise<FriendInvite> { return rpc<FriendInvite>('friend_duel_create', { age }); }
+/** Use a friend's code: the private match to join and the age band its questions are for. */
+export async function joinFriendCode(code: string): Promise<{ matchId: string; age: AgeBand; hostName: string }> { return rpc('friend_duel_join', { code }); }
+/** Host: has the friend used the code yet? */
+export async function friendDuelStatus(code: string): Promise<{ state: 'waiting' | 'joined' | 'expired'; matchId?: string }> { return rpc('friend_duel_status', { code }); }
+/** Host: give up the code (the waiting match closes). */
+export async function cancelFriendDuel(code: string): Promise<void> { await rpc('friend_duel_cancel', { code }); }
+
+/**
+ * Play in a given match (a friend duel): same as `findDuel` but joins `matchId` instead of searching, and never
+ * moves to another game. No Robo: the server waits for the friend.
+ */
+export async function joinDuel(opts: { matchId: string; onView: (v: OnlineView) => void; onError: (e: OnlineError) => void }): Promise<OnlineDuel | null> {
+  let sock: Sock | null = null;
+  let closed = false;
+  const current = opts.matchId;
+  const sendState = (op: number, data: object) => { if (!closed && sock) sock.send({ match_data_send: { match_id: current, op_code: String(op), data: b64encode(JSON.stringify(data)) } }).catch(() => {}); };
+  try {
+    const s = await getSession();
+    sock = await openSocket(s.token, (matchId, op, data) => {
+      if (op !== OP.STATE || matchId !== current) return;
+      try { opts.onView(JSON.parse(data) as OnlineView); } catch { /* ignore */ }
+    }, () => { if (!closed) opts.onError('offline'); });
+    await sock.send({ match_join: { match_id: current } });
+    return {
+      myId: s.userId,
+      answer: (chosen) => sendState(OP.ANSWER, { chosen }),
+      react: (reaction) => sendState(OP.REACT, { reaction }),
+      report: async (targetId, reason) => { await rpc('report_player', { targetId, reason, matchId: current }); },
+      leave: () => { if (closed) return; closed = true; sock?.send({ match_leave: { match_id: current } }).catch(() => {}); setTimeout(() => sock?.close(), 300); },
+    };
+  } catch (e: any) {
+    closed = true; sock?.close();
+    const detail = lastOnlineError + ' ' + String(e?.message ?? '');
+    if (/online_not_allowed|consent/i.test(detail)) opts.onError('not_allowed');
+    else if (e instanceof OnlineFailure || /match|private|full/i.test(detail)) opts.onError('server');
+    else opts.onError('offline');
+    return null;
+  }
+}
