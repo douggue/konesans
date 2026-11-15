@@ -59,7 +59,8 @@ interface State {
   /** Wrong answers from a mode that doesn't go through recordQuiz (duels): onto the "Revize erè m" list. */
   noteMistakes: (qs: Question[]) => void;
   /** A finished "Revize erè m" session: moves each question through its boxes, pays XP, counts for the quests. */
-  recordReview: (answers: { id: string; correct: boolean }[]) => { mastered: number; xp: number; outcomes: ReviewOutcome[] };
+  /** `partial`: the kid quit before the end — no session bonus (else quitting after each answer farms it). */
+  recordReview: (answers: { id: string; correct: boolean }[], partial?: boolean) => { mastered: number; xp: number; outcomes: ReviewOutcome[] };
   /** A solved coding level. Returns the XP paid (first clear: full; replay: only the stars it adds). */
   recordCoding: (levelId: number, stars: number) => number;
   /** A finished Kalkil Mantal run: `correct` answers count for the quests. Returns the XP paid. */
@@ -295,7 +296,7 @@ export const useStore = create<State>()(
         useMistakeBank.getState().keep(qs);
       },
 
-      recordReview: (answers) => {
+      recordReview: (answers, partial) => {
         get().played();
         const now = Date.now();
         let p = get().progress; const outcomes: ReviewOutcome[] = [];
@@ -305,7 +306,8 @@ export const useStore = create<State>()(
         useMistakeBank.getState().prune(Object.keys(p.review));
         for (const a of answers) get().emit({ type: 'answer', correct: a.correct, category: 'review' });
         get().emit({ type: 'review_done', count: answers.length });
-        const xp = reviewXp(correct);
+        // a session left early pays only the answers (2 XP each), not the session bonus
+        const xp = partial ? 2 * correct : reviewXp(correct);
         get().award(xp);
         get().awardBadges();
         return { mastered: outcomes.filter((o) => o === 'mastered').length, xp, outcomes };

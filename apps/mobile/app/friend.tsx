@@ -228,7 +228,7 @@ function Join({ onBack }: { onBack: () => void }) {
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
         {KEYS.map((k) => (
-          <PressScale key={k} debounceMs={0} role="button" accessibilityLabel={k === 'del' ? t('fr_cancel') : k === 'ok' ? t('fr_join') : k}
+          <PressScale key={k} debounceMs={0} role="button" accessibilityLabel={k === 'del' ? t('pg_erase') : k === 'ok' ? t('fr_join') : k}
             disabled={busy || (k === 'ok' && code.length !== 4)} onPress={() => press(k)}
             style={{ width: '30%', height: 62, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderBottomWidth: 5,
               backgroundColor: k === 'ok' ? (code.length === 4 ? colors.green : colors.line) : colors.card, borderColor: k === 'ok' ? (code.length === 4 ? '#1E7A33' : colors.lineStrong) : colors.lineStrong }}>

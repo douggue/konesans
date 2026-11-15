@@ -88,7 +88,7 @@ export default function Account() {
           </>}
         </Card>
       ) : null}
-      <Button variant="ghost" title={t('ac_other_code')} onPress={() => router.push('/recover' as never)} />
+      <Button variant="ghost" lines={2} title={t('ac_other_code')} onPress={() => router.push('/recover' as never)} />
       <ParentGate open={gate} title={t('gg_connect')} note={t('gg_gate_note')} onClose={() => setGate(false)} onPass={connect} />
     </Screen>
   );

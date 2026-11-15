@@ -2,13 +2,15 @@
 import React from 'react';
 import { View } from 'react-native';
 import { RANKS, UNLOCKS, rankUnlocks } from '@konesans/core';
-import { Screen, T, Row, TopBar, Progress, Icon, Mascot, FadeIn, Pop, Bob } from '@/ui';
+import { Screen, T, Row, TopBar, Progress, Icon, Mascot, FadeIn, Pop, Bob, readableOn, contrast, DEEP_GREEN } from '@/ui';
 import { RankBadge, UnlockChip, RankUpListener, useRankName } from '@/ui/RankUp';
 import { colors } from '@/lib/theme';
 import { useStore, useLevel, useRank } from '@/lib/store';
 import { useT } from '@/lib/i18n';
 
 const INK = '#14213D';
+/** A rank's colour as a background for text (≥ 4.5:1 with white or ink), else its darker edge colour. */
+const rankBg = (r: { color: string; edge: string }) => (Math.max(contrast(r.color, '#FFFFFF'), contrast(r.color, INK)) >= 4.5 ? r.color : r.edge);
 const fmt = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 
 export default function Ranks() {
@@ -20,6 +22,10 @@ export default function Ranks() {
   const lvl = useLevel();
   const cur = useRank();
   const bonus = UNLOCKS.filter((u) => !('rank' in u.req));
+  /** the card in the rank's colour, with readable text: white on the dark ones, ink on the light ones (Ti Pous,
+   *  Malfini, Zetwal…); a mid-tone where neither reaches 4.5:1 (Ti Zwazo's blue) uses the rank's darker edge colour */
+  const headBg = rankBg(cur.rank);
+  const onRank = readableOn(headBg);
 
   return (
     <Screen>
@@ -27,19 +33,23 @@ export default function Ranks() {
 
       {/* Where I am */}
       <FadeIn delay={60}>
-        <View style={{ backgroundColor: cur.rank.color, borderRadius: 24, borderWidth: 3, borderColor: INK, borderBottomWidth: 8, padding: 18, gap: 12, overflow: 'hidden' }}>
+        <View style={{ backgroundColor: headBg, borderRadius: 24, borderWidth: 3, borderColor: INK, borderBottomWidth: 8, padding: 18, gap: 12, overflow: 'hidden' }}>
           <View pointerEvents="none" style={{ position: 'absolute', right: -40, top: -40, width: 180, height: 180, borderRadius: 90, backgroundColor: '#FFFFFF', opacity: 0.12 }} />
+          {/* the badge and the name get the whole width (a long name like Eksploratè / Explorateur must not break mid-word
+              at 360 px with big text); Ti Zwazo sits by the "next rank" line instead */}
           <Row gap={14}>
             <Pop rotate={-20}><RankBadge rank={cur.rank} size={86} /></Pop>
             <View style={{ flex: 1, gap: 2 }}>
-              <T v="label" color="#FFFFFF" style={{ opacity: 0.85 }}>{t('pf_rank')}</T>
-              <T v="display" color="#FFFFFF" style={{ fontSize: 30, lineHeight: 34 }}>{rn(cur.rank)}</T>
-              <T v="bold" color="#FFFFFF" style={{ opacity: 0.9 }}>{t('pf_rank_level', { n: lvl.level })}</T>
+              <T v="label" color={onRank} style={{ opacity: 0.85 }}>{t('pf_rank')}</T>
+              <T v="display" color={onRank} style={{ fontSize: 28, lineHeight: 32 }}>{rn(cur.rank)}</T>
+              <T v="bold" color={onRank} style={{ opacity: 0.9 }}>{t('pf_rank_level', { n: lvl.level })}</T>
             </View>
-            <Bob><Mascot size={70} mood={cur.next ? 'proud' : 'cool'} /></Bob>
           </Row>
-          <Progress value={cur.progress} color={colors.yellow} track="rgba(255,255,255,0.3)" height={12} />
-          <T v="bold" color="#FFFFFF">{cur.next ? t('pf_next_rank', { x: fmt(cur.xpToNext), r: rn(cur.next) }) : t('pf_top_rank')}</T>
+          <Progress value={cur.progress} color={onRank === '#FFFFFF' ? colors.yellow : INK} track={onRank === '#FFFFFF' ? 'rgba(255,255,255,0.3)' : 'rgba(20,33,61,0.15)'} height={12} />
+          <Row gap={10}>
+            <T v="bold" color={onRank} style={{ flex: 1 }}>{cur.next ? t('pf_next_rank', { x: fmt(cur.xpToNext), r: rn(cur.next) }) : t('pf_top_rank')}</T>
+            <Bob><Mascot size={56} mood={cur.next ? 'proud' : 'cool'} /></Bob>
+          </Row>
         </View>
       </FadeIn>
       <T v="body" color={colors.muted}>{t('pf_ranks_intro')}</T>
@@ -64,8 +74,8 @@ export default function Ranks() {
                       <T v="h3" color={ahead ? colors.muted : colors.ink}>{rn(r)}</T>
                       <T v="small" color={colors.muted}>{t('pf_rank_level', { n: r.level })}</T>
                     </View>
-                    {here && <View style={{ backgroundColor: r.color, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2, borderWidth: 2, borderColor: INK }}><T v="label" color="#FFFFFF">{t('pf_you_here')}</T></View>}
-                    {done && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><Icon name="bon" size={20} /><T v="label" color={colors.green}>{t('pf_rank_done')}</T></View>}
+                    {here && <View style={{ backgroundColor: rankBg(r), borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2, borderWidth: 2, borderColor: INK }}><T v="label" color={readableOn(rankBg(r))}>{t('pf_you_here')}</T></View>}
+                    {done && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><Icon name="bon" size={20} /><T v="label" color={DEEP_GREEN}>{t('pf_rank_done')}</T></View>}
                     {ahead && <Icon name="femen_kle" size={22} />}
                   </Row>
                   {items.length > 0

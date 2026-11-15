@@ -144,9 +144,11 @@ function PathNode({ ls, x, color, current, unitProgress, title, onPress }: { ls:
       <View style={{ alignItems: 'center', transform: [{ translateX: x }] }}>
         {current && (
           <Bob amount={4} duration={1600} style={{ marginBottom: 6, zIndex: 2 }}>
-            <View style={{ backgroundColor: colors.card, borderWidth: 2, borderColor: retry ? colors.orange : colors.line, borderBottomWidth: 4, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 4 }}>
+            {/* the bubble says "Kòmanse": tapping it starts the lesson too (kids tap the word, not only the node) */}
+            <PressScale role="button" accessibilityLabel={t('cp_node_a11y', { x: title, s: stateLabel })} scaleTo={0.94} onPress={() => { tap(); onPress(); }}
+              style={{ backgroundColor: colors.card, borderWidth: 2, borderColor: retry ? colors.orange : colors.line, borderBottomWidth: 4, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 4 }}>
               <T v="h3" color={retry ? '#A64B00' : colors.ink} center>{retry ? t('cp_retry') : t('cp_start')}</T>
-            </View>
+            </PressScale>
             <View style={{ alignSelf: 'center', width: 12, height: 12, marginTop: -8, backgroundColor: colors.card, borderRightWidth: 2, borderBottomWidth: 4, borderColor: retry ? colors.orange : colors.line, transform: [{ rotate: '45deg' }] }} />
           </Bob>
         )}

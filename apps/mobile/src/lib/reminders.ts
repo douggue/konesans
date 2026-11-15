@@ -81,7 +81,9 @@ const DAILY_KEYS: StrKey[] = ['rem_daily_0', 'rem_daily_1', 'rem_daily_2', 'rem_
 const STREAK_KEYS: StrKey[] = ['rem_streak_0', 'rem_streak_1'];
 /** Ti Zwazo's words for one planned reminder. */
 export function reminderText(r: PlannedReminder, lang: 'ht' | 'fr'): { title: string; body: string } {
-  const key = r.kind === 'streak' ? STREAK_KEYS[r.text % STREAK_KEYS.length] : DAILY_KEYS[r.text % DAILY_KEYS.length];
+  // "Seri w: N jou" needs N ≥ 2 (French "1 jours" is wrong, and 1 day is hardly a streak yet): use another friendly text
+  const text = r.kind === 'daily' && r.text === 0 && r.streak < 2 ? 1 : r.text;
+  const key = r.kind === 'streak' ? STREAK_KEYS[text % STREAK_KEYS.length] : DAILY_KEYS[text % DAILY_KEYS.length];
   return { title: tr(r.kind === 'streak' ? 'rem_title_streak' : 'rem_title', lang), body: tr(key, lang, { n: r.streak }) };
 }
 

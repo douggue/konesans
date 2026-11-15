@@ -11,7 +11,7 @@ import { View, Modal, Animated, Easing } from 'react-native';
 import Svg, { Path, Circle, Ellipse, G, Rect, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { router, useIsFocused } from 'expo-router';
 import { RANKS, BADGES, rankForXp, rankUnlocks, type RankDef, type UnlockDef, type AvatarConfig } from '@konesans/core';
-import { T, Button, Icon, Pill } from './index';
+import { T, Button, Icon, Pill, contrast } from './index';
 import { CardReveal } from './CardReveal';
 import { useCards } from '@/lib/cards';
 import { Avatar } from './avatar';
@@ -125,6 +125,7 @@ export function RankUp({ open, to, onClose }: { open: boolean; from: number; to:
   }, [open]);
   if (!open) return null;
   const close = () => { tap(); onClose(); };
+  const onGlow = contrast(rank.color, '#FFFFFF') >= 3 ? '#FFFFFF' : INK;
   return (
     <Modal visible transparent animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={close}>
       <View style={{ flex: 1, backgroundColor: rank.edge, alignItems: 'center', justifyContent: 'center', padding: 22, gap: 14 }}>
@@ -142,8 +143,9 @@ export function RankUp({ open, to, onClose }: { open: boolean; from: number; to:
           <Pop delay={150} rotate={-30} from={0.2}><RankBadge rank={rank} size={150} /></Pop>
           <Burst trigger={open ? 'up' : null} count={16} radius={130} shapes="stars" />
         </View>
-        <Pop delay={380}><T v="display" color="#FFFFFF" center style={{ fontSize: 34, lineHeight: 40 }}>{t('pf_ru_title', { r: rn(rank) })}</T></Pop>
-        <FadeIn delay={480}><T v="bold" color="#FFFFFF" center style={{ opacity: 0.9 }}>{t('pf_rank_level', { n: rank.level })}</T></FadeIn>
+        {/* large text over the glow (rank colour → edge colour): white, or ink on the light ranks (Ti Pous, Malfini, Zetwal) */}
+        <Pop delay={380}><T v="display" color={onGlow} center style={{ fontSize: 34, lineHeight: 40 }}>{t('pf_ru_title', { r: rn(rank) })}</T></Pop>
+        <FadeIn delay={480}><T v="h2" color={onGlow} center>{t('pf_rank_level', { n: rank.level })}</T></FadeIn>
         <Pop delay={560}><Pill text={t('ec_rank_card')} icon="ewo" color={INK} bg={colors.yellowSoft} /></Pop>
         {unlocks.length > 0 && (
           <FadeIn delay={620} style={{ alignSelf: 'stretch' }}>

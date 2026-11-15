@@ -37,11 +37,11 @@ export default function Review() {
   useEffect(() => { if (q && settings.voice && profile.age === '6-8') speak(l(q.prompt), profile.lang); }, [s.index]);
 
   /** Record what was answered (all of it, or the part done before quitting). */
-  const save = (sess: SoloSession) => {
+  const save = (sess: SoloSession, partial = false) => {
     if (saved.current || !sess.answers.length) return null;
     saved.current = true;
     const answers = sess.answers.map((a, i) => ({ id: sess.questions[i].id, correct: a.correct }));
-    const r = useStore.getState().recordReview(answers);
+    const r = useStore.getState().recordReview(answers, partial);
     return { mastered: r.mastered, xp: r.xp, again: answers.filter((a) => !a.correct).length };
   };
 
@@ -103,7 +103,7 @@ export default function Review() {
       <Sheet open={quitting} title={t('quit_q')} onClose={() => setQuitting(false)}>
         <T v="small" center color={colors.muted}>{t('rv_quit_note')}</T>
         <Button title={t('stay')} onPress={() => setQuitting(false)} />
-        <Button variant="secondary" color={colors.red} title={t('quit')} onPress={() => { setQuitting(false); save(s); leave(goBack); }} />
+        <Button variant="secondary" color={colors.red} title={t('quit')} onPress={() => { setQuitting(false); save(s, !s.finished); leave(goBack); }} />
       </Sheet>
     </Screen>
   );

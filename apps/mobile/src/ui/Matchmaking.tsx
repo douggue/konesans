@@ -4,6 +4,7 @@
  *  1. Ti Zwazo sits in radar rings, "N ap chèche yon bon advèsè pou ou…", the kid's chip, a waiting button
  *  2. the kid's card slides in from the left, the opponent's from the right
  *  3. a big "VS" slams down and the screen shakes, then onDone().
+ * A friend duel (`title`) says it is waiting for the friend with the code, not looking for a stranger.
  * Online, `opponent` is null while the server is still looking: the radar keeps going until a player is found
  * (`hint` shows under it after a few seconds).
  * `instant` (Robo on the phone): nobody is being searched for, so there is no radar — straight to the face-off,
@@ -23,7 +24,7 @@ import { tap, sfx, music } from '@/lib/audio';
 /** The search screen's colour (white text 7.5:1). */
 export const MATCH_BG = colors.blue;
 
-export function Matchmaking({ me, opponent, onDone, hint, instant }: { me: { name: string; avatar: AvatarConfig; sub?: string }; opponent: { name: string; avatar: AvatarConfig; sub?: string } | null; onDone: () => void; hint?: string; instant?: boolean }) {
+export function Matchmaking({ me, opponent, onDone, hint, instant, title }: { me: { name: string; avatar: AvatarConfig; sub?: string }; opponent: { name: string; avatar: AvatarConfig; sub?: string } | null; onDone: () => void; hint?: string; instant?: boolean; /** the search line (default "N ap chèche yon bon advèsè pou ou…"); a friend duel waits for the friend instead */ title?: string }) {
   const t = useT();
   const [phase, setPhase] = useState<'search' | 'found'>(instant ? 'found' : 'search');
   const done = useRef(false);
@@ -86,7 +87,7 @@ export function Matchmaking({ me, opponent, onDone, hint, instant }: { me: { nam
               <View style={{ position: 'absolute', width: 170, height: 170, borderRadius: 85, backgroundColor: 'rgba(255,255,255,0.12)' }} />
               <Bob amount={6} duration={1800}><Mascot size={150} mood="think" /></Bob>
             </View>
-            <T v="h1" center color="#FFFFFF" style={{ paddingHorizontal: 20 }}>{t('mm_looking').replace(/…$/, '')}{'.'.repeat(dots)}<T v="h1" color="transparent">{'.'.repeat(3 - dots)}</T></T>
+            <T v="h1" center color="#FFFFFF" style={{ paddingHorizontal: 20 }}>{(title ?? t('mm_looking')).replace(/…$/, '')}{'.'.repeat(dots)}<T v="h1" color="transparent">{'.'.repeat(3 - dots)}</T></T>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'rgba(255,255,255,0.14)', borderRadius: 999, paddingVertical: 6, paddingLeft: 6, paddingRight: 16 }}>
               <Avatar a={me.avatar} size={40} />
               <T v="bold" color="#FFFFFF" style={{ flexShrink: 1 }}>{me.name}{me.sub ? ` · ${me.sub}` : ''}</T>

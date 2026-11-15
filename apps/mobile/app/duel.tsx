@@ -132,7 +132,7 @@ function DuelGame({ vm, results, onPick, onReact, onQuit, onPause, online }: { v
   );
 }
 
-function DuelEnd({ won, draw, me, op, note, onReport, again }: { won: boolean; draw: boolean; me: Side; op: Side; note?: StrKey | null; onReport?: () => Promise<void>; /** "Ankò" goes here (a friend duel: back to the code screen) */ again?: string }) {
+function DuelEnd({ won, draw, me, op, note, onReport, again, againTitle }: { won: boolean; draw: boolean; me: Side; op: Side; note?: StrKey | null; onReport?: () => Promise<void>; /** "Ankò" goes here (a friend duel: back to the code screen) */ again?: string; againTitle?: string }) {
   const t = useT();
   const stats = useStore((s) => s.stats);
   const [reported, setReported] = useState(false);
@@ -159,7 +159,7 @@ function DuelEnd({ won, draw, me, op, note, onReport, again }: { won: boolean; d
         <FadeIn delay={1250}><T v="small" color={colors.muted}>{t('wins')}: {stats.duelWins} / {stats.duels}</T></FadeIn>
       </View>
       <View style={{ marginTop: 'auto', gap: 10 }}>
-        <Button title={t('again')} onPress={() => router.replace((again ?? '/duel') as never)} />
+        <Button title={againTitle ?? t('again')} onPress={() => router.replace((again ?? '/duel') as never)} />
         <Button variant="secondary" title={t('done')} onPress={() => (router.canGoBack() ? router.back() : router.replace('/home'))} />
         {onReport && (reported
           ? <T v="small" center color={colors.muted}>{t('reported')}</T>
@@ -175,6 +175,9 @@ function ScoreNum({ n, color, small }: { n: number; color: string; small?: boole
 }
 
 // ─── online ──────────────────────────────────────────────────────────────────
+
+/** Give up on a friend match whose other kid never came: a little after the server closes it (60 s). */
+const FRIEND_NO_SHOW_MS = 65_000;
 
 const HAIR = ['afro', 'braids', 'short', 'puffs', 'bun', 'mohawk', 'locs'] as const;
 const EXTRA = ['none', 'glasses', 'cap', 'mask', 'uniform', 'headphones', 'strawhat', 'shades', 'crown', 'flower', 'bowtie', 'catears', 'headwrap'] as const;
@@ -230,7 +233,10 @@ function OnlineDuel({ onFallback, match, matchAge }: { onFallback: (note: StrKey
       ctl.current = c;
     })();
     const id = setInterval(() => setNow(Date.now()), 200);
-    return () => { alive = false; clearInterval(id); ctl.current?.leave(); ctl.current = null; };
+    // a friend match closes on the server when the other kid never comes (60 s, PRIVATE_NO_SHOW_MS) and the socket
+    // is not told: don't leave the kid on "N ap tann zanmi w…" forever
+    const noShow = match ? setTimeout(() => { if (alive && !started.current) onFallback('online_err'); }, FRIEND_NO_SHOW_MS) : undefined;
+    return () => { alive = false; clearInterval(id); if (noShow) clearTimeout(noShow); ctl.current?.leave(); ctl.current = null; };
   }, []);
 
   const myId = ctl.current?.myId;
@@ -254,7 +260,8 @@ function OnlineDuel({ onFallback, match, matchAge }: { onFallback: (note: StrKey
         <TopBar close ink="#FFFFFF" title={match ? t('fr_title') : t('duel_bot')} onBack={() => router.back()} />
         <Matchmaking me={{ name: profile.username, avatar: myAvatar, sub: t(AGE_KEY[profile.age]) }}
           opponent={op ? { name: op.name, avatar: op.avatar, sub: op.isBot ? t('robot') : t('online_player') } : null}
-          hint={match ? t('fr_wait_host', { age: t(AGE_KEY[(matchAge && matchAge in AGE_KEY ? matchAge : profile.age) as keyof typeof AGE_KEY]) }) : t('robo_soon')} onDone={() => setIntro(false)} />
+          title={match ? t('fr_waiting') : undefined}
+          hint={match ? t('fr_questions_for', { age: t(AGE_KEY[(matchAge && matchAge in AGE_KEY ? matchAge : profile.age) as keyof typeof AGE_KEY]) }) : t('robo_soon')} onDone={() => setIntro(false)} />
       </Screen>
     );
   }
@@ -262,7 +269,7 @@ function OnlineDuel({ onFallback, match, matchAge }: { onFallback: (note: StrKey
   if (v.phase === 'ended' || lost) {
     const won = !lost && v.winnerId === myId; const draw = !lost && v.winnerId === null;
     const note: StrKey | null = lost ? 'online_err' : v.endReason === 'forfeit' && won ? 'player_left' : null;
-    return <DuelEnd won={won} draw={draw} me={me} op={op} note={note} again={match ? '/friend' : undefined}
+    return <DuelEnd won={won} draw={draw} me={me} op={op} note={note} again={match ? '/friend' : undefined} againTitle={match ? t('fr_again') : undefined}
       onReport={!op.isBot && opP ? () => ctl.current?.report(opP.id, 'name') ?? Promise.resolve() : undefined} />;
   }
 
@@ -346,6 +353,8 @@ function LocalDuel({ note }: { note: StrKey | null }) {
   useEffect(() => {
     if (s.phase === 'ended' && !recorded.current) {
       recorded.current = true;
+      // the kid quit (✕ / back → "Kite kanmenm"): no XP, no streak day, no duel counted — else quitting at once farms them
+      if (s.endReason === 'forfeit' && s.winnerId !== ME) return;
       const me = s.players.find((p) => p.id === ME)!;
       recordDuel(s.winnerId === ME, s.winnerId === null, me.score, duelAnswers(results.current));
     }
