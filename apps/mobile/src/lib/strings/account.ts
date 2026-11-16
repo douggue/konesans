@@ -1,6 +1,6 @@
 /** Strings for the kid's account: recovery code, cloud save, restoring on a new phone. Kreyòl first, French second. */
 export const ACCOUNT_STRINGS = {
-  ac_row: ['Kòd pou rekipere pwogrè m', 'Code pour récupérer ma progression'],
+  ac_row: ['Kòd pou rekipere pwogrè\u00a0m', 'Code pour récupérer ma\u00a0progression'],
   ac_row_sub: ['Pou jwenn pwogrè w sou yon lòt telefòn', 'Pour retrouver ta progression sur un autre téléphone'],
   ac_intro: ['Si w chanje telefòn oswa si w pèdi l, kòd sa a fè w jwenn tout pwogrè w ankò.', 'Si tu changes de téléphone ou si tu le perds, ce code te rend toute ta progression.'],
   ac_hint: ['Ekri l sou papye / montre paran w', 'Écris-le sur papier / montre-le à tes parents'],
