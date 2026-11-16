@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import { BADGES } from '@konesans/core';
-import { Screen, T, Row, TopBar, Icon, Progress, FadeIn, Pop } from '@/ui';
+import { Screen, T, Row, Icon, Progress, FadeIn, Pop, HeroHeader } from '@/ui';
 import { colors } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT, formatDate, type StrKey } from '@/lib/i18n';
@@ -50,9 +50,14 @@ export default function Trophies() {
   };
 
   return (
-    <Screen>
-      <TopBar title={t('trophies')} sub={`${earned.length} / ${BADGES.length}`} />
-      <T v="body" color={colors.muted}>{t('trophies_sub')}</T>
+    <Screen bleed>
+      <HeroHeader color={colors.yellowDark} title={t('trophies')} sub={t('trophies_sub')} motif="sitadel" mascot mood="proud">
+        <Row gap={8}>
+          <Icon name="twofe" size={28} />
+          <T v="h1" color={colors.ink} style={{ fontVariant: ['tabular-nums'] }}>{earned.length} / {BADGES.length}</T>
+        </Row>
+        <Progress value={earned.length / BADGES.length} color={colors.ink} track="rgba(20,33,61,0.15)" height={10} />
+      </HeroHeader>
       {earned.length > 0 && <>
         <T v="h2">{t('earned')}</T>
         <Row gap={10} style={{ flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'stretch' }}>{earned.map((b, i) => <Tile key={b.id} id={b.id} i={i} on />)}</Row>

@@ -2,7 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
 import { categoryLevel } from '@konesans/core';
-import { Screen, T, Card, Row, BottomNav, Progress, IconTile, PressScale, FadeIn } from '@/ui';
+import { Screen, T, Card, Row, BottomNav, Progress, IconTile, PressScale, FadeIn, Chevron } from '@/ui';
 import { colors } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT } from '@/lib/i18n';
@@ -26,7 +26,7 @@ export default function Categories() {
       {features.math && <FadeIn delay={60}><Card onPress={() => router.push('/math')} soft={colors.orangeSoft} edge={colors.orange} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <IconTile name="kalkil" bg="#FFFFFF" size={48} />
         <View style={{ flex: 1 }}><T v="h3">{t('math_title')}</T><T v="small" color={colors.muted}>{t('math_60s')} · {stats.mathBest ? t('math_record', { n: stats.mathBest }) : t('math_how_many')}</T></View>
-        <T v="h2" color={colors.orange}>›</T>
+        <Chevron />
       </Card></FadeIn>}
       {/* the difficulty sits with what it changes: the categories below (and Peyi), not Kalkil Mantal */}
       <View style={{ gap: 6 }}>

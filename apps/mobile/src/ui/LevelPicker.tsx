@@ -1,6 +1,6 @@
-/** The one level chooser used everywhere (Peyi, Defi categories…): ★ / ★★ / ★★★ cards, the chosen one filled. */
+/** The one level chooser used everywhere (Peyi, Defi categories…): 1 / 2 / 3 drawn stars, the chosen card filled. */
 import React from 'react';
-import { Row, T, PressScale, readableOn, DEEP_GREEN } from './index';
+import { Row, T, Icon, PressScale, readableOn, DEEP_GREEN } from './index';
 import { colors, radius } from '@/lib/theme';
 import { tap } from '@/lib/audio';
 
@@ -16,7 +16,7 @@ export function LevelPicker({ value, onChange, labels }: { value: Level3; onChan
         return (
           <PressScale debounceMs={0} key={l} role="button" accessibilityState={{ selected: on }} accessibilityLabel={labels[l - 1]} onPress={() => { tap(); onChange(l); }}
             style={{ flex: 1, minHeight: 72, gap: 2, paddingHorizontal: 6, borderRadius: radius.md, backgroundColor: on ? color : colors.card, borderWidth: 2, borderColor: on ? color : colors.line, borderBottomWidth: on ? 2 : 5, alignItems: 'center', justifyContent: 'center' }}>
-            <T v="h3" color={fg}>{'★'.repeat(l)}</T>
+            <Row gap={1}>{Array.from({ length: l }, (_, i) => <Icon key={i} name="pwen" size={20} />)}</Row>
             <T v="bold" color={fg} numberOfLines={1} adjustsFontSizeToFit>{labels[l - 1]}</T>
           </PressScale>
         );

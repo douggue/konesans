@@ -14,6 +14,9 @@ import { PressScale, Shake, Bounce, Burst, Pulse, Pop, Bob, Hop, AnimatedBar, us
 import { FLAG_SVG } from './flags';
 export * from './motion';
 export { Avatar, AvatarArt, avatarFromSeed } from './avatar';
+export * from './kit';
+export type { IconName } from './icons';
+import { Dots } from './kit';
 
 // ─── Text ────────────────────────────────────────────────────────────────────
 type Variant = 'display' | 'h1' | 'h2' | 'h3' | 'body' | 'bold' | 'small' | 'label';
@@ -37,11 +40,11 @@ export function T({ v = 'body', color = colors.ink, style, children, center, ...
 
 // ─── Layout ──────────────────────────────────────────────────────────────────
 /** Every screen. Clears the status bar and, at the bottom, the Android gesture / 3-button bar (edge-to-edge). */
-export function Screen({ children, scroll = true, pad = 20, bottom, style }: { children: React.ReactNode; scroll?: boolean; pad?: number; bottom?: React.ReactNode; style?: ViewStyle }) {
+export function Screen({ children, scroll = true, pad = 20, bottom, style, bleed }: { children: React.ReactNode; scroll?: boolean; pad?: number; bottom?: React.ReactNode; style?: ViewStyle; /** the first child is a full-bleed <HeroHeader> that runs under the status bar */ bleed?: boolean }) {
   const insets = useSafeAreaInsets();
   const padBottom = bottom ? 24 : 24 + insets.bottom; // with a BottomNav, the nav itself clears the system bar
   return (
-    <SafeAreaView style={[{ flex: 1, backgroundColor: colors.bg }, style]} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={[{ flex: 1, backgroundColor: colors.bg }, style]} edges={bleed ? ['left', 'right'] : ['top', 'left', 'right']}>
       {scroll ? (
         <ScrollView contentContainerStyle={{ padding: pad, paddingBottom: padBottom, gap: 14 }} keyboardShouldPersistTaps="handled">{children}</ScrollView>
       ) : (
@@ -84,12 +87,12 @@ export const DEEP_GREEN = '#1E7A33';
 const fillFor = (c: string) => (c === colors.green ? DEEP_GREEN : c);
 
 // ─── Buttons ─────────────────────────────────────────────────────────────────
-export function Button({ title, onPress, variant = 'primary', color = colors.blue, icon, disabled, style, small, lines = 1 }: { title: string; onPress: () => void; variant?: 'primary' | 'secondary' | 'ghost'; color?: string; icon?: IconName; disabled?: boolean; style?: StyleProp<ViewStyle>; small?: boolean; /** let a long label wrap (narrow places) instead of being cut */ lines?: number }) {
+export function Button({ title, onPress, variant = 'primary', color = colors.blue, icon, disabled, style, small, lines = 1, loading }: { title: string; onPress: () => void; variant?: 'primary' | 'secondary' | 'ghost'; color?: string; icon?: IconName; disabled?: boolean; style?: StyleProp<ViewStyle>; small?: boolean; /** let a long label wrap (narrow places) instead of being cut */ lines?: number; /** busy: hopping dots in place of the label (same size, so nothing jumps), not pressable */ loading?: boolean }) {
   const primary = variant === 'primary';
   const bg = primary ? fillFor(color) : variant === 'secondary' ? colors.card : 'transparent';
   const fg = primary ? readableOn(bg) : color;
   return (
-    <PressScale role="button" disabled={disabled} scaleTo={0.96} onPress={() => { tap(); sfx('tap'); onPress(); }} style={({ pressed }) => [
+    <PressScale role="button" disabled={disabled || loading} accessibilityLabel={title} accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }} scaleTo={0.96} onPress={() => { tap(); sfx('tap'); onPress(); }} style={({ pressed }) => [
       { minHeight: small ? 44 : 54, borderRadius: radius.md, paddingHorizontal: 20, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, backgroundColor: bg },
       primary && { borderBottomWidth: 4, borderBottomColor: 'rgba(0,0,0,0.25)' },
       variant === 'secondary' && { borderWidth: 2, borderColor: colors.line, borderBottomWidth: 5 },
@@ -97,8 +100,10 @@ export function Button({ title, onPress, variant = 'primary', color = colors.blu
       disabled && { opacity: 0.45 },
       style,
     ]}>
-      {icon && <Icon name={icon} size={22} />}
-      <T v="h3" color={fg} numberOfLines={lines} adjustsFontSizeToFit={lines === 1} style={{ flexShrink: 1, textAlign: 'center' }}>{title}</T>
+      {loading ? <Dots color={fg} size={8} /> : <>
+        {icon && <Icon name={icon} size={22} />}
+        <T v="h3" color={fg} numberOfLines={lines} adjustsFontSizeToFit={lines === 1} style={{ flexShrink: 1, textAlign: 'center' }}>{title}</T>
+      </>}
     </PressScale>
   );
 }
@@ -149,7 +154,7 @@ export function Stars({ n, size = 18, pop }: { n: number; size?: number; pop?: b
   return (
     <Row gap={2}>
       {[1, 2, 3].map((i) => {
-        const star = <T style={{ fontSize: size, lineHeight: size + 4 }} color={i <= n ? colors.yellowDark : colors.line}>★</T>;
+        const star = <Icon name={i <= n ? 'pwen' : 'zetwal_gri'} size={size + 2} />;
         return pop ? <Pop key={i} delay={250 + i * 220} rotate={-25}>{star}</Pop> : <View key={i}>{star}</View>;
       })}
     </Row>
@@ -161,11 +166,11 @@ export function TopBar({ title, sub, right, onBack, close, ink = colors.ink }: {
   const t = useT();
   return (
     <Row gap={12}>
-      <PressScale role="button" accessibilityLabel={close ? t('close') : t('back')} scaleTo={0.9} onPress={() => { tap(); onBack ? onBack() : router.canGoBack() ? router.back() : router.replace('/home'); }} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.card, borderWidth: 2, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' }}>
+      <PressScale role="button" accessibilityLabel={close ? t('close') : t('back')} scaleTo={0.9} onPress={() => { tap(); onBack ? onBack() : router.canGoBack() ? router.back() : router.replace('/home'); }} style={({ pressed }) => [{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.card, borderWidth: 2, borderColor: colors.line, borderBottomWidth: 4, alignItems: 'center', justifyContent: 'center' }, pressed && { borderBottomWidth: 2, transform: [{ translateY: 2 }] }]}>
         <Icon name={close ? 'femen' : 'retounen'} size={24} />
       </PressScale>
       <View style={{ flex: 1 }}>
-        <T v="h1" color={ink}>{title}</T>
+        <T v="h1" color={ink} accessibilityRole="header">{title}</T>
         {sub ? <T v="small" color={ink === colors.ink ? colors.muted : ink}>{sub}</T> : null}
       </View>
       {right}

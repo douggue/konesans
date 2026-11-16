@@ -6,7 +6,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
 import { startSolo, answerSolo, soloSummary, type SoloSession } from '@konesans/core';
-import { Screen, T, Button, Progress, Sheet, TopBar, Mascot, Pill, SlideSwap, Pop, FadeIn } from '@/ui';
+import { Screen, T, Button, Progress, Sheet, TopBar, Mascot, Pill, SlideSwap, Pop, FadeIn, EmptyState } from '@/ui';
 import { QuestionView } from '@/ui/QuestionView';
 import { AnswerFeedbackSheet, StreakLabel, trailingStreak } from '@/ui/feedback';
 import { ResultScreen, tierFor, useStdStats } from '@/ui/ResultScreen';
@@ -66,12 +66,7 @@ export default function Review() {
     return (
       <Screen scroll={false}>
         <TopBar close title={t('rv_title')} onBack={goBack} />
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-          <Pop><Mascot size={140} mood="cool" /></Pop>
-          <T v="h1" center>{t('rv_none_title')}</T>
-          <T v="body" center color={colors.muted}>{t('rv_none_sub')}</T>
-        </View>
-        <Button title={t('done')} onPress={goBack} />
+        <EmptyState mood="cool" badge="bon" title={t('rv_none_title')} sub={t('rv_none_sub')} action={{ title: t('done'), onPress: goBack }} />
       </Screen>
     );
   }

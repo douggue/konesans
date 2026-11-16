@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { levelById, run, countBlocks, validateProgram, isWall, type Block, type Robot, type RunResult, type Level } from '@konesans/core';
-import { Screen, T, Button, Card, Row, TopBar, Icon, Stars, Pill, Mascot, PressScale, Sheet, readableOn } from '@/ui';
+import Svg, { Path as SvgPath } from 'react-native-svg';
+import { Screen, T, Button, Card, Row, TopBar, Icon, IconButton, Stars, Pill, Mascot, PressScale, Sheet, FadeIn, readableOn } from '@/ui';
 import { useQuitGuard } from '@/ui/activity';
 import { colors, radius } from '@/lib/theme';
 import { useStore } from '@/lib/store';
@@ -17,7 +18,7 @@ const PALETTE: { type: Kind; icon: 'avanse' | 'vire_goch' | 'vire_dwat' | 'repet
   { type: 'avanse', icon: 'avanse', color: AVANSE_BLUE }, { type: 'vire_goch', icon: 'vire_goch', color: colors.orange }, { type: 'vire_dwat', icon: 'vire_dwat', color: colors.orange },
   { type: 'repete', icon: 'repete', color: colors.purple }, { type: 'si_mi', icon: 'simi', color: colors.redLight }, { type: 'jiska_zetwal', icon: 'zetwal_gri', color: colors.green },
 ];
-const ARROW: Record<Robot['dir'], string> = { N: '▲', E: '▶', S: '▼', W: '◀' };
+const ARROW_DEG: Record<Robot['dir'], number> = { N: 0, E: 90, S: 180, W: 270 };
 /** where the little "facing" arrow sits around the robot */
 const ARROW_POS: Record<Robot['dir'], object> = { N: { top: -3, alignSelf: 'center' }, S: { bottom: -3, alignSelf: 'center' }, E: { right: -3, top: '30%' }, W: { left: -3, top: '30%' } };
 
@@ -78,8 +79,8 @@ export default function CodingLevel() {
   return (
     <Screen>
       <TopBar title={`${lv.id}. ${fr ? lv.titleFr : lv.title}`} sub={`${countBlocks(program)} ${t('blocks')} · ${t('par_goal', { n: lv.par })}`} onBack={() => router.back()}
-        right={<PressScale debounceMs={0} role="button" onPress={() => { tap(); setShowHint(!showHint); }} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.yellowSoft, alignItems: 'center', justifyContent: 'center' }}><Icon name="endis" size={26} /></PressScale>} />
-      {showHint && <Card soft={colors.yellowSoft} edge={colors.yellowDark}><T v="body">{fr ? lv.hintFr : lv.hint}</T></Card>}
+        right={<IconButton icon="endis" bg={colors.yellowSoft} size={26} label={t('pl_hint')} onPress={() => setShowHint(!showHint)} />} />
+      {showHint && <FadeIn from={8}><Card soft={colors.yellowSoft} edge={colors.yellowDark} style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}><Mascot size={48} mood="think" live={false} /><T v="body" style={{ flex: 1 }}>{fr ? lv.hintFr : lv.hint}</T></Card></FadeIn>}
 
       {/* Maze */}
       <View style={{ alignSelf: 'center', borderWidth: 3, borderColor: colors.ink, borderRadius: 12, overflow: 'hidden', backgroundColor: '#DCEBFF' }}>
@@ -92,12 +93,12 @@ export default function CodingLevel() {
               const here = robot.r === r && robot.c === c;
               return (
                 <View key={c} style={{ width: cell, height: cell, backgroundColor: wall ? colors.ink : (r + c) % 2 ? '#E8F0FF' : '#F6F9FF', alignItems: 'center', justifyContent: 'center' }}>
-                  {star && !here && <T style={{ fontSize: cell * 0.6, lineHeight: cell * 0.7 }} color={colors.yellowDark}>★</T>}
-                  {gem && <T style={{ fontSize: cell * 0.45, lineHeight: cell * 0.6 }}>💎</T>}
+                  {star && !here && <Icon name="pwen" size={cell * 0.7} />}
+                  {gem && <Icon name="jem" size={cell * 0.6} />}
                   {here && (
                     <View accessibilityLabel="Robo" /* i18n-ok: the robot's name */ style={{ width: cell * 0.9, height: cell * 0.9, borderRadius: cell * 0.28, backgroundColor: result?.ok ? colors.greenSoft : '#FFFFFF', borderWidth: 2, borderColor: result?.ok ? colors.green : colors.ink, alignItems: 'center', justifyContent: 'center' }}>
                       <Icon name="robo" size={cell * 0.72} />
-                      <View style={[{ position: 'absolute' }, ARROW_POS[robot.dir]]}><T color={colors.red} style={{ fontSize: cell * 0.26, lineHeight: cell * 0.3 }}>{ARROW[robot.dir]}</T></View>
+                      <View style={[{ position: 'absolute' }, ARROW_POS[robot.dir]]}><Svg width={cell * 0.26} height={cell * 0.26} viewBox="0 0 10 10" style={{ transform: [{ rotate: `${ARROW_DEG[robot.dir]}deg` }] }}><SvgPath d="M5 1L9.2 9H.8z" fill={colors.red} stroke={colors.ink} strokeWidth={1} strokeLinejoin="round" /></Svg></View>
                     </View>
                   )}
                 </View>
@@ -110,7 +111,7 @@ export default function CodingLevel() {
       {/* Program */}
       <Card style={{ minHeight: 90, gap: 6 }} edge={colors.lineStrong}>
         <Row><T v="small" color={colors.muted} style={{ flex: 1 }}>{t('your_program')}</T>
-          {program.length > 0 && <PressScale debounceMs={0} role="button" onPress={() => { tap(); removeLast(); }} style={{ minHeight: 36, paddingHorizontal: 10, justifyContent: 'center' }}><T v="small" color={colors.red}>⌫ {t('clear')}</T></PressScale>}
+          {program.length > 0 && <PressScale debounceMs={0} role="button" onPress={() => { tap(); removeLast(); }} accessibilityLabel={t('clear')} style={{ minHeight: 44, paddingHorizontal: 10, justifyContent: 'center' }}><Row gap={4}><Icon name="mwens" size={18} /><T v="small" color={colors.red}>{t('clear')}</T></Row></PressScale>}
         </Row>
         {program.length === 0 ? <T v="body" color={colors.muted}>{t('tap_blocks')}</T> : <ProgramList blocks={program} path={[]} cursor={cursor} setCursor={(c) => { tap(); setCursor(c); }} onTimes={(path, d) => { reset(); setProgram((p) => bumpTimes(p, path, d)); }} t={t} />}
       </Card>
@@ -207,7 +208,7 @@ function ProgramList({ blocks, path, cursor, setCursor, onTimes, t }: { blocks: 
           </View>
         );
       })}
-      {path.length === 0 && cursor.length > 0 && <PressScale debounceMs={0} role="button" onPress={() => setCursor([])} style={{ minHeight: 32, justifyContent: 'center' }}><T v="small" color={colors.blue}>{t('back_to_program')}</T></PressScale>}
+      {path.length === 0 && cursor.length > 0 && <PressScale debounceMs={0} role="button" onPress={() => setCursor([])} style={{ minHeight: 32, justifyContent: 'center' }}><Row gap={6}><Icon name="retounen" size={18} /><T v="small" color={colors.blue}>{t('back_to_program')}</T></Row></PressScale>}
     </View>
   );
 }

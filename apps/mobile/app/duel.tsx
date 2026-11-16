@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { createDuel, questionTimeMs, reduce, planBotAnswer, planBotReaction, adaptBot, BOT_PROFILES, BOT_NAMES, rng, type DuelState, type ReactionId, type AvatarConfig, type Question } from '@konesans/core';
-import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Pill, Avatar, avatarFromSeed, Bounce, Drop, FadeIn, Pop, Confetti, SlideSwap, useCountUp } from '@/ui';
+import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Pill, Avatar, Icon, avatarFromSeed, Bounce, Drop, FadeIn, Pop, Confetti, SlideSwap, useCountUp } from '@/ui';
 import { Matchmaking, MATCH_BG } from '@/ui/Matchmaking';
 import { QuestionView } from '@/ui/QuestionView';
 import { RankUpListener } from '@/ui/RankUp';
@@ -85,6 +85,7 @@ function DuelGame({ vm, results, onPick, onReact, onQuit, onPause, online }: { v
     results.current.push(!timedOut && me.chosen === vm.question.answer);
     if (results.current[results.current.length - 1] === false && vm.question.answer >= 0) useStore.getState().noteMistakes([vm.question]); // "Revize erè m"
     sfx(answerSfx(results.current, timedOut));
+    tap(results.current[results.current.length - 1] ? 'success' : 'error');
   }, [reveal, vm.index]);
   return (
     <Screen>
@@ -102,7 +103,7 @@ function DuelGame({ vm, results, onPick, onReact, onQuit, onPause, online }: { v
         </Row>
         <View style={{ flex: 1, alignItems: 'center', gap: 2 }}>
           <Bounce trigger={op.score || null} amount={0.12}><Avatar a={op.avatar} size={40} /></Bounce>
-          <T v="small" center color={colors.red} numberOfLines={2} style={{ fontFamily: 'Nunito_800ExtraBold' }}>{op.isBot && !/robo/i.test(op.name) ? '🤖 ' : ''}{op.name}</T>
+          <Row gap={3} style={{ justifyContent: 'center', flexWrap: 'wrap' }}>{op.isBot && !/robo/i.test(op.name) ? <Icon name="robo" size={16} /> : null}<T v="small" center color={colors.red} numberOfLines={2} style={{ fontFamily: 'Nunito_800ExtraBold', flexShrink: 1 }}>{op.name}</T></Row>
         </View>
       </Card>
         {/* reaction bubbles, hanging under each player's avatar (over the timer / question for ~2 s) */}
@@ -139,6 +140,7 @@ function DuelEnd({ won, draw, me, op, note, onReport, again, againTitle }: { won
   useEffect(() => {
     music(null);
     sfx(won ? 'win' : draw ? 'draw' : 'lose');
+    tap(won || draw ? 'success' : 'error');
     const id = setTimeout(() => sfx('coin'), 1200); // with the XP pill
     return () => clearTimeout(id);
   }, []);
@@ -153,7 +155,7 @@ function DuelEnd({ won, draw, me, op, note, onReport, again, againTitle }: { won
         <Row gap={16}>
           <FadeIn delay={650} x={-40} from={0} style={{ alignItems: 'center', gap: 4 }}><Avatar a={me.avatar} size={64} live={won} /><ScoreNum n={me.score} color={colors.blue} /><T v="small" color={colors.muted}>{me.name}</T></FadeIn>
           <T v="h2" color={colors.muted}>{t('vs')}</T>
-          <FadeIn delay={650} x={40} from={0} style={{ alignItems: 'center', gap: 4 }}><Avatar a={op.avatar} size={64} /><ScoreNum n={op.score} color={colors.red} /><T v="small" color={colors.muted}>{op.isBot ? '🤖 ' : ''}{op.name}</T></FadeIn>
+          <FadeIn delay={650} x={40} from={0} style={{ alignItems: 'center', gap: 4 }}><Avatar a={op.avatar} size={64} /><ScoreNum n={op.score} color={colors.red} /><Row gap={3}>{op.isBot ? <Icon name="robo" size={16} /> : null}<T v="small" color={colors.muted}>{op.name}</T></Row></FadeIn>
         </Row>
         <Pop delay={1100}><Pill text={`+${won ? 40 : draw ? 25 : 15} XP`} color="#5C4600" bg={colors.yellowSoft} icon="pwen" /></Pop>
         <FadeIn delay={1250}><T v="small" color={colors.muted}>{t('wins')}: {stats.duelWins} / {stats.duels}</T></FadeIn>

@@ -118,7 +118,7 @@ export function RankUp({ open, to, onClose }: { open: boolean; from: number; to:
   const glow = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (!open) return;
-    sfx('level');
+    sfx('level'); tap('success');
     const id = setTimeout(() => sfx('badge'), 650);
     if (!reduceMotion()) Animated.loop(Animated.timing(glow, { toValue: 1, duration: 2400, easing: Easing.linear, useNativeDriver: true })).start();
     return () => { clearTimeout(id); glow.stopAnimation(); };

@@ -4,10 +4,10 @@
  * keep (the code's is the default) → done.
  */
 import React, { useState } from 'react';
-import { View, TextInput, ActivityIndicator } from 'react-native';
+import { View, TextInput } from 'react-native';
 import { router } from 'expo-router';
 import type { AvatarConfig, SavePreview } from '@konesans/core';
-import { Screen, T, Card, TopBar, Button, Mascot, Avatar, avatarFromSeed, FadeIn, Pop, PressScale } from '@/ui';
+import { Screen, T, Card, TopBar, Button, Mascot, Avatar, avatarFromSeed, FadeIn, Pop, PressScale, Loader } from '@/ui';
 import { colors, fonts } from '@/lib/theme';
 import { useT, type StrKey } from '@/lib/i18n';
 import { tap, sfx } from '@/lib/audio';
@@ -93,7 +93,7 @@ export default function Recover() {
             placeholder={t('rc_ph')} placeholderTextColor="#B9C2D6" onSubmitEditing={check} returnKeyType="go" testID="code-input"
             style={{ minHeight: 64, borderWidth: 3, borderColor: err ? colors.red : colors.blue, borderRadius: 18, paddingHorizontal: 16, fontFamily: fonts.display, fontSize: 30, letterSpacing: 2, textAlign: 'center', color: colors.ink, backgroundColor: colors.card }} />
           {err ? <T v="bold" center color={colors.red}>{t(err)}</T> : null}
-          {busy ? <ActivityIndicator color={colors.blue} style={{ minHeight: 54 }} /> : <Button title={t('check')} disabled={input.trim().length < 6} onPress={check} />}
+          <Button title={t('check')} loading={busy} disabled={input.trim().length < 6} onPress={check} />
           {googleEnabled() && !busy ? <><T v="small" center color={colors.muted}>{t('gg_or')}</T><Button variant="secondary" title={t('gg_login')} onPress={() => setGate(true)} /></> : null}
         </FadeIn>
       )}
@@ -118,11 +118,7 @@ export default function Recover() {
       )}
 
       {step === 'working' && (
-        <View style={{ alignItems: 'center', gap: 14, paddingVertical: 40 }}>
-          <Mascot size={110} mood="think" />
-          <ActivityIndicator color={colors.blue} />
-          <T v="bold" color={colors.muted}>{t('rc_working')}</T>
-        </View>
+        <Loader fill={false} label={t('rc_working')} />
       )}
 
       {(step === 'done' || step === 'kept') && (

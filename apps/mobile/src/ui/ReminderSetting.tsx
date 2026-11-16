@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Switch, Linking } from 'react-native';
 import { streakNudgeHour } from '@konesans/core';
-import { T, Card, Row, Button, Sheet, PressScale, Mascot } from './index';
+import { T, Card, Row, Button, Sheet, PressScale, Mascot, SectionLabel, stripEmoji } from './index';
 import { colors } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT } from '@/lib/i18n';
@@ -42,7 +42,7 @@ export function ReminderSetting() {
   const nudge = streakNudgeHour(bedtime);
   return (
     <>
-      <T v="label" color={colors.muted}>{t('rem_section')}</T>
+      <SectionLabel>{t('rem_section')}</SectionLabel>
       <Card style={{ gap: 8, paddingVertical: 10 }}>
         <Row style={{ minHeight: 56 }}>
           <Mascot size={44} mood={on ? 'happy' : 'think'} />
@@ -74,7 +74,7 @@ export function ReminderSetting() {
         <View style={{ alignItems: 'center' }}><Mascot size={110} mood="happy" /></View>
         <T v="body" center color={colors.ink}>{t('rem_why_body')}</T>
         <View style={{ backgroundColor: colors.blueSoft, borderRadius: 14, padding: 10 }}>
-          <T v="bold" center color={colors.blue}>{t('rem_daily_1')}</T>
+          <T v="bold" center color={colors.blue}>{stripEmoji(t('rem_daily_1'))}</T>
         </View>
         <Button title={t('rem_why_ok')} color={colors.green} onPress={accept} />
         <Button variant="ghost" title={t('rem_why_no')} onPress={() => { setWhy(false); set({ explained: true }); }} />

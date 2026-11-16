@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { parseMedia, type Question } from '@konesans/core';
-import { T, Row, OptionButton, Icon, Flag, PressScale, Pop, FadeIn, Avatar } from './index';
+import { T, Row, OptionButton, Icon, IconTile, Flag, PressScale, Pop, FadeIn, Avatar } from './index';
 import { QuestionMedia } from './QuestionMedia';
 import { colors } from '@/lib/theme';
 import { useL, useT } from '@/lib/i18n';
@@ -71,7 +71,7 @@ export function QuestionView({ q, chosen, reveal, onPick, otherChosen, otherAvat
             ) : null}
             {reveal && otherChosen === i && (
               <Pop style={{ position: 'absolute', right: 8, top: -8 }}>
-                {otherAvatar ? <Avatar a={otherAvatar} size={30} /> : <T v="small" color={colors.muted}>🤖</T>}
+                {otherAvatar ? <Avatar a={otherAvatar} size={30} /> : <IconTile name="robo" bg={colors.card} size={30} />}
               </Pop>
             )}
           </FadeIn>

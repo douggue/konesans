@@ -8,10 +8,10 @@
  * No Robo here: a friend match waits for the friend.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Share, Linking, ActivityIndicator, Platform } from 'react-native';
+import { View, Share, Linking, Platform } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import type { AgeBand } from '@konesans/core';
-import { Screen, T, Card, Row, TopBar, Button, IconTile, PressScale, Mascot, FadeIn, Pop, Pulse, Shake, Icon } from '@/ui';
+import { Screen, T, Card, Row, TopBar, Button, IconTile, PressScale, Mascot, FadeIn, Pop, Pulse, Shake, Icon, Chevron, EmptyState, ErrorState, Loader, Dots } from '@/ui';
 import { colors, fonts } from '@/lib/theme';
 import { useStore, useAvatar } from '@/lib/store';
 import { useT, type StrKey } from '@/lib/i18n';
@@ -45,15 +45,15 @@ export default function Friend() {
         <T v="body" color={colors.muted} style={{ flex: 1 }}>{t('fr_intro')}</T>
       </Row></FadeIn>
       {lost ? <T v="small" center color={colors.red}>{t('fr_lost')}</T> : null}
-      <FadeIn delay={80}><Card onPress={() => { tap(); setMode('host'); }} soft={colors.redSoft} edge={FRIEND_RED} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 96 }}>
+      <FadeIn delay={80}><Card onPress={() => setMode('host')} soft={colors.redSoft} edge={FRIEND_RED} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 96 }}>
         <IconTile name="fanmi" bg="#FFFFFF" size={56} />
         <View style={{ flex: 1, gap: 2 }}><T v="h2">{t('fr_invite')}</T><T v="small" color={colors.muted}>{t('fr_invite_sub')}</T></View>
-        <T v="h1" color={FRIEND_RED}>›</T>
+        <Chevron />
       </Card></FadeIn>
-      <FadeIn delay={140}><Card onPress={() => { tap(); setMode('join'); }} soft={colors.blueSoft} edge={colors.blue} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 96 }}>
+      <FadeIn delay={140}><Card onPress={() => setMode('join')} soft={colors.blueSoft} edge={colors.blue} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 96 }}>
         <IconTile name="kesyon" bg="#FFFFFF" size={56} />
         <View style={{ flex: 1, gap: 2 }}><T v="h2">{t('fr_have_code')}</T><T v="small" color={colors.muted}>{t('fr_have_code_sub')}</T></View>
-        <T v="h1" color={colors.blue}>›</T>
+        <Chevron />
       </Card></FadeIn>
     </Screen>
   );
@@ -65,15 +65,9 @@ function Blocked({ title, body, settings }: { title?: string; body: string; sett
   return (
     <Screen scroll={false}>
       <TopBar close title={t('fr_title')} onBack={goBack} />
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-        <Pop><Mascot size={130} mood="think" /></Pop>
-        {title ? <T v="h1" center>{title}</T> : null}
-        <T v="body" center color={colors.muted}>{body}</T>
-      </View>
-      <View style={{ gap: 10 }}>
-        {settings ? <Button title={t('fr_open_settings')} icon="paramet" onPress={() => router.push('/settings')} /> : null}
-        <Button variant="secondary" title={t('fr_play_robo')} onPress={() => router.replace('/duel')} />
-      </View>
+      <EmptyState mood="think" badge={settings ? 'paran' : 'sanentenet'} title={title ?? t('fr_title')} sub={body}
+        action={settings ? { title: t('fr_open_settings'), icon: 'paramet', onPress: () => router.push('/settings') } : { title: t('fr_play_robo'), icon: 'robo', onPress: () => router.replace('/duel') }}
+        secondary={settings ? { title: t('fr_play_robo'), icon: 'robo', onPress: () => router.replace('/duel') } : undefined} />
     </Screen>
   );
 }
@@ -138,13 +132,9 @@ function Host({ onBack }: { onBack: () => void }) {
     <Screen>
       <TopBar close title={t('fr_invite')} onBack={cancel} />
       {!inv && !err ? (
-        <View style={{ alignItems: 'center', gap: 10, paddingVertical: 40 }}><ActivityIndicator color={colors.blue} size="large" /><T v="body" color={colors.muted}>{t('fr_making')}</T></View>
+        <Loader fill={false} label={t('fr_making')} mood="happy" />
       ) : err ? (
-        <View style={{ alignItems: 'center', gap: 12, paddingVertical: 24 }}>
-          <Mascot size={110} mood="think" />
-          <T v="body" center color={colors.red}>{t(ERR_KEY[err] === 'fr_parent_title' ? 'fr_err_server' : ERR_KEY[err])}</T>
-          <Button title={t('maint_retry')} onPress={make} />
-        </View>
+        <ErrorState fill={false} kind={err === 'offline' ? 'offline' : 'server'} sub={t(ERR_KEY[err] === 'fr_parent_title' ? 'fr_err_server' : ERR_KEY[err])} onRetry={make} />
       ) : inv ? (
         <>
           <Pop><Card style={{ alignItems: 'center', gap: 14, paddingVertical: 22 }}>
@@ -232,12 +222,12 @@ function Join({ onBack }: { onBack: () => void }) {
             disabled={busy || (k === 'ok' && code.length !== 4)} onPress={() => press(k)}
             style={{ width: '30%', height: 62, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderBottomWidth: 5,
               backgroundColor: k === 'ok' ? (code.length === 4 ? colors.green : colors.line) : colors.card, borderColor: k === 'ok' ? (code.length === 4 ? '#1E7A33' : colors.lineStrong) : colors.lineStrong }}>
-            {k === 'ok' ? (busy ? <ActivityIndicator color="#fff" /> : <T v="h2" color={code.length === 4 ? '#FFFFFF' : colors.muted}>{'✓' /* i18n-ok */}</T>)
+            {k === 'ok' ? (busy ? <Dots color="#FFFFFF" size={8} /> : <T v="h2" color={code.length === 4 ? '#FFFFFF' : colors.muted}>{'✓' /* i18n-ok */}</T>)
               : <T v="h1" color={colors.ink}>{k === 'del' ? '⌫' /* i18n-ok */ : k}</T>}
           </PressScale>
         ))}
       </View>
-      <Button title={t('fr_join')} color={colors.green} disabled={code.length !== 4 || busy} onPress={go} />
+      <Button title={t('fr_join')} color={colors.green} loading={busy} disabled={code.length !== 4} onPress={go} />
     </Screen>
   );
 }

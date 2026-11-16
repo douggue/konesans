@@ -90,7 +90,7 @@ export default function Profile() {
       </View></FadeIn>
 
       {/* This week's streak */}
-      {kidStreakOn && <FadeIn delay={110}><WeekCard count={progress.streak.count} lastDay={progress.streak.lastDay} freezeNote={freezeIn === 0 ? `🧊 ${t('ec_freeze_have')}` : t('ec_freeze_in', { n: freezeIn })} /></FadeIn>}
+      {kidStreakOn && <FadeIn delay={110}><WeekCard count={progress.streak.count} lastDay={progress.streak.lastDay} freezeNote={freezeIn === 0 ? t('ec_freeze_have') : t('ec_freeze_in', { n: freezeIn })} freezeHave={freezeIn === 0} /></FadeIn>}
 
       {/* Trophies carousel */}
       <FadeIn delay={150}><TrophyCarousel /></FadeIn>
@@ -125,7 +125,7 @@ function StatTile({ n, k, icon, label, bg, edge, fg, pulse, freeze, onPress, a11
   const Box = (onPress ? PressScale : View) as React.ComponentType<any>;
   return (
     <Box {...(onPress ? { role: 'button', accessibilityLabel: `${n} ${label}. ${a11y ?? ''}`, onPress, scaleTo: 0.94 } : {})} style={{ flex: 1, backgroundColor: bg, borderRadius: 18, borderWidth: 2, borderColor: edge, borderBottomWidth: 5, paddingVertical: 12, paddingHorizontal: 8, alignItems: 'center', gap: 2 }}>
-      {freeze && <View style={{ position: 'absolute', right: 6, top: 6 }}><T v="small">🧊</T></View>}
+      {freeze && <View style={{ position: 'absolute', right: 5, top: 5 }}><Icon name="glas" size={22} /></View>}
       {onPress && <View style={{ position: 'absolute', right: 6, top: 6 }}><Icon name="pwochen" size={16} /></View>}
       {pulse ? <Pulse>{ic}</Pulse> : ic}
       <T v="h1" color={fg} style={{ fontVariant: ['tabular-nums'] }}>{fmtN ? fmtN(v) : v}</T>
@@ -143,7 +143,7 @@ const dayMs = 86_400_000;
 const dayNum = (d: string) => Math.round(Date.parse(d + 'T00:00:00Z') / dayMs);
 
 /** "N jou seri" + this week's day circles (Mon→Sun). A day is lit when it is inside the current streak. */
-function WeekCard({ count, lastDay, freezeNote }: { count: number; lastDay: string | null; freezeNote: string }) {
+function WeekCard({ count, lastDay, freezeNote, freezeHave }: { count: number; lastDay: string | null; freezeNote: string; /** the kid holds a streak freeze: show the ice cube */ freezeHave?: boolean }) {
   const t = useT();
   const today = dayNum(localDay(Date.now(), Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Port-au-Prince'));
   const dow = (new Date(today * dayMs).getUTCDay() + 6) % 7; // 0 = Monday
@@ -181,7 +181,7 @@ function WeekCard({ count, lastDay, freezeNote }: { count: number; lastDay: stri
           );
         })}
       </View>
-      <T v="small" center color={colors.muted}>{freezeNote}</T>
+      <Row gap={6} style={{ justifyContent: 'center' }}>{freezeHave ? <Icon name="glas" size={20} /> : null}<T v="small" center color={colors.muted} style={{ flexShrink: 1 }}>{freezeNote}</T></Row>
     </View>
   );
 }

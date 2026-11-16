@@ -4,14 +4,14 @@
  * The first finished run of the day is the scored one (sent to the server, XP once); every replay is practice.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View } from 'react-native';
 import { router } from 'expo-router';
 import { startSolo, answerSolo, soloSummary, quizXp, type SoloSession, type AvatarConfig } from '@konesans/core';
-import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Pill, CountPill, FadeIn, Pop, SlideSwap, Confetti, Avatar, Motif, useCountUp, avatarFromSeed } from '@/ui';
+import { Screen, T, Button, Card, Row, Progress, Sheet, Mascot, TopBar, Pill, CountPill, FadeIn, Pop, SlideSwap, Confetti, Avatar, Motif, useCountUp, avatarFromSeed, Loader, SkeletonRow, IconButton, EmptyState } from '@/ui';
 import { HAIRS, EXTRAS } from '@/ui/avatar';
 import { QuestionView } from '@/ui/QuestionView';
 import { AnswerFeedbackSheet, StreakLabel, trailingStreak } from '@/ui/feedback';
-import { ResultHero, StatCards, tierFor, useStdStats } from '@/ui/ResultScreen';
+import { ResultHero, StatCards, ResultScreen, tierFor, useStdStats } from '@/ui/ResultScreen';
 import { RankUpListener } from '@/ui/RankUp';
 import { useQuitGuard, useQuestionClock, questionTimeMs, scoredNow } from '@/ui/activity';
 import { colors } from '@/lib/theme';
@@ -47,11 +47,8 @@ export default function Daily() {
   if (phase === 'loading' || !d) {
     return (
       <Screen scroll={false}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 }}>
-          <Mascot size={120} mood="think" />
-          <ActivityIndicator color={colors.blue} />
-          <T v="body" center color={colors.muted}>{t('dl_loading')}</T>
-        </View>
+        <TopBar close title={t('dl_label')} onBack={exit} />
+        <Loader label={t('dl_loading')} />
       </Screen>
     );
   }
@@ -75,12 +72,14 @@ export default function Daily() {
     );
   }
 
+  // a practice run ends on the shared result screen (no XP, no ranking change)
+  if (phase === 'result' && practice && lastRun.current) return <PracticeResult onAgain={() => start(true)} onDone={exit} />;
+
   return (
     <Screen scroll>
       <TopBar close title={t('dl_label')} sub={formatDate(`${d.day}T12:00:00`, profile.lang)} onBack={exit} />
-      {phase === 'result' && practice ? <PracticeResult /> : null}
       {d.questions.length === 0 ? (
-        <Card><T v="body" center>{t('dl_empty')}</T></Card>
+        <EmptyState fill={false} mood="sleepy" badge="kalandriye" title={t('dl_label')} sub={t('dl_empty')} />
       ) : d.result && !(phase === 'result' && practice) ? (
         <ScoredView d={d} online={online} sending={sending} fresh={phase === 'result'} onRefresh={async () => setD(await refreshTop(d))} />
       ) : !d.result ? (
@@ -108,17 +107,20 @@ export default function Daily() {
 /** The last practice run (shown on the result screen). */
 const lastRun: { current: SoloSession | null } = { current: null };
 
-function PracticeResult() {
+function PracticeResult({ onAgain, onDone }: { onAgain: () => void; onDone: () => void }) {
   const t = useT();
-  const s = lastRun.current;
-  if (!s) return null;
+  const s = lastRun.current!;
   const sum = soloSummary(s);
+  const ratio = sum.total ? sum.correct / sum.total : 0;
+  const timeMs = s.answers.reduce((n, a) => n + (a.elapsedMs ?? 0), 0);
+  const { items, a11y } = useStdStats({ xp: sum.score, xpLabel: t('points'), correct: sum.correct, total: sum.total, timeMs: timeMs > 0 ? timeMs : undefined });
   return (
-    <FadeIn><Card soft={colors.yellowSoft} edge={colors.yellowSoft} style={{ alignItems: 'center', gap: 6 }}>
-      <Pill text={t('dl_practice_tag')} color="#5C4600" bg="#FFFFFF" icon="pwen" />
-      <T v="h1" center color={colors.blue}>{sum.correct} {t('correct_of')} {sum.total}</T>
-      <T v="small" center color={colors.muted}>{t('dl_practice_note')}</T>
-    </Card></FadeIn>
+    <ResultScreen tier={tierFor(ratio)} sub={t('rs_sub', { c: sum.correct, n: sum.total })} stats={items} statsA11y={a11y} confetti={ratio >= 0.7} rankUp={false}
+      extras={<View style={{ alignItems: 'center', gap: 6 }}>
+        <Pill text={t('dl_practice_tag')} color="#5C4600" bg={colors.yellowSoft} icon="pwen" />
+        <T v="small" center color={colors.muted}>{t('dl_practice_note')}</T>
+      </View>}
+      primary={{ title: t('dl_practice'), onPress: onAgain, icon: 'repete' }} secondary={{ title: t('done'), onPress: onDone }} />
   );
 }
 
@@ -142,7 +144,7 @@ function ScoredView({ d, online, sending, fresh, onRefresh }: { d: DailyDay; onl
       <ResultHero tier={tierFor(ratio)} compact={!fresh} headline={fresh ? undefined : t('dl_your_score')} sub={t('rs_sub', { c: r.correct, n: r.total })} stars={stars} />
       <StatCards items={items} a11y={a11y} delay={base + 900} />
       <Pop delay={base + 1000} style={{ alignSelf: 'center' }}><CountPill value={r.score} k={`daily-${d.day}`} suffix={` ${t('points')}`} color="#5C4600" bg={colors.yellowSoft} icon="pwen" /></Pop>
-      {sending ? <ActivityIndicator color={colors.blue} /> : ranked ? (
+      {sending ? <View style={{ gap: 10 }}><SkeletonRow /><SkeletonRow /><SkeletonRow /></View> : ranked ? (
         <Ranking d={d} delay={base + 1300} onRefresh={onRefresh} />
       ) : (
         <FadeIn delay={base + 1300}><Card soft={colors.blueSoft} edge={colors.blueSoft} style={{ gap: 4 }}>
@@ -172,7 +174,7 @@ function Ranking({ d, delay, onRefresh }: { d: DailyDay; delay: number; onRefres
       ) : null}
       <FadeIn delay={delay + 200}><Row style={{ justifyContent: 'space-between' }}>
         <T v="h2">{t('dl_top')}</T>
-        <Button small variant="ghost" title="↻" onPress={() => { tap(); onRefresh(); }} />
+        <IconButton icon="chanje" label={t('pl_refresh')} onPress={onRefresh} />
       </Row></FadeIn>
       {d.top.length === 1 && d.top[0].me ? <FadeIn delay={delay + 300}><T v="small" color={colors.muted}>{t('dl_first')}</T></FadeIn> : null}
       {d.top.map((row, i) => <RankRow key={`${row.rank}-${row.name}`} row={row} delay={delay + 350 + i * 90} />)}

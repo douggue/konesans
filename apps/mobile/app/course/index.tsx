@@ -9,7 +9,7 @@ import { View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { router } from 'expo-router';
 import { coursePath, courseSummary, courseById, type CourseId } from '@konesans/core';
-import { Screen, T, Row, BottomNav, Progress, Stars, Icon, PressScale, FadeIn, Bob, Pulse, Mascot, DEEP_GREEN } from '@/ui';
+import { Screen, T, Row, BottomNav, Progress, Stars, Icon, PressScale, FadeIn, Bob, Pulse, Mascot, DEEP_GREEN, StarShape } from '@/ui';
 import { colors } from '@/lib/theme';
 import { Illustration } from '@/ui/Illustration';
 import { useStore } from '@/lib/store';
@@ -129,7 +129,7 @@ function PathNode({ ls, x, color, current, unitProgress, title, onPress }: { ls:
         {done ? <T v="display" color="#FFFFFF" style={{ fontSize: 34, lineHeight: 38 }}>✓</T>
           : retry ? <Icon name="chanje" size={36} />
           : locked ? <Icon name="femen_kle" size={32} />
-          : <T v="display" color="#FFFFFF" style={{ fontSize: 34, lineHeight: 38 }}>★</T>}
+          : <StarShape size={40} fill="#FFFFFF" />}
       </View>
     </View>
   );

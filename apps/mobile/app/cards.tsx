@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, ScrollView, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { HERO_CARDS, cardById, cardProgress, type HeroCard } from '@konesans/core';
-import { Screen, T, TopBar, Button, Mascot, FadeIn, Pop, Bounce, Shake, reduceMotion } from '@/ui';
+import { Screen, T, TopBar, Button, Mascot, Icon, Row, FadeIn, Pop, Bounce, Shake, reduceMotion } from '@/ui';
 import { MiniCard, HeroFront } from '@/ui/CardReveal';
 import { colors, fonts } from '@/lib/theme';
 import { useT, useL, type StrKey } from '@/lib/i18n';
@@ -104,13 +104,14 @@ function EmptyFeature() {
   const t = useT();
   return (
     <View style={{ minHeight: FEATURE_H, borderRadius: 24, borderWidth: 3, borderBottomWidth: 7, borderColor: colors.lineStrong, backgroundColor: colors.card, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-      <View style={{ width: 88, alignSelf: 'stretch', borderRadius: 16, backgroundColor: '#DCE1EE', alignItems: 'center', justifyContent: 'center' }}>
-        <T style={{ fontFamily: fonts.display, fontSize: 56, lineHeight: 62 }} color="#8A93A8">?</T>
+      <View style={{ width: 96, alignSelf: 'stretch', borderRadius: 16, backgroundColor: colors.purpleSoft, alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+        <Mascot size={84} mood="shy" />
+        <Icon name="ewo" size={32} />
       </View>
       <View style={{ flex: 1, gap: 8 }}>
         <T v="h2">{t('kt_empty_title')}</T>
         <T v="body" color={colors.muted}>{t('ec_cards_empty_sub')}</T>
-        <Button small lines={2} style={{ paddingHorizontal: 12, paddingVertical: 6 }} title={t('ec_cards_go')} onPress={() => router.push('/quests' as never)} />
+        <Button small lines={2} icon="kof" style={{ paddingHorizontal: 12, paddingVertical: 6 }} title={t('ec_cards_go')} onPress={() => router.push('/quests' as never)} />
       </View>
     </View>
   );
@@ -131,7 +132,7 @@ function Featured({ card }: { card: HeroCard }) {
     tap();
     const next = !flipped;
     setFlipped(next);
-    if (next && useCards.getState().markRead(card.id)) { setGotXp(true); setTimeout(() => sfx('coin'), 450); }
+    if (next && useCards.getState().markRead(card.id)) { setGotXp(true); tap('success'); setTimeout(() => sfx('coin'), 450); }
   }
   const half = (from: number, to: number) => f.interpolate({ inputRange: [0, 0.5, 0.501, 1], outputRange: [from, from, to, to] });
   return (
@@ -157,7 +158,7 @@ function Featured({ card }: { card: HeroCard }) {
             ))}
             <View style={{ marginTop: 'auto', flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingRight: 46 }}>
               {gotXp
-                ? <Bounce trigger={gotXp ? 1 : null} amount={0.15}><T style={{ fontFamily: fonts.bodyHeavy, fontSize: 13, lineHeight: 17 }} color={colors.green}>{t('kt_read_xp', { n: CARD_READ_XP })} ✓</T></Bounce>
+                ? <Bounce trigger={gotXp ? 1 : null} amount={0.15}><Row gap={4}><T style={{ fontFamily: fonts.bodyHeavy, fontSize: 13, lineHeight: 17 }} color={colors.green}>{t('kt_read_xp', { n: CARD_READ_XP })}</T><Icon name="bon" size={18} /></Row></Bounce>
                 : <T style={{ fontFamily: fonts.bodyHeavy, fontSize: 13, lineHeight: 17 }} color={read ? colors.muted : colors.blue}>{read ? t('kt_read_done') : t('kt_read_xp', { n: CARD_READ_XP })}</T>}
             </View>
             <View style={{ position: 'absolute', right: 8, bottom: 4 }}><Mascot size={50} mood="proud" live={false} /></View>

@@ -13,6 +13,7 @@ import { FIX_UX_STRINGS } from './strings/fix-ux';
 import { DAILY_STRINGS } from './strings/daily';
 import { REDESIGN_STRINGS } from './strings/redesign';
 import { FEATURES2_STRINGS } from './strings/features2';
+import { POLISH_STRINGS } from './strings/polish';
 
 const S = {
   ...VWAYAJ_STRINGS,
@@ -27,6 +28,7 @@ const S = {
   ...DAILY_STRINGS,
   ...REDESIGN_STRINGS,
   ...FEATURES2_STRINGS,
+  ...POLISH_STRINGS,
   // nav
   home: ['Lakay', 'Accueil'], challenge: ['Defi', 'Défis'], course: ['Kou', 'Cours'], coding: ['Enfòmatik', 'Coder'], me: ['Mwen', 'Moi'],
   // onboarding
@@ -102,7 +104,7 @@ const S = {
   chest_open: ['Kòf la louvri! +100 XP', 'Le coffre est ouvert\u00a0! +100 XP'],
   league: ['Lig', 'Ligue'], profile_stats: ['{xp} XP · {c} bon repons · {l} leson · {w} mo', '{xp} XP · {c} bonnes réponses · {l} leçons · {w} mots'],
   // duel
-  robot: ['🤖 Robo', '🤖 Robo'], already_answered: ['{name} reponn deja!', '{name} a déjà répondu\u00a0!'], seconds_short: ['{n} s', '{n} s'],
+  robot: ['Robo', 'Robo'], already_answered: ['{name} reponn deja!', '{name} a déjà répondu\u00a0!'], seconds_short: ['{n} s', '{n} s'],
   // Peyi options
   peyi_title: ['Peyi', 'Pays'], peyi_sub: ['Drapo · Kapital · Fòm', 'Drapeaux · Capitales · Formes'], mode: ['MÒD', 'MODE'], level_caps: ['DIFIKILTE', 'DIFFICULTÉ'], region_caps: ['REJYON', 'RÉGION'],
   peyi_mode_drapo: ['Drapo', 'Drapeaux'], peyi_mode_kapital: ['Kapital', 'Capitales'], peyi_mode_fom: ['Fòm', 'Formes'],
@@ -114,7 +116,7 @@ const S = {
   app_version: ['Konesans {v} · Kreyòl ayisyen · Français', 'Konesans {v} · créole haïtien · français'],
   // coding
   your_program: ['Pwogram ou', 'Ton programme'], tap_blocks: ['Tape blòk yo anba a.', 'Touche les blocs ci-dessous.'], here: ['◀ isit', '◀ ici'], else_: ['sinon', 'sinon'],
-  back_to_program: ['↩ Retounen anba pwogram nan', '↩ Revenir au programme'],
+  back_to_program: ['Retounen anba pwogram nan', 'Revenir au programme'],
   prog_too_long: ['Pwogram nan twò long (maks 40 blòk).', 'Le programme est trop long (40 blocs max).'], prog_invalid: ['Gen yon blòk ki pa mache isit la.', 'Un bloc ne fonctionne pas ici.'],
   // courses
   listen: ['Koute', 'Écouter'], in_my_lang: ['Kreyòl', 'Français'], xp_coins: ['+{xp} XP · +{c} kòb', '+{xp} XP · +{c} pièces'],

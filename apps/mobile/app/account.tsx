@@ -1,8 +1,8 @@
 /** "Kòd pou rekipere pwogrè m": the account's recovery code, big, to write down or share (src/lib/cloud.ts). */
 import React, { useEffect, useState } from 'react';
-import { View, Platform, Share, ActivityIndicator } from 'react-native';
+import { View, Platform, Share } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Screen, T, Card, TopBar, Button, Icon, Mascot, FadeIn, Pop } from '@/ui';
+import { Screen, T, Card, TopBar, Button, Icon, Mascot, FadeIn, Pop, Skeleton, Dots, Row, IconTile, SectionLabel } from '@/ui';
 import { colors, fonts } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT, formatDate } from '@/lib/i18n';
@@ -62,11 +62,11 @@ export default function Account() {
             </View>
           </Pop>
         ) : state === 'loading' ? (
-          <View style={{ alignItems: 'center', gap: 8, paddingVertical: 10 }}><ActivityIndicator color={colors.blue} /><T v="small" color={colors.muted}>{t('ac_loading')}</T></View>
+          <View style={{ alignItems: 'center', gap: 8, paddingVertical: 10, alignSelf: 'stretch' }}><Skeleton h={80} r={18} /><Row gap={8}><Dots size={7} /><T v="small" color={colors.muted}>{t('ac_loading')}</T></Row></View>
         ) : (
-          <View style={{ gap: 10, alignItems: 'center' }}>
-            <T v="small" center color={colors.red}>{t('ac_offline')}</T>
-            <Button small variant="secondary" title={t('ac_retry')} onPress={load} />
+          <View style={{ gap: 10, alignItems: 'center', alignSelf: 'stretch', backgroundColor: colors.redSoft, borderRadius: 16, padding: 12 }}>
+            <Row gap={10}><IconTile name="wifi" bg="#FFFFFF" size={40} /><T v="small" color="#8F0A22" style={{ flex: 1 }}>{t('ac_offline')}</T></Row>
+            <Button small variant="secondary" icon="chanje" title={t('ac_retry')} onPress={load} style={{ alignSelf: 'stretch' }} />
           </View>
         )}
         {code ? (
@@ -80,10 +80,10 @@ export default function Account() {
       <T v="small" center color={colors.muted}>{lastSync ? t('ac_saved', { x: formatDate(new Date(lastSync).toISOString(), lang) }) : t('ac_saved_never')}</T>
       {googleEnabled() ? (
         <Card style={{ gap: 8 }}>
-          <T v="label" color={colors.muted}>{t('gg_section').toUpperCase()}</T>
+          <SectionLabel>{t('gg_section')}</SectionLabel>
           {linked ? <T v="bold" color={colors.green}>{t('gg_linked')}</T> : <>
             <T v="small" color={colors.muted}>{t('gg_connect_sub')}</T>
-            {gBusy ? <ActivityIndicator color={colors.blue} style={{ minHeight: 54 }} /> : <Button variant="secondary" title={t('gg_connect')} onPress={() => setGate(true)} />}
+            <Button variant="secondary" loading={gBusy} title={t('gg_connect')} onPress={() => setGate(true)} />
             {gErr ? <T v="small" color={colors.red}>{t(gErr)}</T> : null}
           </>}
         </Card>

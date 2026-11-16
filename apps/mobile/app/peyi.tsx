@@ -2,13 +2,12 @@ import React, { useState } from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
 import { REGIONS, REGION_LABEL, countryPool, type CountryMode, type CountryLevel, type WorldRegion } from '@konesans/core';
-import { Screen, T, Button, TopBar, Icon, Row, PressScale, Sheet, readableOn } from '@/ui';
+import { Screen, T, Button, Icon, IconTile, Row, Sheet, Pill, HeroHeader, SectionLabel, SelectTile, ListRow, Chevron, StarIcons, type IconName } from '@/ui';
 import { LevelPicker } from '@/ui/LevelPicker';
 import { usePrefs } from '@/lib/prefs';
-import { colors, radius } from '@/lib/theme';
+import { colors } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT } from '@/lib/i18n';
-import { tap } from '@/lib/audio';
 
 const MODES: { id: CountryMode; icon: 'drapo' | 'kapital' | 'fom'; key: 'peyi_mode_drapo' | 'peyi_mode_kapital' | 'peyi_mode_fom' }[] = [
   { id: 'drapo', icon: 'drapo', key: 'peyi_mode_drapo' }, { id: 'kapital', icon: 'kapital', key: 'peyi_mode_kapital' }, { id: 'fom', icon: 'fom', key: 'peyi_mode_fom' },
@@ -18,6 +17,9 @@ const LEVELS: { id: CountryLevel; key: 'peyi_lv1' | 'peyi_lv2' | 'peyi_lv3'; sub
   { id: 2, key: 'peyi_lv2', sub: 'peyi_lv2_sub' },
   { id: 3, key: 'peyi_lv3', sub: 'peyi_lv3_sub' },
 ];
+
+/** Our drawn region pictures (no emoji). */
+const REGION_ICON: Record<WorldRegion | 'mond', IconName> = { mond: 'jewo', 'Karayib': 'zile', 'Amerik di Nò': 'amerik', 'Amerik di Sid': 'jako', 'Ewòp': 'chato', 'Afrik': 'lyon', 'Azi': 'panda', 'Oseyani': 'koala' };
 
 /** Peyi: pick a mode (flags / capitals / shapes), a level and a region, then play. */
 export default function Peyi() {
@@ -29,55 +31,51 @@ export default function Peyi() {
   const lang = profile.lang;
   // the count must use the same level as the game (the Defi difficulty), not the old per-Peyi level
   const pool = countryPool({ ...peyi, level }).length;
-  const seg = (on: boolean, color = colors.blue) => ({ borderRadius: radius.md, backgroundColor: on ? color : colors.card, borderWidth: 2, borderColor: on ? color : colors.line, borderBottomWidth: on ? 2 : 5, alignItems: 'center' as const, justifyContent: 'center' as const });
 
   return (
-    <Screen>
-      <TopBar title={t('peyi_title')} sub={t('peyi_sub')} onBack={() => router.back()} />
+    <Screen bleed>
+      <HeroHeader color={colors.yellowDark} title={t('peyi_title')} sub={t('peyi_sub')} onBack={() => router.back()} motif="drapo" mascot mood="wave">
+        <View style={{ alignSelf: 'flex-start' }}><Pill text={t('peyi_pool', { n: pool })} color="#5C4600" bg="#FFFFFF" icon="drapo" /></View>
+      </HeroHeader>
 
-      <T v="label" color={colors.muted}>{t('mode')}</T>
-      <Row gap={10}>
+      <SectionLabel>{t('mode')}</SectionLabel>
+      <Row gap={10} style={{ alignItems: 'stretch' }}>
         {MODES.map((m) => {
           const on = peyi.mode === m.id;
           return (
-            <PressScale debounceMs={0} key={m.id} role="button" onPress={() => { tap(); setPeyi({ mode: m.id }); }} style={[{ flex: 1, minHeight: 92, gap: 6, paddingVertical: 10 }, seg(on)]}>
-              <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: on ? 'rgba(255,255,255,0.2)' : colors.yellowSoft, alignItems: 'center', justifyContent: 'center' }}><Icon name={m.icon} size={32} /></View>
-              <T v="h3" color={on ? readableOn(colors.blue) : colors.ink}>{t(m.key)}</T>
-            </PressScale>
+            <SelectTile key={m.id} on={on} onPress={() => setPeyi({ mode: m.id })} style={{ flex: 1, minHeight: 96 }}>
+              <IconTile name={m.icon} bg={on ? '#FFFFFF' : colors.yellowSoft} size={48} />
+              <T v="h3" center color={on ? colors.blue : colors.ink}>{t(m.key)}</T>
+            </SelectTile>
           );
         })}
       </Row>
 
       {/* level = the difficulty chosen on Defi (one setting for everything); tap to change it here too */}
-      <PressScale role="button" scaleTo={0.98} onPress={() => { tap(); setLevelSheet(true); }} accessibilityLabel={`${t('diff_label')} · ${t('diff_change')}`}
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.md, backgroundColor: colors.card, borderWidth: 2, borderColor: colors.line, borderBottomWidth: 4 }}>
-        <View style={{ flex: 1 }}>
-          <T v="label" color={colors.muted}>{t('level_caps')}</T>
-          <T v="bold">{'★'.repeat(level)} {t(LEVELS.find((l) => l.id === level)!.key)} · <T v="small" color={colors.muted}>{t(LEVELS.find((l) => l.id === level)!.sub)}</T></T>
-        </View>
-        <T v="bold" color={colors.blue} style={{ flexShrink: 0 }}>{t('diff_change')}{'\u00a0'}›</T>
-      </PressScale>
+      <SectionLabel>{t('level_caps')}</SectionLabel>
+      <ListRow title={t(LEVELS.find((l) => l.id === level)!.key)} sub={t(LEVELS.find((l) => l.id === level)!.sub)} a11y={`${t('diff_label')} · ${t('diff_change')}`}
+        onPress={() => setLevelSheet(true)} right={<Row gap={6}><StarIcons n={level} of={level} size={18} gap={0} /><Chevron /></Row>} />
 
-      <T v="label" color={colors.muted}>{t('region_caps')}</T>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+      <SectionLabel>{t('region_caps')}</SectionLabel>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'space-between' }}>
         {(['mond', ...REGIONS] as (WorldRegion | 'mond')[]).map((r) => {
           const on = peyi.region === r; const lab = REGION_LABEL[r];
           return (
-            <PressScale debounceMs={0} key={r} role="button" onPress={() => { tap(); setPeyi({ region: r }); }} style={[{ minHeight: 46, paddingHorizontal: 12, flexDirection: 'row', gap: 6, width: r === 'mond' ? '100%' : '48%' }, seg(on, colors.teal)]}>
-              <T style={{ fontSize: 18, lineHeight: 24 }}>{lab.emoji}</T>
-              <T v="bold" color={on ? '#fff' : colors.ink}>{lang === 'fr' ? lab.fr : lab.ht}</T>
-            </PressScale>
+            <SelectTile key={r} on={on} color={colors.teal} soft="#DDF3F4" onPress={() => setPeyi({ region: r })}
+              style={{ width: r === 'mond' ? '100%' : '48%', flexDirection: 'row', justifyContent: 'flex-start', gap: 8, minHeight: 56 }}>
+              <Icon name={REGION_ICON[r]} size={32} />
+              <T v="bold" color={on ? '#0A5A61' : colors.ink} style={{ flexShrink: 1 }}>{lang === 'fr' ? lab.fr : lab.ht}</T>
+            </SelectTile>
           );
         })}
       </View>
 
-      <T v="small" center color={colors.muted}>{t('peyi_pool', { n: pool })}</T>
       <Sheet open={levelSheet} title={t('diff_peyi_sheet')} onClose={() => setLevelSheet(false)}>
         <LevelPicker value={level} onChange={(v) => { setDifficulty(v); }} labels={[t('diff_easy'), t('diff_mid'), t('diff_hard')]} />
         <T v="small" center color={colors.muted}>{t(LEVELS.find((l) => l.id === level)!.sub)} · {t('peyi_pool', { n: pool })}</T>
         <Button title={t('continue')} onPress={() => setLevelSheet(false)} />
       </Sheet>
-      <Button title={t('play_now')} color={colors.yellowDark} onPress={() => router.push(`/quiz/peyi?mode=${peyi.mode}&level=${level}&region=${encodeURIComponent(peyi.region)}`)} />
+      <Button title={t('play_now')} color={colors.yellowDark} icon="jwe" onPress={() => router.push(`/quiz/peyi?mode=${peyi.mode}&level=${level}&region=${encodeURIComponent(peyi.region)}`)} style={{ marginTop: 4 }} />
     </Screen>
   );
 }

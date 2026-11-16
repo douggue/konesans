@@ -5,6 +5,7 @@
  * 3 s idle bobs, 4 s blinks, 0.55 s shakes.
  */
 import React, { useEffect, useRef, useState } from 'react';
+import Svg, { Path } from 'react-native-svg';
 import { AccessibilityInfo, Animated, Easing, Pressable, View, type LayoutChangeEvent, type StyleProp, type ViewStyle, type PressableProps } from 'react-native';
 
 // ─── reduce motion ───────────────────────────────────────────────────────────
@@ -202,8 +203,8 @@ function BurstOnce({ count, radius, shapes }: { count: number; radius: number; s
   return (
     <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
       {parts.map((p, i) => (
-        <Animated.Text key={i} style={{
-          position: 'absolute', fontSize: p.star ? 20 * p.s : 12 * p.s, color: p.c,
+        <Animated.View key={i} style={{
+          position: 'absolute',
           opacity: v.interpolate({ inputRange: [0, 0.1, 0.7, 1], outputRange: [0, 1, 1, 0] }),
           transform: [
             { translateX: v.interpolate({ inputRange: [0, 1], outputRange: [0, Math.cos(p.a) * p.r] }) },
@@ -211,7 +212,7 @@ function BurstOnce({ count, radius, shapes }: { count: number; radius: number; s
             { rotate: v.interpolate({ inputRange: [0, 1], outputRange: ['0deg', `${p.rot}deg`] }) },
             { scale: v.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0.2, 1.1, 0.8] }) },
           ],
-        }}>{p.star ? '★' : '●'}</Animated.Text>
+        }}>{p.star ? <StarShape size={22 * p.s} fill={p.c} /> : <View style={{ width: 9 * p.s, height: 9 * p.s, borderRadius: 5 * p.s, backgroundColor: p.c }} />}</Animated.View>
       ))}
     </View>
   );
@@ -293,4 +294,10 @@ export function SlideSwap({ id, children, style }: { id: string | number; childr
     Animated.timing(v, { toValue: 1, duration: 340, easing: smooth, useNativeDriver: ND }).start();
   }, [id]);
   return <Animated.View style={[style, { opacity: v.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 0.8, 1] }), transform: [{ translateX: v.interpolate({ inputRange: [0, 1], outputRange: [60, 0] }) }] }]}>{children}</Animated.View>;
+}
+
+/** Our five-point star as a shape (bursts, path nodes): flat fill, optional navy outline. */
+export const STAR_PATH = 'M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z';
+export function StarShape({ size = 20, fill = '#FFD43B', stroke }: { size?: number; fill?: string; stroke?: string }) {
+  return <Svg width={size} height={size} viewBox="0 0 24 24"><Path d={STAR_PATH} fill={fill} stroke={stroke} strokeWidth={stroke ? 2 : 0} strokeLinejoin="round" /></Svg>;
 }

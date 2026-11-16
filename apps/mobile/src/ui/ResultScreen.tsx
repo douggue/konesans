@@ -14,6 +14,7 @@ import type { IconName } from './icons';
 import { RankUpListener } from './RankUp';
 import { colors } from '@/lib/theme';
 import { useT, type StrKey } from '@/lib/i18n';
+import { tap } from '@/lib/audio';
 
 export type Tier = 'perfect' | 'great' | 'good' | 'low';
 export const tierFor = (ratio: number): Tier => (ratio >= 1 ? 'perfect' : ratio >= 0.8 ? 'great' : ratio >= 0.5 ? 'good' : 'low');
@@ -37,7 +38,8 @@ export function ResultHero({ tier, mood, headline, sub, stars, compact }: { tier
   const size = compact ? 104 : 150;
   const bird = happy && !compact ? <Hop height={10} duration={1100}><Mascot size={size} mood={m} /></Hop> : <Mascot size={size} mood={m} />;
   const [landed, setLanded] = useState(false);
-  useEffect(() => { if (compact) return; const id = setTimeout(() => setLanded(true), 520); return () => clearTimeout(id); }, []);
+  // the bird lands: a little buzz of joy on a good score (haptics respect Paramèt → Vibrasyon)
+  useEffect(() => { if (compact) return; const id = setTimeout(() => { setLanded(true); if (happy) tap('success'); }, 520); return () => clearTimeout(id); }, []);
   return (
     <View style={{ alignItems: 'center', gap: 6 }}>
       <View style={{ width: size + 40, height: size + 16, alignItems: 'center', justifyContent: 'flex-end' }}>

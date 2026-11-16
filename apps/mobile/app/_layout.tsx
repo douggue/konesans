@@ -58,6 +58,14 @@ export default function RootLayout() {
         <Stack.Screen name="vwayaj/[dep]" options={MODAL} />
         <Stack.Screen name="review" options={MODAL} />
         <Stack.Screen name="friend" options={PUSH} />
+        {/* every other screen, named so the transitions stay deliberate: activities slide up, the rest push */}
+        <Stack.Screen name="daily" options={MODAL} />
+        <Stack.Screen name="peyi" options={PUSH} />
+        <Stack.Screen name="settings" options={PUSH} />
+        <Stack.Screen name="trophies" options={PUSH} />
+        <Stack.Screen name="avatar" options={PUSH} />
+        <Stack.Screen name="account" options={PUSH} />
+        <Stack.Screen name="recover" options={PUSH} />
       </Stack>
       {maint && !intro && <Maintenance text={(lang === 'fr' && maint.fr) || maint.ht || maint.fr} lang={lang} />}
       {intro && <Intro onDone={() => setIntro(false)} />}

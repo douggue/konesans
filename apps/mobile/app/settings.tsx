@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Switch, ActivityIndicator, TextInput, ScrollView, useWindowDimensions } from 'react-native';
+import { View, Switch, TextInput, ScrollView, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import type { Lang, AgeBand } from '@konesans/core';
-import { Screen, T, Card, Row, TopBar, Button, Sheet, PressScale, Pill, IconTile } from '@/ui';
+import { Screen, T, Card, Row, TopBar, Button, Sheet, PressScale, Pill, IconTile, SectionLabel, SelectTile, ListRow, Chevron, Dots, type IconName } from '@/ui';
 import { colors, fonts } from '@/lib/theme';
 import { useStore } from '@/lib/store';
 import { useT } from '@/lib/i18n';
@@ -21,9 +21,9 @@ const REQ_LABEL = { pending: 'req_st_pending', approved: 'req_st_approved', refu
 /** Chip for the change-request form (selected = blue; the current value is greyed out). */
 function Choice({ label, on, current, onPress, tight }: { label: string; on: boolean; current?: boolean; onPress: () => void; tight?: boolean }) {
   return (
-    <PressScale debounceMs={0} role="button" disabled={current} onPress={() => { tap(); onPress(); }} style={{ minHeight: 44, paddingHorizontal: tight ? 4 : 14, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? colors.blueSoft : colors.card, borderWidth: on ? 3 : 2, borderColor: on ? colors.blue : colors.lineStrong, borderBottomWidth: on ? 3 : 4, opacity: current ? 0.45 : 1 }}>
+    <SelectTile on={on} disabled={current} onPress={onPress} style={{ minHeight: 44, paddingHorizontal: tight ? 4 : 14 }}>
       <T v="bold" color={on ? colors.blue : colors.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</T>
-    </PressScale>
+    </SelectTile>
   );
 }
 
@@ -106,17 +106,18 @@ export default function Settings() {
     catch { if (on) setErr(true); else setKidSettings({ randomDuelsAllowed: false }); }
     finally { setBusy(false); }
   };
-  const toggles: { key: keyof typeof settings; label: string; locked?: boolean }[] = [
-    { key: 'sfx', label: t('sfx') }, { key: 'music', label: t('music') }, { key: 'voice', label: t('voice'), locked: profile.age === '6-8' }, { key: 'haptic', label: t('haptic') },
+  const toggles: { key: keyof typeof settings; label: string; locked?: boolean; icon: IconName; bg: string }[] = [
+    { key: 'sfx', label: t('sfx'), icon: 'koute', bg: colors.blueSoft }, { key: 'music', label: t('music'), icon: 'tanbou', bg: colors.orangeSoft },
+    { key: 'voice', label: t('voice'), locked: profile.age === '6-8', icon: 'lang', bg: colors.yellowSoft }, { key: 'haptic', label: t('haptic'), icon: 'vibre', bg: colors.purpleSoft },
   ];
-  const seg = (on: boolean) => ({ flex: 1, minHeight: 60, borderRadius: 16, alignItems: 'center' as const, justifyContent: 'center' as const, backgroundColor: colors.card, borderWidth: on ? 3 : 2, borderColor: on ? colors.blue : colors.lineStrong, borderBottomWidth: on ? 3 : 5 });
   return (
     <Screen>
       <TopBar title={t('settings')} onBack={() => router.back()} />
-      <T v="label" color={colors.muted}>{t('sound').toUpperCase()}</T>
+      <SectionLabel>{t('sound')}</SectionLabel>
       <Card style={{ paddingVertical: 4 }}>
         {toggles.map((x, i) => (
-          <Row key={x.key} style={{ minHeight: 56, borderBottomWidth: i < toggles.length - 1 ? 1 : 0, borderBottomColor: colors.line }}>
+          <Row key={x.key} gap={12} style={{ minHeight: 60, borderBottomWidth: i < toggles.length - 1 ? 1 : 0, borderBottomColor: colors.line }}>
+            <IconTile name={x.icon} bg={x.bg} size={40} />
             <View style={{ flex: 1, gap: 2, paddingVertical: 6 }}>
               <T v="bold">{x.label}</T>
               {x.locked ? <T v="small" color={colors.muted}>{t('voice_68_note')}</T> : null}
@@ -126,39 +127,39 @@ export default function Settings() {
           </Row>
         ))}
       </Card>
-      <Button small variant="secondary" title={t('sound_test')} onPress={runSoundTest} />
+      <Button small variant="secondary" icon="koute" title={t('sound_test')} onPress={runSoundTest} />
       {audioOk !== null ? (
         <PressScale scaleTo={1} debounceMs={0} accessibilityHint={t('sound_details')} onLongPress={() => setAudioDetails((d) => !d)} delayLongPress={600}>
           <T v="bold" center color={audioOk ? colors.green : colors.red}>{t(audioOk ? 'sound_ok' : 'sound_bad')}</T>
           {audioDetails ? <T v="small" color={colors.muted} style={{ fontSize: 11, marginTop: 4 }} selectable>{audioInfo || audioError}</T> : null}
         </PressScale>
       ) : null}
-      <T v="label" color={colors.muted}>{t('app_lang').toUpperCase()}</T>
-      <Row>
+      <SectionLabel>{t('app_lang')}</SectionLabel>
+      <Row style={{ alignItems: 'stretch' }}>
         {/* i18n-ok: each language named in its own words */ ([['ht', 'KR', 'Kreyòl ayisyen'], ['fr', 'FR', 'Français']] as [Lang, string, string][]).map(([id, code, label]) => ( // i18n-ok
-          <PressScale debounceMs={0} role="button" key={id} onPress={() => { tap(); setLang(id); }} style={seg(profile.lang === id)}><T v="h2">{code}</T><T v="small">{label}</T></PressScale>
+          <SelectTile key={id} on={profile.lang === id} onPress={() => setLang(id)} style={{ flex: 1, minHeight: 64 }}><T v="h2" color={profile.lang === id ? colors.blue : colors.ink}>{code}</T><T v="small" center>{label}</T></SelectTile>
         ))}
       </Row>
-      <T v="label" color={colors.muted}>{t('text_size').toUpperCase()}</T>
-      <Row>
+      <SectionLabel>{t('text_size')}</SectionLabel>
+      <Row style={{ alignItems: 'stretch' }}>
         {([t('small'), t('normal'), t('big')]).map((label, i) => (
-          <PressScale debounceMs={0} role="button" key={label} onPress={() => { tap(); setSettings({ textSize: i as 0 | 1 | 2 }); }} style={seg(settings.textSize === i)}><T style={{ fontSize: [14, 18, 24][i], lineHeight: [16, 20, 28][i], fontFamily: 'Baloo2_800ExtraBold' }}>{'Aa' /* i18n-ok: font size sample */}</T><T v="small">{label}</T></PressScale>
+          <SelectTile key={label} on={settings.textSize === i} onPress={() => setSettings({ textSize: i as 0 | 1 | 2 })} style={{ flex: 1, minHeight: 64 }}><T style={{ fontSize: [14, 18, 24][i], lineHeight: [16, 20, 28][i], fontFamily: 'Baloo2_800ExtraBold' }} color={settings.textSize === i ? colors.blue : colors.ink}>{'Aa' /* i18n-ok: font size sample */}</T><T v="small" center>{label}</T></SelectTile>
         ))}
       </Row>
-      <Card><T v="bold">{t('sample_question')}</T></Card>
+      <Card soft={colors.blueSoft} edge={colors.blueSoft} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><IconTile name="kesyon" bg="#FFFFFF" size={40} /><T v="bold" style={{ flex: 1 }}>{t('sample_question')}</T></Card>
       {/* daily reminder (hidden when this APK has no notifications module) */}
       <ReminderSetting />
-      {serverConfigured() && <Card onPress={() => router.push('/account' as never)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60 }}><IconTile name="pwoteje" bg={colors.greenSoft} size={44} /><View style={{ flex: 1 }}><T v="bold">{t('ac_row')}</T><T v="small" color={colors.muted}>{t('ac_row_sub')}</T></View><T v="h2" color={colors.blue}>›</T></Card>}
-      <T v="label" color={colors.muted}>{t('parent').toUpperCase()}</T>
+      {serverConfigured() && <ListRow icon="pwoteje" iconBg={colors.greenSoft} title={t('ac_row')} sub={t('ac_row_sub')} onPress={() => router.push('/account' as never)} />}
+      <SectionLabel>{t('parent')}</SectionLabel>
       <Card style={{ gap: 6 }}>
-        <T v="small" color={colors.muted}>{t('parent_only')}</T>
+        <Row gap={10}><IconTile name="paran" bg={colors.yellowSoft} size={40} /><T v="small" color={colors.muted} style={{ flex: 1 }}>{t('parent_only')}</T></Row>
         {serverConfigured() && <>
           <Row style={{ minHeight: 56 }}>
             <View style={{ flex: 1, gap: 2 }}>
               <T v="bold">{t('online_duels')}</T>
               <T v="small" color={colors.muted}>{t('online_duels_sub')}</T>
             </View>
-            {busy ? <ActivityIndicator color={colors.blue} /> : <Switch value={!!kidSettings.randomDuelsAllowed} onValueChange={(v) => { tap(); if (v) setGate('online'); else applyOnline(false); }} trackColor={{ true: colors.green, false: '#B9C2D6' }} thumbColor="#fff" />}
+            {busy ? <View style={{ width: 52, alignItems: 'center' }}><Dots size={7} /></View> : <Switch value={!!kidSettings.randomDuelsAllowed} onValueChange={(v) => { tap(); if (v) setGate('online'); else applyOnline(false); }} trackColor={{ true: colors.green, false: '#B9C2D6' }} thumbColor="#fff" />}
           </Row>
           {err && <T v="small" color={colors.red}>{t('online_err')}</T>}
           <PressScale role="button" scaleTo={0.98} onPress={() => { tap(); setGate('change'); }} style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: 8 }}>
@@ -167,7 +168,7 @@ export default function Settings() {
               <T v="small" color={colors.muted}>{t('req_now', { x: `${ageText(profile.age)} · ${gradeText(profile.grade)}` })}</T>
             </View>
             {changeReq ? <Pill text={t(REQ_LABEL[changeReq.status])} color={REQ_TONE[changeReq.status][0]} bg={REQ_TONE[changeReq.status][1]} /> : null}
-            <T v="h2" color={colors.blue}>›</T>
+            <Chevron />
           </PressScale>
           {changeReq && (reqPending || changeReq.status === 'refused' || !changeReq.applied) ? <View style={{ backgroundColor: colors.bg, borderRadius: 14, padding: 10 }}>{statusBlock(changeReq)}</View> : null}
         </>}
@@ -192,16 +193,16 @@ export default function Settings() {
             <>
               <T v="small" color={colors.muted}>{t('req_intro')}</T>
               <T v="bold">{t('req_now', { x: `${ageText(profile.age)} · ${gradeText(profile.grade)}` })}</T>
-              <T v="label" color={colors.muted}>{t('req_new_age').toUpperCase()}</T>
+              <SectionLabel>{t('req_new_age')}</SectionLabel>
               <Row gap={8}>
                 {AGE_BANDS.map((a) => <View key={a} style={{ flex: 1 }}><Choice tight label={ageText(a)} on={reqAge === a} current={profile.age === a} onPress={() => setReqAge(reqAge === a ? null : a)} /></View>)}
               </Row>
-              <T v="label" color={colors.muted}>{t('req_new_grade').toUpperCase()}</T>
+              <SectionLabel>{t('req_new_grade')}</SectionLabel>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {GRADES.map((g) => <Choice key={g} label={t(gradeKey(g))} on={reqGrade === g} current={profile.grade === g} onPress={() => pickGrade(g)} />)}
               </View>
               {mismatch ? <T v="small" color={colors.red}>{mismatch}</T> : null}
-              <T v="label" color={colors.muted}>{t('req_reason').toUpperCase()}</T>
+              <SectionLabel>{t('req_reason')}</SectionLabel>
               <TextInput value={reason} onChangeText={setReason} maxLength={140} placeholder={t('req_reason_ph')} placeholderTextColor={colors.muted}
                 style={{ minHeight: 48, borderWidth: 2, borderColor: colors.lineStrong, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10, fontFamily: fonts.bodyRegular, fontSize: 15, color: colors.ink, backgroundColor: colors.card }} />
               {reqMsg ? <T v="small" color={colors.red}>{t(reqMsg)}</T> : null}
@@ -209,7 +210,7 @@ export default function Settings() {
             </>
           )}
         </ScrollView>
-        {!reqPending && reqMsg !== 'req_sent' ? (sending ? <ActivityIndicator color={colors.blue} style={{ minHeight: 54 }} /> : <Button title={t('req_send')} disabled={(!reqAge && !reqGrade) || !!mismatch} onPress={sendRequest} />) : null}
+        {!reqPending && reqMsg !== 'req_sent' ? <Button title={t('req_send')} loading={sending} disabled={(!reqAge && !reqGrade) || !!mismatch} onPress={sendRequest} /> : null}
         <Button variant="ghost" title={t('req_close')} onPress={() => setForm(false)} />
       </Sheet>
     </Screen>
