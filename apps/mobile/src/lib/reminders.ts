@@ -22,7 +22,7 @@ function N(): NotifModule | null {
   const force = (globalThis as { __KONESANS_FORCE_REMINDERS?: boolean }).__KONESANS_FORCE_REMINDERS; // web screenshots only
   if (Platform.OS === 'web' && !force) return (mod = null);
   try {
-    const m: NotifModule = require('expo-notifications');
+    const m: NotifModule = null as any; if (!m) throw new Error('no notifications module in this build');
     if (!force && typeof m?.scheduleNotificationAsync !== 'function') return (mod = null);
     mod = m;
   } catch { mod = null; }

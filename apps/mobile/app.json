@@ -51,14 +51,7 @@
           }
         }
       ],
-      "expo-system-ui",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/android-icon-monochrome.png",
-          "color": "#1F47B5"
-        }
-      ]
+      "expo-system-ui"
     ],
     "experiments": {
       "typedRoutes": false,
