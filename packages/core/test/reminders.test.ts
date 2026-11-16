@@ -37,28 +37,32 @@ describe('daily reminders', () => {
   });
   it('the next reminder shows the streak ("Seri w: N jou")', () => {
     const now = at('2026-11-16T14:00:00Z');
-    const r = planReminders({ now, tz: TZ, prefs, progress: streak(5, '2026-11-15'), settings: DEFAULT_SETTINGS });
-    expect(r[0]).toMatchObject({ kind: 'daily', text: 0, streak: 5, day: '2026-11-16' });
+    const r = planReminders({ now, tz: TZ, prefs, progress: streak(2, '2026-11-15'), settings: DEFAULT_SETTINGS });
+    expect(r[0]).toMatchObject({ kind: 'daily', text: 0, streak: 2, day: '2026-11-16' });
     expect(r.filter((x) => x.kind === 'daily').slice(1).every((x) => x.text > 0)).toBe(true);
     // a broken streak is not shown
     const broken = planReminders({ now, tz: TZ, prefs, progress: streak(5, '2026-11-10'), settings: DEFAULT_SETTINGS });
     expect(broken[0].text).toBeGreaterThan(0);
   });
-  it('streak in danger: an evening nudge when streak > 2 and not played', () => {
+  it('streak in danger: one reminder a day, and it becomes the streak reminder', () => {
     const now = at('2026-11-16T14:00:00Z');
     const r = planReminders({ now, tz: TZ, prefs, progress: streak(4, '2026-11-15'), settings: DEFAULT_SETTINGS });
-    const s = r.filter((x) => x.kind === 'streak');
-    expect(s.length).toBe(1);
-    expect(s[0]).toMatchObject({ day: '2026-11-16', streak: 4 });
-    expect(hhmm(s[0].at)).toBe('19:00');
-    // played today → tomorrow's evening
+    const today = r.filter((x) => x.day === '2026-11-16');
+    expect(today.length).toBe(1);
+    expect(today[0]).toMatchObject({ kind: 'streak', streak: 4 });
+    expect(hhmm(today[0].at)).toBe('17:00');
+    // never two on any day
+    const perDay = new Map<string, number>(); for (const x of r) perDay.set(x.day, (perDay.get(x.day) ?? 0) + 1);
+    expect([...perDay.values()].every((n) => n === 1)).toBe(true);
+    // the daily time already passed today → the evening nudge is the only one today
+    const late = planReminders({ now: at('2026-11-16T22:30:00Z'), tz: TZ, prefs, progress: streak(4, '2026-11-15'), settings: DEFAULT_SETTINGS }).filter((x) => x.day === '2026-11-16');
+    expect(late.length).toBe(1); expect(late[0].kind).toBe('streak'); expect(hhmm(late[0].at)).toBe('19:00');
+    // played today → tomorrow's reminder is the streak one
     const p = planReminders({ now, tz: TZ, prefs, progress: streak(4, '2026-11-16'), settings: DEFAULT_SETTINGS }).filter((x) => x.kind === 'streak');
     expect(p[0].day).toBe('2026-11-17');
     // streak 2 → none; streaks turned off by a parent → none
     expect(planReminders({ now, tz: TZ, prefs, progress: streak(2, '2026-11-15'), settings: DEFAULT_SETTINGS }).some((x) => x.kind === 'streak')).toBe(false);
     expect(planReminders({ now, tz: TZ, prefs, progress: streak(9, '2026-11-15'), settings: { ...DEFAULT_SETTINGS, streakEnabled: false } }).some((x) => x.kind === 'streak')).toBe(false);
-    // daily time at 19:00 already → no second nudge the same evening
-    expect(planReminders({ now, tz: TZ, prefs: { on: true, hour: 19, minute: 0 }, progress: streak(4, '2026-11-15'), settings: DEFAULT_SETTINGS }).some((x) => x.kind === 'streak')).toBe(false);
   });
   it('never at night: before 8:00 or after bedtime', () => {
     const now = at('2026-11-16T14:00:00Z');

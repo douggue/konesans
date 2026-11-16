@@ -80,8 +80,11 @@ export function planReminders(o: {
     const day = playedToday ? addDays(today, 1) : today;
     const at = localTimeToMs(day, h, 0, tz);
     const daily = out.find((r) => r.day === day);
-    // only as a second, later nudge (or when the daily reminder is off for that day)
-    if (at > now + 60_000 && (!daily || daily.at < at - 30 * 60_000)) out.push({ at, day, kind: 'streak', text: seed(day + 's') % REMINDER_TEXTS.streak, streak });
+    // owner's rule: at most ONE reminder a day — that day's reminder becomes the streak one;
+    // only when no daily reminder is left for that day (its time already passed) does the evening nudge go out
+    const text = seed(day + 's') % REMINDER_TEXTS.streak;
+    if (daily) Object.assign(daily, { kind: 'streak' as const, text, streak });
+    else if (at > now + 60_000) out.push({ at, day, kind: 'streak', text, streak });
   }
   return out.sort((a, b) => a.at - b.at);
 }
