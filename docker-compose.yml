@@ -1,0 +1,40 @@
+# Production stack on your server: Postgres + Nakama (Konesans module) + Caddy (HTTPS, admin panel).
+# Lives in /opt/konesans/app (the `deploy` branch). Secrets come from /opt/konesans/.env (made once by setup.sh).
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment: { POSTGRES_DB: nakama, POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}" }
+    volumes: [ "pgdata:/var/lib/postgresql/data" ]
+    healthcheck: { test: ["CMD", "pg_isready", "-U", "postgres"], interval: 5s, retries: 20 }
+
+  nakama:
+    image: registry.heroiclabs.com/heroiclabs/nakama:3.22.0
+    restart: unless-stopped
+    depends_on: { postgres: { condition: service_healthy } }
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - >
+        /nakama/nakama migrate up --database.address "postgres:${POSTGRES_PASSWORD}@postgres:5432/nakama" &&
+        exec /nakama/nakama --name konesans
+        --database.address "postgres:${POSTGRES_PASSWORD}@postgres:5432/nakama"
+        --runtime.js_entrypoint index.js --logger.level INFO
+        --socket.server_key "${SERVER_KEY}" --runtime.http_key "${HTTP_KEY}"
+        --session.encryption_key "${SESSION_KEY}" --session.refresh_encryption_key "${REFRESH_KEY}"
+        --session.token_expiry_sec 7200 --session.refresh_token_expiry_sec 2592000
+        --console.username admin --console.password "${CONSOLE_PASSWORD}" --console.signing_key "${CONSOLE_KEY}"
+        --runtime.env "KONESANS_ADMINS=${ADMIN_EMAILS}" --runtime.env "KONESANS_ADMIN_PASSWORD=${ADMIN_PASSWORD}" --runtime.env "GOOGLE_CLIENT_IDS=${GOOGLE_CLIENT_IDS:-}"
+        --socket.max_message_size_bytes 65536 --socket.max_request_size_bytes 1048576 --match.label_update_interval_ms 250
+    volumes: [ "./modules:/nakama/data/modules:ro" ]
+    ports: [ "127.0.0.1:7351:7351" ]   # Nakama console only on the server itself (use an SSH tunnel)
+
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    depends_on: [ nakama ]
+    environment: { DOMAIN: "${DOMAIN}" }
+    ports: [ "80:80", "443:443" ]
+    volumes: [ "./Caddyfile:/etc/caddy/Caddyfile:ro", "./admin:/srv/admin:ro", "caddydata:/data", "caddyconfig:/config" ]
+
+volumes: { pgdata: {}, caddydata: {}, caddyconfig: {} }
